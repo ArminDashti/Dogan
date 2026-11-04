@@ -38,14 +38,18 @@ onMounted(async () => {
 </script>
 
 <template>
-  <AppLayout title="Camera Stream" subtitle="Live feed from your selected device.">
+  <AppLayout
+    title="Camera Stream"
+    subtitle="Live feed from your selected device."
+    :scrollable="false"
+  >
     <div class="space-y-6">
       <div class="flex flex-wrap items-end gap-4">
         <label class="min-w-64 flex-1">
-          <span class="mb-1.5 block text-sm font-medium text-gray-300">Device</span>
+          <span class="mb-1.5 block text-sm font-medium text-[var(--text)]">Device</span>
           <select
             v-model="selectedDeviceId"
-            class="w-full rounded-lg border border-white/10 bg-surface-900 px-3 py-2.5 text-white outline-none focus:border-accent-500"
+            class="yoda-select"
             :disabled="loadingDevices || devices.length === 0"
           >
             <option v-if="devices.length === 0" value="">No devices available</option>

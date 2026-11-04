@@ -26,11 +26,11 @@ const selectedDevice = computed(() =>
 function statusClass(status: Device['status']): string {
   switch (status) {
     case 'online':
-      return 'bg-emerald-500/15 text-emerald-300'
+      return 'status-pill status-pill--online'
     case 'offline':
-      return 'bg-red-500/15 text-red-300'
+      return 'status-pill status-pill--offline'
     default:
-      return 'bg-gray-500/15 text-gray-300'
+      return 'status-pill status-pill--unknown'
   }
 }
 
@@ -149,14 +149,18 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <AppLayout title="Dashboard" subtitle="Live device telemetry and camera controls.">
+  <AppLayout
+    title="Dashboard"
+    subtitle="Live device telemetry and camera controls."
+    :scrollable="false"
+  >
     <div class="space-y-6">
       <div class="flex flex-wrap items-end gap-4">
         <label class="min-w-64 flex-1">
-          <span class="mb-1.5 block text-sm font-medium text-gray-300">Device</span>
+          <span class="mb-1.5 block text-sm font-medium text-[var(--text)]">Device</span>
           <select
             v-model="selectedDeviceId"
-            class="w-full rounded-lg border border-white/10 bg-surface-900 px-3 py-2.5 text-white outline-none focus:border-accent-500"
+            class="yoda-select"
             :disabled="loadingDevices || devices.length === 0"
           >
             <option v-if="devices.length === 0" value="">No devices available</option>
@@ -168,25 +172,21 @@ onUnmounted(() => {
 
         <div
           v-if="selectedDevice"
-          class="rounded-lg border border-white/10 bg-surface-900 px-4 py-2.5 text-sm text-gray-300"
+          class="yoda-card px-4 py-2.5 text-sm text-[var(--muted)]"
         >
-          <span class="text-gray-400">Name:</span>
-          <span class="ml-1 font-medium text-white">{{ selectedDevice.name }}</span>
+          <span class="text-[var(--muted)]">Name:</span>
+          <span class="ml-1 font-medium text-[var(--text)]">{{ selectedDevice.name }}</span>
         </div>
 
         <div
           v-if="selectedDevice"
-          class="rounded-lg border border-white/10 bg-surface-900 px-4 py-2.5 text-sm text-gray-300"
+          class="yoda-card px-4 py-2.5 text-sm text-[var(--muted)]"
         >
-          <span class="text-gray-400">Location:</span>
-          <span class="ml-1 font-medium text-white">{{ selectedDevice.location ?? selectedDevice.id }}</span>
+          <span class="text-[var(--muted)]">Location:</span>
+          <span class="ml-1 font-medium text-[var(--text)]">{{ selectedDevice.location ?? selectedDevice.id }}</span>
         </div>
 
-        <span
-          v-if="selectedDevice"
-          class="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide"
-          :class="statusClass(selectedDevice.status)"
-        >
+        <span v-if="selectedDevice" :class="statusClass(selectedDevice.status)">
           {{ selectedDevice.status }}
         </span>
       </div>
@@ -194,16 +194,16 @@ onUnmounted(() => {
       <ErrorAlert v-if="errorMessage" title="Dashboard unavailable" :message="errorMessage" />
 
       <div class="grid gap-6 lg:grid-cols-2">
-        <section class="rounded-xl border border-white/10 bg-surface-900 p-6">
+        <section class="yoda-card p-6">
           <div class="mb-4">
-            <h2 class="text-lg font-semibold text-white">Telemetry</h2>
-            <p class="text-sm text-gray-400">
+            <h2 class="text-lg font-semibold text-[var(--text)]">Telemetry</h2>
+            <p class="text-sm text-[var(--muted)]">
               Live readings from
-              <code class="text-gray-300">GET /devices/:id/telemetry</code>
+              <code class="text-[var(--text)]">GET /devices/:id/telemetry</code>
             </p>
           </div>
 
-          <div v-if="loadingTelemetry" class="py-8 text-center text-sm text-gray-400">
+          <div v-if="loadingTelemetry" class="py-8 text-center text-sm text-[var(--muted)]">
             Loading telemetry…
           </div>
 
@@ -211,22 +211,22 @@ onUnmounted(() => {
             <article
               v-for="card in telemetryCards"
               :key="card.label"
-              class="rounded-lg border border-white/10 bg-surface-950 px-4 py-3"
+              class="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-4 py-3"
             >
-              <p class="text-sm text-gray-400">{{ card.label }}</p>
-              <p class="mt-1 text-2xl font-semibold text-white">{{ card.value }}</p>
+              <p class="text-sm text-[var(--muted)]">{{ card.label }}</p>
+              <p class="mt-1 text-2xl font-semibold text-[var(--text)]">{{ card.value }}</p>
             </article>
           </div>
 
-          <p v-if="telemetry" class="mt-4 text-xs text-gray-500">
+          <p v-if="telemetry" class="mt-4 text-xs text-[var(--muted)]">
             Last updated {{ formatTimestamp(telemetry.recordedAt) }}
           </p>
         </section>
 
         <div>
           <div class="mb-4">
-            <h2 class="text-lg font-semibold text-white">Camera</h2>
-            <p class="text-sm text-gray-400">Live feed with manual stream controls.</p>
+            <h2 class="text-lg font-semibold text-[var(--text)]">Camera</h2>
+            <p class="text-sm text-[var(--muted)]">Live feed with manual stream controls.</p>
           </div>
 
           <CameraPanel
