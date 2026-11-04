@@ -107,10 +107,10 @@ onMounted(async () => {
     <div class="space-y-6">
       <div class="flex flex-wrap items-end gap-4">
         <label class="min-w-64 flex-1">
-          <span class="mb-1.5 block text-sm font-medium text-gray-300">Device</span>
+          <span class="mb-1.5 block text-sm font-medium text-[var(--text)]">Device</span>
           <select
             v-model="selectedDeviceId"
-            class="w-full rounded-lg border border-white/10 bg-surface-900 px-3 py-2.5 text-white outline-none focus:border-accent-500"
+            class="yoda-select"
             :disabled="loadingDevices || devices.length === 0"
           >
             <option v-if="devices.length === 0" value="">No devices available</option>
@@ -124,72 +124,72 @@ onMounted(async () => {
       <ErrorAlert v-if="errorMessage" title="Metrics unavailable" :message="errorMessage" />
 
       <div class="grid gap-4 md:grid-cols-2">
-        <article class="rounded-xl border border-white/10 bg-surface-900 p-6">
-          <p class="text-sm text-gray-400">Current temperature</p>
-          <p class="mt-2 text-4xl font-semibold text-white">{{ temperatureDisplay }}</p>
-          <p v-if="metrics" class="mt-2 text-xs text-gray-500">
+        <article class="yoda-card p-6">
+          <p class="text-sm text-[var(--muted)]">Current temperature</p>
+          <p class="mt-2 text-4xl font-semibold text-[var(--text)]">{{ temperatureDisplay }}</p>
+          <p v-if="metrics" class="mt-2 text-xs text-[var(--muted)]">
             Updated {{ formatTimestamp(metrics.current.recordedAt) }}
           </p>
         </article>
 
-        <article class="rounded-xl border border-white/10 bg-surface-900 p-6">
-          <p class="text-sm text-gray-400">Current noise level</p>
-          <p class="mt-2 text-4xl font-semibold text-white">{{ noiseDisplay }}</p>
-          <p v-if="metrics" class="mt-2 text-xs text-gray-500">
+        <article class="yoda-card p-6">
+          <p class="text-sm text-[var(--muted)]">Current noise level</p>
+          <p class="mt-2 text-4xl font-semibold text-[var(--text)]">{{ noiseDisplay }}</p>
+          <p v-if="metrics" class="mt-2 text-xs text-[var(--muted)]">
             Updated {{ formatTimestamp(metrics.current.recordedAt) }}
           </p>
         </article>
       </div>
 
-      <section class="rounded-xl border border-white/10 bg-surface-900 p-6">
+      <section class="yoda-card p-6">
         <div class="mb-4">
-          <h2 class="text-lg font-semibold text-white">Recent history</h2>
-          <p class="text-sm text-gray-400">Lightweight bar view of the latest readings.</p>
+          <h2 class="text-lg font-semibold text-[var(--text)]">Recent history</h2>
+          <p class="text-sm text-[var(--muted)]">Lightweight bar view of the latest readings.</p>
         </div>
 
-        <div v-if="loadingMetrics" class="py-8 text-center text-sm text-gray-400">
+        <div v-if="loadingMetrics" class="py-8 text-center text-sm text-[var(--muted)]">
           Loading metrics…
         </div>
 
-        <div v-else-if="!metrics || metrics.history.length === 0" class="py-8 text-center text-sm text-gray-400">
+        <div v-else-if="!metrics || metrics.history.length === 0" class="py-8 text-center text-sm text-[var(--muted)]">
           No historical readings yet.
         </div>
 
         <div v-else class="grid gap-6 lg:grid-cols-2">
           <div>
-            <p class="mb-3 text-sm font-medium text-gray-300">Temperature (°C)</p>
+            <p class="mb-3 text-sm font-medium text-[var(--text)]">Temperature (°C)</p>
             <div class="flex h-40 items-end gap-2">
               <div
                 v-for="reading in recentHistory(metrics.history)"
                 :key="`${reading.timestamp}-temp`"
                 class="flex flex-1 flex-col items-center gap-2"
               >
-                <div class="flex h-32 w-full items-end rounded-md bg-surface-950">
+                <div class="flex h-32 w-full items-end rounded-md bg-[var(--bg)]">
                   <div
-                    class="w-full rounded-md bg-orange-400/80"
+                    class="w-full rounded-md bg-[var(--accent)]/80"
                     :style="{ height: barHeight(reading.temperatureCelsius, 40) }"
                   />
                 </div>
-                <span class="text-[10px] text-gray-500">{{ formatTimestamp(reading.timestamp) }}</span>
+                <span class="text-[10px] text-[var(--muted)]">{{ formatTimestamp(reading.timestamp) }}</span>
               </div>
             </div>
           </div>
 
           <div>
-            <p class="mb-3 text-sm font-medium text-gray-300">Noise (dB)</p>
+            <p class="mb-3 text-sm font-medium text-[var(--text)]">Noise (dB)</p>
             <div class="flex h-40 items-end gap-2">
               <div
                 v-for="reading in recentHistory(metrics.history)"
                 :key="`${reading.timestamp}-noise`"
                 class="flex flex-1 flex-col items-center gap-2"
               >
-                <div class="flex h-32 w-full items-end rounded-md bg-surface-950">
+                <div class="flex h-32 w-full items-end rounded-md bg-[var(--bg)]">
                   <div
-                    class="w-full rounded-md bg-sky-400/80"
+                    class="w-full rounded-md bg-[#64748b]/80"
                     :style="{ height: barHeight(reading.noiseDb, 100) }"
                   />
                 </div>
-                <span class="text-[10px] text-gray-500">{{ formatTimestamp(reading.timestamp) }}</span>
+                <span class="text-[10px] text-[var(--muted)]">{{ formatTimestamp(reading.timestamp) }}</span>
               </div>
             </div>
           </div>

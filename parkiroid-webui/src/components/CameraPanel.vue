@@ -160,14 +160,14 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section class="overflow-hidden rounded-xl border border-white/10 bg-surface-900">
+  <section class="yoda-card overflow-hidden">
     <div class="relative aspect-video bg-black">
       <div ref="videoContainer" class="absolute inset-0" />
       <div
         v-if="connectionState !== 'live'"
-        class="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6 text-center text-gray-400"
+        class="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6 text-center text-[var(--muted)]"
       >
-        <p class="text-lg font-medium text-gray-300">{{ statusLabel }}</p>
+        <p class="text-lg font-medium text-[var(--text)]">{{ statusLabel }}</p>
         <p class="text-sm">
           {{
             deviceId
@@ -178,49 +178,59 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div class="flex flex-wrap items-center gap-3 border-t border-white/10 px-5 py-4">
+    <div class="flex flex-wrap items-center gap-3 border-t border-[var(--border)] px-5 py-4">
       <button
         type="button"
-        class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+        class="yoda-btn yoda-btn--primary cursor-pointer"
         :disabled="!canPlay"
         @click="playStream"
       >
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M5 5l12 7-12 7V5Z" fill="currentColor" />
+        </svg>
         Play
       </button>
       <button
         type="button"
-        class="rounded-lg border border-white/10 bg-surface-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-surface-700 disabled:cursor-not-allowed disabled:opacity-50"
+        class="yoda-btn yoda-btn--outline cursor-pointer"
         :disabled="!canStop"
         @click="stopStream"
       >
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="6" y="6" width="12" height="12" rx="1" fill="currentColor" />
+        </svg>
         Stop
       </button>
       <button
         type="button"
-        class="rounded-lg border border-accent-500/40 bg-accent-500/10 px-4 py-2 text-sm font-medium text-accent-300 transition hover:bg-accent-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+        class="yoda-btn yoda-btn--outline cursor-pointer"
         :disabled="!canCapture"
         @click="captureFrame"
       >
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 7h4l2-2h4l2 2h4v12H4V7Z" stroke="currentColor" stroke-width="1.75" />
+          <circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.75" />
+        </svg>
         {{ capturing ? 'Capturing…' : 'Capture Frame' }}
       </button>
 
       <span
         class="ml-auto text-sm font-medium"
         :class="{
-          'text-green-400': connectionState === 'live',
-          'text-yellow-400': connectionState === 'connecting',
-          'text-red-400': connectionState === 'error',
-          'text-gray-400': connectionState === 'idle',
+          'text-[#86efac]': connectionState === 'live',
+          'text-[#fde047]': connectionState === 'connecting',
+          'text-[#fca5a5]': connectionState === 'error',
+          'text-[var(--muted)]': connectionState === 'idle',
         }"
       >
         {{ statusLabel }}
       </span>
     </div>
 
-    <p v-if="captureMessage" class="border-t border-white/10 px-5 py-3 text-sm text-emerald-300">
+    <p v-if="captureMessage" class="border-t border-[var(--border)] px-5 py-3 text-sm text-[#86efac]">
       {{ captureMessage }}
     </p>
-    <p v-if="errorMessage" class="border-t border-white/10 px-5 py-3 text-sm text-red-300">
+    <p v-if="errorMessage" class="border-t border-[var(--border)] px-5 py-3 text-sm text-[#fca5a5]">
       {{ errorMessage }}
     </p>
   </section>

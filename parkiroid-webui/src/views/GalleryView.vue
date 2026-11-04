@@ -34,23 +34,19 @@ onMounted(async () => {
     <div class="space-y-6">
       <ErrorAlert v-if="errorMessage" title="Gallery unavailable" :message="errorMessage" />
 
-      <div v-if="loading" class="rounded-xl border border-white/10 bg-surface-900 px-5 py-12 text-center text-gray-400">
+      <div v-if="loading" class="yoda-card px-5 py-12 text-center text-[var(--muted)]">
         Loading images…
       </div>
 
       <div
         v-else-if="images.length === 0"
-        class="rounded-xl border border-dashed border-white/10 bg-surface-900 px-5 py-12 text-center text-gray-400"
+        class="yoda-card border-dashed px-5 py-12 text-center text-[var(--muted)]"
       >
         No images yet. Once your backend starts storing captures, they will appear here.
       </div>
 
       <div v-else class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <article
-          v-for="image in images"
-          :key="image.id"
-          class="overflow-hidden rounded-xl border border-white/10 bg-surface-900"
-        >
+        <article v-for="image in images" :key="image.id" class="yoda-card overflow-hidden">
           <img
             :src="image.thumbnailUrl ?? image.url"
             :alt="image.caption ?? 'Captured image'"
@@ -58,8 +54,8 @@ onMounted(async () => {
             loading="lazy"
           />
           <div class="space-y-1 px-4 py-3">
-            <p class="font-medium text-white">{{ image.caption ?? 'Untitled capture' }}</p>
-            <p class="text-xs text-gray-400">{{ formatDate(image.capturedAt) }}</p>
+            <p class="font-medium text-[var(--text)]">{{ image.caption ?? 'Untitled capture' }}</p>
+            <p class="text-xs text-[var(--muted)]">{{ formatDate(image.capturedAt) }}</p>
           </div>
         </article>
       </div>

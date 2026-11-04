@@ -36,46 +36,57 @@ async function handleSubmit(): Promise<void> {
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-surface-950 px-4">
-    <div class="w-full max-w-md rounded-2xl border border-white/10 bg-surface-900 p-8 shadow-2xl">
+  <div class="flex min-h-screen items-center justify-center bg-[var(--bg)] px-4">
+    <div class="yoda-card w-full max-w-md p-8 shadow-lg">
       <div class="mb-8 text-center">
-        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-accent-500">Parkiroid</p>
-        <h1 class="mt-2 text-2xl font-semibold text-white">Sign in</h1>
-        <p class="mt-2 text-sm text-gray-400">Access your devices, streams, and metrics.</p>
+        <div
+          class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--bg)] text-lg font-bold text-[var(--accent)]"
+          aria-hidden="true"
+        >
+          P
+        </div>
+        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">Parkiroid</p>
+        <h1 class="mt-2 text-2xl font-semibold text-[var(--text)]">Sign in</h1>
+        <p class="mt-2 text-sm text-[var(--muted)]">Access devices, streams, and metrics.</p>
       </div>
 
       <form class="space-y-4" @submit.prevent="handleSubmit">
         <ErrorAlert v-if="errorMessage" title="Sign in failed" :message="errorMessage" />
 
         <label class="block">
-          <span class="mb-1.5 block text-sm font-medium text-gray-300">Email or username</span>
+          <span class="mb-1.5 block text-sm font-medium text-[var(--text)]">Email or username</span>
           <input
             v-model="email"
             type="text"
             autocomplete="username"
             required
-            class="w-full rounded-lg border border-white/10 bg-surface-950 px-3 py-2.5 text-white outline-none transition focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20"
-            placeholder="armin"
+            class="yoda-input"
+            placeholder="admin"
           />
         </label>
 
         <label class="block">
-          <span class="mb-1.5 block text-sm font-medium text-gray-300">Password</span>
+          <span class="mb-1.5 block text-sm font-medium text-[var(--text)]">Password</span>
           <input
             v-model="password"
             type="password"
             autocomplete="current-password"
             required
-            class="w-full rounded-lg border border-white/10 bg-surface-950 px-3 py-2.5 text-white outline-none transition focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20"
+            class="yoda-input"
             placeholder="••••••••"
           />
         </label>
 
         <button
           type="submit"
-          class="w-full rounded-lg bg-accent-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60"
+          class="yoda-btn yoda-btn--primary w-full cursor-pointer"
           :disabled="authStore.loading"
         >
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" stroke="currentColor" stroke-width="1.75" />
+            <path d="M10 17l5-5-5-5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+            <path d="M15 12H3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+          </svg>
           {{ authStore.loading ? 'Signing in…' : 'Sign in' }}
         </button>
       </form>
