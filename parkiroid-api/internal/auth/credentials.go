@@ -1,9 +1,9 @@
 package auth
 
 const (
-	AdminUsername    = "armin"
-	AdminDisplayName = "Armin"
+	AdminUsername    = "admin"
+	AdminDisplayName = "Admin"
 
-	// bcrypt hash of password in armin-credentials.txt (dogan123)
-	AdminPasswordHash = "$2b$10$YIhU6Abu.9JFRpgWtMIEjuUzhBXwi4slpHnfYoYKjjhBkYCDzPJtu"
+	// bcrypt hash of password in armin-credentials.txt (admin)
+	AdminPasswordHash = "$2a$10$NhHYPKBR2Vh5m75s5r59LeT9ivpDVRSxliUQAnGrumihuzhC8pQG2"
 )

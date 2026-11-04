@@ -350,8 +350,8 @@ class SettingsStore(private val context: Context) {
     }
 
     companion object {
-        const val DEFAULT_USERNAME = "armin"
-        const val DEFAULT_PASSWORD = "dogan123"
+        const val DEFAULT_USERNAME = "admin"
+        const val DEFAULT_PASSWORD = "admin"
         const val DEFAULT_API_ENDPOINT = "dogan-api.xaigrok.ir"
         const val DEFAULT_API_PORT = 443
         const val DEFAULT_STREAM_ENDPOINT = "dogan-livekit.xaigrok.ir"
