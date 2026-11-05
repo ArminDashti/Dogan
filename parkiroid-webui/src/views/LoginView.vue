@@ -61,7 +61,7 @@ async function handleSubmit(): Promise<void> {
             autocomplete="username"
             required
             class="yoda-input"
-            placeholder="admin"
+            placeholder="admin@local.local"
           />
         </label>
 

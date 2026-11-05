@@ -131,7 +131,7 @@ func (handler *AuthHandler) authenticateAdminForWeb(context *gin.Context, userna
 		Token: token,
 		User: models.WebUser{
 			ID:    auth.AdminUsername,
-			Email: loginLabel,
+			Email: auth.AdminEmail,
 			Name:  auth.AdminDisplayName,
 		},
 	})
@@ -161,7 +161,7 @@ func (handler *AuthHandler) CurrentUser(context *gin.Context) {
 
 	context.JSON(http.StatusOK, models.WebUser{
 		ID:    username,
-		Email: username + "@dogan.local",
+		Email: auth.AdminEmail,
 		Name:  auth.AdminDisplayName,
 	})
 }

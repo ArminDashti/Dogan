@@ -8,10 +8,8 @@ $EmbeddedToken = if ($env:DOGAN_EMBEDDED_API_TOKEN) {
     'dg_dev_a8f3c2e1b9d74f6a0e5c3b9d2f7a1e4c8b6d0f3a7e2c9b5d1f8a4e6c0b3d7f9'
 }
 
-$credentialsPath = Join-Path (Join-Path $PSScriptRoot '..') 'armin-credentials.txt'
-$credentialsText = Get-Content -LiteralPath $credentialsPath -Raw
-$username = ($credentialsText | Select-String -Pattern 'username:\s*(.+)' -AllMatches).Matches[0].Groups[1].Value.Trim()
-$password = ($credentialsText | Select-String -Pattern 'password:\s*(.+)' -AllMatches).Matches[0].Groups[1].Value.Trim()
+$username = 'admin'
+$password = 'admin'
 
 function Invoke-DoganRequest {
     param(

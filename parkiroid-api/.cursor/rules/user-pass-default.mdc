@@ -1,5 +1,5 @@
 ---
-description: Default login account for every api-webui app (username armin)
+description: Default login account for Parkiroid API/webui (admin)
 alwaysApply: true
 ---
 
@@ -9,8 +9,9 @@ For every **api** / **webui** app that has login (seed, migrate, bootstrap, demo
 
 | Field | Value |
 |-------|-------|
-| Username | `armin` |
-| Password | `dopadopa123` |
+| Username | `admin` |
+| Password | `admin` |
+| Email (web login) | `admin@local.local` |
 
 ## Requirements
 

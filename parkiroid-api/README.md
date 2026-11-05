@@ -21,7 +21,7 @@ Local API host port defaults to `8080` (override with `--internal-port`). Postgr
 
 Compat: `build-docker-image.ps1` and `run-on-docker.ps1` still work; prefer the scripts above.
 
-Login credentials for the web app are in `armin-credentials.txt` (generated locally, gitignored).
+Default web login: username `admin`, password `admin`, email `admin@local.local` (see `internal/auth/credentials.go`).
 
 Generate an embedded API token for Android client apps:
 
