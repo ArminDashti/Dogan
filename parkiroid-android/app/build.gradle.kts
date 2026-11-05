@@ -4,9 +4,6 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
 }
 
-apply(from = "download_ncnn.gradle")
-apply(from = "download_models.gradle")
-
 android {
     namespace = "com.dogan"
     compileSdk = 35
@@ -19,16 +16,6 @@ android {
         versionName = "2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        externalNativeBuild {
-            cmake {
-                cppFlags += "-std=c++17"
-            }
-        }
-
-        ndk {
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
-        }
     }
 
     buildTypes {
@@ -46,14 +33,6 @@ android {
     }
     kotlinOptions {
         jvmTarget = "17"
-    }
-    externalNativeBuild {
-        cmake {
-            path = file("src/main/cpp/CMakeLists.txt")
-        }
-    }
-    androidResources {
-        noCompress += listOf("bin", "param")
     }
 }
 

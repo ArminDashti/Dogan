@@ -17,7 +17,7 @@ object SettingsPublisher {
     ) {
         val appContext = context.applicationContext
         val store = SettingsStore(appContext)
-        val updated = mutate(store.settingsFlow.first()).copy(objectDetectionOnDevice = true)
+        val updated = mutate(store.settingsFlow.first())
         store.save(updated)
         SessionCredentials.updateFrom(updated)
         if (!ServerConnectionManager.isConnected() || changedKeys.isEmpty()) return
@@ -35,13 +35,12 @@ object SettingsPublisher {
     suspend fun saveFullAndPushAll(context: Context, settings: AppSettings) {
         val appContext = context.applicationContext
         val store = SettingsStore(appContext)
-        val forced = settings.copy(objectDetectionOnDevice = true)
-        store.save(forced)
-        SessionCredentials.updateFrom(forced)
+        store.save(settings)
+        SessionCredentials.updateFrom(settings)
         if (!ServerConnectionManager.isConnected()) return
         val apiClient = DoganApiClient(deviceId = DeviceIdentity.resolveDeviceId(appContext))
         withContext(Dispatchers.IO) {
-            pushSnapshot(apiClient, forced)
+            pushSnapshot(apiClient, settings)
         }
     }
 
@@ -60,7 +59,6 @@ object SettingsPublisher {
             "stream_endpoint" to settings.streamEndpoint,
             "stream_port" to settings.streamPort,
             "operating_mode" to settings.operatingMode.toStoredValue(),
-            "ai_model" to settings.aiModel.toStoredValue(),
             "active_camera" to settings.activeCamera.toStoredValue(),
             "telemetry_interval_sec" to settings.telemetryIntervalSec,
             "settings_sync_interval_sec" to settings.settingsSyncIntervalSec,
@@ -74,13 +72,6 @@ object SettingsPublisher {
             "alert_duration" to settings.alertDuration.toStoredValue(),
             "copilot_alerts_enabled" to settings.copilotAlertsEnabled,
             "copilot_distance_control_enabled" to settings.copilotDistanceControlEnabled,
-            "copilot_video_chunk_minutes" to settings.copilotVideoChunkMinutes,
-            "recording_fps" to settings.recordingFps,
-            "recording_chunk_minutes" to settings.recordingChunkMinutes,
-            "recording_quality" to settings.recordingQuality.toStoredValue(),
-            "recording_enabled" to settings.recordingEnabled,
-            "recording_sound_enabled" to settings.recordingSoundEnabled,
-            "recording_retention_hours" to settings.recordingRetentionHours,
         )
         putModeKeys(keys, "watcher", settings.watcherSettings)
         putModeKeys(keys, "spotter", settings.spotterSettings)
@@ -93,14 +84,6 @@ object SettingsPublisher {
     }
 
     private fun putModeKeys(keys: MutableMap<String, Any?>, prefix: String, mode: ModeSettings) {
-        keys["${prefix}_fps"] = mode.fps
-        keys["${prefix}_min_confidence"] = mode.minConfidence
-        keys["${prefix}_record_video"] = mode.recordVideo
-        keys["${prefix}_video_audio_mode"] = mode.videoAudioMode.toStoredValue()
-        keys["${prefix}_image_retention_hours"] = mode.imageRetentionHours
-        keys["${prefix}_video_retention_hours"] = mode.videoRetentionHours
         keys["${prefix}_image_upload_policy"] = mode.imageUploadPolicy.toStoredValue()
-        keys["${prefix}_history_retention_frames"] = mode.historyRetentionFrames
-        keys["${prefix}_frame_quality"] = mode.frameQuality.toStoredValue()
     }
 }

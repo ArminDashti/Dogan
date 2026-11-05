@@ -131,9 +131,7 @@ object AppLogger {
         return when (tag) {
             "Spotter" -> LogSection.SPOTTER
             "Audio", "Watcher", "Watchman" -> LogSection.WATCHMAN
-            "VideoRecorder", "MediaArchive", "Storage" -> LogSection.RECORDING
             "Server", "LiveKit", "SSL", "SettingsSync", "Settings" -> LogSection.CONNECTIVITY
-            "Detection", "Capture", "Camera" -> activeModeSection ?: LogSection.GENERAL
             else -> LogSection.GENERAL
         }
     }

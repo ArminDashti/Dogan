@@ -63,9 +63,6 @@ object ServerSettingsSync {
         if (remote.has("operating_mode")) {
             updated = updated.copy(operatingMode = OperatingMode.fromStoredValue(remote.getString("operating_mode")))
         }
-        if (remote.has("ai_model")) {
-            updated = updated.copy(aiModel = parseAiModel(remote.getString("ai_model"), updated.aiModel))
-        }
         if (remote.has("capture_interval_ms")) {
             updated = updated.copy(
                 captureIntervalMs = SettingsStore.normalizeIntervalMs(remote.getLong("capture_interval_ms")),
@@ -147,45 +144,11 @@ object ServerSettingsSync {
         if (remote.has("copilot_distance_control_enabled")) {
             updated = updated.copy(copilotDistanceControlEnabled = remote.getBoolean("copilot_distance_control_enabled"))
         }
-        if (remote.has("copilot_video_chunk_minutes")) {
-            updated = updated.copy(
-                copilotVideoChunkMinutes = SettingsStore.normalizeVideoChunkMinutes(
-                    remote.getInt("copilot_video_chunk_minutes"),
-                ),
-            )
-        }
         if (remote.has("copilot_alerts_enabled")) {
             updated = updated.copy(copilotAlertsEnabled = remote.getBoolean("copilot_alerts_enabled"))
         }
-        if (remote.has("recording_fps")) {
-            updated = updated.copy(
-                recordingFps = SettingsStore.normalizeFps(remote.getDouble("recording_fps").toFloat()),
-            )
-        }
-        if (remote.has("recording_chunk_minutes")) {
-            updated = updated.copy(
-                recordingChunkMinutes = SettingsStore.normalizeVideoChunkMinutes(remote.getInt("recording_chunk_minutes")),
-            )
-        }
-        if (remote.has("recording_quality")) {
-            updated = updated.copy(recordingQuality = ImageQuality.fromStoredValue(remote.getString("recording_quality")))
-        }
-        if (remote.has("recording_enabled")) {
-            updated = updated.copy(recordingEnabled = remote.getBoolean("recording_enabled"))
-        }
-        if (remote.has("recording_sound_enabled")) {
-            updated = updated.copy(recordingSoundEnabled = remote.getBoolean("recording_sound_enabled"))
-        }
-        if (remote.has("recording_retention_hours")) {
-            updated = updated.copy(
-                recordingRetentionHours = SettingsStore.normalizeRecordingRetentionHours(
-                    remote.getInt("recording_retention_hours"),
-                ),
-            )
-        }
 
         updated = updated.copy(
-            objectDetectionOnDevice = true,
             watcherSettings = mergeMode(remote, "watcher", updated.watcherSettings),
             spotterSettings = mergeMode(remote, "spotter", updated.spotterSettings),
             copilotSettings = mergeMode(remote, "copilot", updated.copilotSettings),
@@ -196,60 +159,12 @@ object ServerSettingsSync {
 
     private fun mergeMode(remote: JSONObject, prefix: String, current: ModeSettings): ModeSettings {
         var mode = current
-        if (remote.has("${prefix}_fps")) {
-            val fpsValue = remote.optDouble("${prefix}_fps", Double.NaN)
-            if (!fpsValue.isNaN()) {
-                mode = mode.copy(fps = SettingsStore.normalizeFps(fpsValue.toFloat()))
-            }
-        }
-        if (remote.has("${prefix}_min_confidence")) {
-            mode = mode.copy(
-                minConfidence = SettingsStore.normalizeConfidence(remote.getDouble("${prefix}_min_confidence").toFloat()),
-            )
-        }
-        if (remote.has("${prefix}_record_video")) {
-            mode = mode.copy(recordVideo = remote.getBoolean("${prefix}_record_video"))
-        }
-        if (remote.has("${prefix}_video_audio_mode")) {
-            mode = mode.copy(videoAudioMode = VideoAudioMode.fromStoredValue(remote.getString("${prefix}_video_audio_mode")))
-        }
-        if (remote.has("${prefix}_image_retention_hours")) {
-            mode = mode.copy(
-                imageRetentionHours = SettingsStore.normalizeRetentionHours(remote.getInt("${prefix}_image_retention_hours")),
-            )
-        }
-        if (remote.has("${prefix}_video_retention_hours")) {
-            mode = mode.copy(
-                videoRetentionHours = SettingsStore.normalizeRetentionHours(remote.getInt("${prefix}_video_retention_hours")),
-            )
-        }
         if (remote.has("${prefix}_image_upload_policy")) {
             mode = mode.copy(
                 imageUploadPolicy = ImageUploadPolicy.fromStoredValue(remote.getString("${prefix}_image_upload_policy")),
             )
         }
-        if (remote.has("${prefix}_history_retention_frames")) {
-            mode = mode.copy(
-                historyRetentionFrames = SettingsStore.normalizeHistoryFrames(
-                    remote.getInt("${prefix}_history_retention_frames"),
-                ),
-            )
-        }
-        if (remote.has("${prefix}_frame_quality")) {
-            mode = mode.copy(frameQuality = ImageQuality.fromStoredValue(remote.getString("${prefix}_frame_quality")))
-        }
         return mode
-    }
-
-    private fun parseAiModel(value: String?, fallback: AiModel): AiModel {
-        if (value.isNullOrBlank()) return fallback
-        val parsed = AiModel.fromStoredValue(value)
-        val normalized = value.trim().lowercase()
-        val known = AiModel.all.any {
-            it.toStoredValue() == normalized || it.name.equals(normalized, ignoreCase = true)
-        }
-        val legacy = normalized in setOf("yolov8_nano", "yolov8_small", "mobilenet_ssd")
-        return if (known || legacy) parsed else fallback
     }
 
     private fun isValidBaseUrl(baseUrl: String): Boolean {

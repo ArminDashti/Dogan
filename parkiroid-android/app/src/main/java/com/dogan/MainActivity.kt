@@ -67,9 +67,6 @@ class MainActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.connectivitySettingsBtn).setOnClickListener {
             openSettings(SettingsActivity.SECTION_CONNECTIVITY)
         }
-        findViewById<MaterialButton>(R.id.recordingSettingsBtn).setOnClickListener {
-            openSettings(SettingsActivity.SECTION_RECORDING)
-        }
         findViewById<MaterialButton>(R.id.settingsBtn).setOnClickListener {
             openSettings(SettingsActivity.SECTION_GENERAL)
         }
@@ -105,7 +102,7 @@ class MainActivity : AppCompatActivity() {
                     updateModeButtons(settings.operatingMode)
                     if (settings.operatingMode == OperatingMode.OFF) {
                         stopMonitoringIfNeeded()
-                    } else if (ServerConnectionManager.isConnected() || settings.objectDetectionOnDevice) {
+                    } else {
                         ensureMonitoringStarted()
                     }
                 }

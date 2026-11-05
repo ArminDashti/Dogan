@@ -4,7 +4,6 @@ package com.dogan
 enum class LogSection(val storedValue: String) {
     SPOTTER("spotter"),
     WATCHMAN("watchman"),
-    RECORDING("recording"),
     CONNECTIVITY("connectivity"),
     GENERAL("general");
 
