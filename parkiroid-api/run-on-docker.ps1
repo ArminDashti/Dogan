@@ -434,7 +434,10 @@ function Build-LocalDockerImages {
 
     Push-Location $ProjectRoot
     try {
-        & docker compose -p dogan -f $Script:ComposeFile build dogan-api
+        $manifest = Get-StackManifest -ProjectRoot $ProjectRoot
+        $composeProject = if ($manifest -and $manifest.stackName) { [string]$manifest.stackName } else { 'parkiroid' }
+        $composeService = if ($manifest -and $manifest.apiContainerName) { [string]$manifest.apiContainerName } else { 'parkiroid-api' }
+        & docker compose -p $composeProject -f $Script:ComposeFile build $composeService
         if ($LASTEXITCODE -ne 0) { throw "docker compose build failed (exit $LASTEXITCODE)" }
     }
     finally {
@@ -945,9 +948,11 @@ function Invoke-ComposeStack {
 
     $downFlag = if ($RemoveVolumes) { ' -v' } else { '' }
     $rmiFlag = if ($RemoveImages) { ' --rmi local' } else { '' }
-    $composeDown = "docker compose -p dogan -f $Script:ComposeFile down$rmiFlag$downFlag"
+    $stackManifest = Get-StackManifest -ProjectRoot $WorkingDirectory
+    $composeProject = if ($stackManifest -and $stackManifest.stackName) { [string]$stackManifest.stackName } else { 'parkiroid' }
+    $composeDown = "docker compose -p $composeProject -f $Script:ComposeFile down$rmiFlag$downFlag"
     $buildFlag = if ($Build) { ' --build' } else { '' }
-    $composeUp = "docker compose -p dogan -f $Script:ComposeFile up -d$buildFlag"
+    $composeUp = "docker compose -p $composeProject -f $Script:ComposeFile up -d --force-recreate$buildFlag"
 
     if ($Target.IsLocal) {
         Push-Location $WorkingDirectory

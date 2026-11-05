@@ -164,7 +164,10 @@ function Invoke-ImageBuild {
     try {
         if ((Test-Path $composePath) -and $Dockerfile -eq 'Dockerfile' -and $Context -eq '.') {
             $env:API_IMAGE_TAG = $FullTag
-            $buildCommand = "docker compose -p dogan -f $Script:ComposeFile build dogan-api"
+            $manifest = Get-StackManifest
+            $composeProject = if ($manifest -and $manifest.stackName) { [string]$manifest.stackName } else { 'parkiroid' }
+            $composeService = if ($manifest -and $manifest.apiContainerName) { [string]$manifest.apiContainerName } else { 'parkiroid-api' }
+            $buildCommand = "docker compose -p $composeProject -f $Script:ComposeFile build $composeService"
             if ($NoCache) { $buildCommand += ' --no-cache' }
             Invoke-Expression $buildCommand
             if ($LASTEXITCODE -ne 0) { throw 'Docker compose build failed.' }
