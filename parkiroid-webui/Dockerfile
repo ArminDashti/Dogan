@@ -8,8 +8,10 @@ RUN npm ci
 COPY . .
 
 # Production default; override at build time for local (e.g. http://localhost:8080/dogan/api/v1).
-ARG VITE_API_BASE_URL=https://dogan-api.xaigrok.ir/dogan/api/v1
+ARG VITE_API_BASE_URL=
+ARG PARKIROID_API_BASE_URL=
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV PARKIROID_API_BASE_URL=$PARKIROID_API_BASE_URL
 
 RUN npm run build
 

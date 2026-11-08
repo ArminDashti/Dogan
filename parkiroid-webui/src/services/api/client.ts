@@ -11,10 +11,14 @@ interface RequestOptions extends Omit<RequestInit, 'body'> {
 const DEFAULT_BASE_URL = 'http://localhost:8080/dogan/api/v1'
 
 class ApiClient {
-  private readonly baseUrl: string
+  private baseUrl: string
   private tokenProvider: TokenProvider = () => null
 
-  constructor(baseUrl = import.meta.env.VITE_API_BASE_URL || DEFAULT_BASE_URL) {
+  constructor(baseUrl = DEFAULT_BASE_URL) {
+    this.baseUrl = baseUrl.replace(/\/$/, '')
+  }
+
+  setBaseUrl(baseUrl: string): void {
     this.baseUrl = baseUrl.replace(/\/$/, '')
   }
 
