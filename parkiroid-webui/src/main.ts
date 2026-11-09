@@ -4,15 +4,23 @@ import { registerSW } from 'virtual:pwa-register'
 
 import App from './App.vue'
 import router from './router'
+import { resolveApiBaseUrl } from '@/services/api/appConfig'
+import { apiClient } from '@/services/api/client'
 import './assets/main.css'
 
 document.documentElement.dataset.theme = 'admin'
 
 registerSW({ immediate: true })
 
-const app = createApp(App)
+async function bootstrap(): Promise<void> {
+  apiClient.setBaseUrl(await resolveApiBaseUrl())
 
-app.use(createPinia())
-app.use(router)
+  const app = createApp(App)
 
-app.mount('#app')
+  app.use(createPinia())
+  app.use(router)
+
+  app.mount('#app')
+}
+
+void bootstrap()
