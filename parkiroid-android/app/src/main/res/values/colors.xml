@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#1565C0</color>
+    <color name="ic_launcher_background">#0B6E4F</color>
 
-    <color name="dogan_surface">#121212</color>
-    <color name="dogan_surface_variant">#1E1E1E</color>
-    <color name="dogan_surface_elevated">#2C2C2C</color>
-    <color name="dogan_primary">#2E7D32</color>
-    <color name="dogan_primary_dark">#1B5E20</color>
-    <color name="dogan_primary_light">#4CAF50</color>
+    <color name="dogan_surface">#101820</color>
+    <color name="dogan_surface_variant">#15202B</color>
+    <color name="dogan_surface_elevated">#1A2834</color>
+    <color name="dogan_primary">#0B6E4F</color>
+    <color name="dogan_primary_dark">#085A41</color>
+    <color name="dogan_primary_light">#3D9B78</color>
     <color name="dogan_on_primary">#FFFFFF</color>
-    <color name="dogan_on_surface">#FFFFFF</color>
-    <color name="dogan_on_surface_secondary">#B3FFFFFF</color>
-    <color name="dogan_outline">#3D3D3D</color>
-    <color name="dogan_danger">#C62828</color>
-    <color name="dogan_warning">#F9A825</color>
-    <color name="dogan_mode_selected">#2E7D32</color>
-    <color name="dogan_mode_unselected">#2C2C2C</color>
+    <color name="dogan_on_surface">#E8EDF1</color>
+    <color name="dogan_on_surface_secondary">#8AA0B2</color>
+    <color name="dogan_outline">#2A3A48</color>
+    <color name="dogan_danger">#E07070</color>
+    <color name="dogan_signal">#C9780E</color>
+    <color name="dogan_warning">#C9780E</color>
+    <color name="dogan_mode_selected">#0B6E4F</color>
+    <color name="dogan_mode_unselected">#15202B</color>
 </resources>

@@ -8,10 +8,12 @@
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/settingsToolbar"
+        style="@style/Widget.Dogan.Toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="@color/dogan_surface_variant"
-        android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar" />
+        app:navigationIcon="?attr/homeAsUpIndicator"
+        app:titleTextColor="@color/dogan_on_surface" />
 
     <FrameLayout
         android:id="@+id/settingsContent"

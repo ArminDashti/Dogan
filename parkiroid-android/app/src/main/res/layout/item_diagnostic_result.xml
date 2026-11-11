@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="8dp"
-    android:background="#F5F5F5"
+    android:background="@drawable/bg_diagnostic_card"
     android:orientation="horizontal"
     android:padding="12dp">
 
@@ -23,20 +23,24 @@
             android:id="@+id/testNameTxt"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:fontFamily="@font/bricolage_grotesque_semibold"
+            android:textColor="@color/dogan_on_surface"
+            android:textSize="16sp" />
 
         <TextView
             android:id="@+id/testStatusTxt"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp" />
+            android:layout_marginTop="2dp"
+            android:textColor="@color/dogan_on_surface" />
 
         <TextView
             android:id="@+id/testDetailTxt"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
+            android:fontFamily="@font/ibm_plex_mono_medium"
+            android:textColor="@color/dogan_on_surface_secondary"
             android:textSize="12sp" />
     </LinearLayout>
 </LinearLayout>
