@@ -17,11 +17,11 @@ Snapshot of where the product stands today and what to expect when planning pilo
 - [x] Configurable capture / upload interval (1–60 seconds; 15 seconds default)
 - [x] Battery level and temperature reporting to server
 - [x] Motion / bump detection with alert notification and extra capture
-- [x] Cloud object detection (upload frames for server-side analysis)
+- [x] Frame upload to Dogan server for monitoring/gallery
 - [x] Dedicated section Settings screens (Connectivity, Recording, modes, General)
 - [x] Persistent notification while monitoring
 - [x] Camera eye activity for live preview (from section Preview, not on main hub)
-- [x] Local history frames gallery with bounding boxes
+- [x] Local history frames gallery when enabled
 - [x] Mode selection on main screen; re-tap active mode → OFF
 
 ## What is not included (yet)
@@ -60,9 +60,6 @@ Roadmap priorities should be confirmed with the product owner; the list above re
 - A valid server address is **required** to start monitoring.
 - **HTTP and HTTPS** server URLs are supported (`http://` works on Android 10+ via network security config for local/dev servers).
 - Motion detection sensitivity is tuned for **gentle bumps and parking-lot contacts**; extreme environments may need field validation.
-- Object detection uses embedded YOLO26 COCO-80 weights (person/car/motorcycle/truck, etc.). Copilot `speed_camera` / `speed_limit_sign` classes are not in COCO and will not fire until a fine-tuned model is embedded.
-- Object detection results are available on the server; the app shows upload status only.
-
 ### Android 10 compatibility
 
 - **Minimum supported version:** Android 10 (API 29). The app is built and tested against this floor.
@@ -76,7 +73,7 @@ Good fits for early deployment:
 
 - Single-vehicle parking monitoring with a dedicated spare phone
 - Proof-of-concept for bump detection in controlled parking environments
-- Server-side object detection and analytics via the Dogan backend
+- Server-side frame gallery and telemetry analytics via the Dogan backend
 - Battery and uptime testing over multi-hour sessions
 
 Less ideal without further product work:

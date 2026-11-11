@@ -16,7 +16,6 @@ const (
 	defaultTokenTTL         = 24 * time.Hour
 	defaultDatabaseURL      = "postgres://dogan:dogan@localhost:5432/dogan?sslmode=disable"
 	defaultFramesDir        = "frames"
-	defaultModelsDir        = "models"
 	defaultSoundsDir        = "sounds"
 	defaultAudioDir         = "diagnostic-audio"
 	defaultRetentionDays    = 7
@@ -36,7 +35,6 @@ type Config struct {
 	TokenTTL            time.Duration
 	DatabaseURL         string
 	FramesDir           string
-	ModelsDir           string
 	SoundsDir           string
 	AudioDir            string
 	RetentionPeriod     time.Duration
@@ -64,7 +62,6 @@ func Load() Config {
 		TokenTTL:           envDurationOrDefault("DOGAN_TOKEN_TTL", defaultTokenTTL),
 		DatabaseURL:        envOrDefault("DOGAN_DATABASE_URL", defaultDatabaseURL),
 		FramesDir:          envOrDefault("DOGAN_FRAMES_DIR", defaultFramesDir),
-		ModelsDir:          envOrDefault("DOGAN_MODELS_DIR", defaultModelsDir),
 		SoundsDir:          envOrDefault("DOGAN_SOUNDS_DIR", defaultSoundsDir),
 		AudioDir:           envOrDefault("DOGAN_AUDIO_DIR", defaultAudioDir),
 		RetentionPeriod:    envDaysOrDefault("DOGAN_RETENTION_DAYS", defaultRetentionDays),

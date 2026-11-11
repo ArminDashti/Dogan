@@ -21,7 +21,7 @@ From a PC with USB debugging enabled on the phone:
 - Windows: `.\install-on-phone-directly.ps1 -Launch`
 - macOS/Linux: `./scripts/install-apk.sh --build --launch`
 
-Then open Dogan. The main screen is a button hub: mode rows (Copilot / Spotter / Watchman with settings gears), Connectivity, Record, Settings, Logs, Exit.
+Then open Dogan. The main screen is a button hub: mode rows (Copilot / Watchman with settings gears), Connectivity, Record, Settings, Logs, Exit.
 
 ### 2. Grant permissions
 
@@ -39,7 +39,7 @@ Above the Connect button you see **ping**, **API**, and **LiveKit** status. The 
 
 ### 4. Pick a mode
 
-On the main screen, tap **Copilot**, **Spotter**, or **Watchman**. Activating Spotter/Watchman starts monitoring and fills History + Logs immediately. Tap the active mode again to turn **OFF**. Open **Preview** from that mode’s settings gear (mode must already be active) to verify the camera angle (green/red bounding boxes + confidence; Watchman also shows jolt/sound). Recording stays off until you enable **Record video** in Recording settings.
+On the main screen, tap **Copilot** or **Watchman**. Activating Watchman starts monitoring and fills History + Logs immediately. Tap the active mode again to turn **OFF**. Open **Preview** from that mode’s settings gear (mode must already be active) to verify the camera angle (Watchman also shows jolt/sound HUD when available). Recording stays off until you enable **Record video** in Recording settings.
 
 ## Daily operation
 
@@ -47,8 +47,8 @@ On the main screen, tap **Copilot**, **Spotter**, or **Watchman**. Activating Sp
 
 - CaptureService runs in the background with an ongoing notification.
 - The camera opens only for each detection still (duty-cycle), unless Preview or recording is on.
-- Detection frames are kept in **History frames** (open from Copilot / Spotter / Watchman settings).
-- Jolts and sharp sounds can raise alerts in Watchman/Spotter.
+- Detection frames are kept in **History frames** (open from Copilot / Watchman settings).
+- Jolts and sharp sounds can raise alerts in Watchman.
 
 ### Stop monitoring
 

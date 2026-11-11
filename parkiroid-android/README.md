@@ -1,20 +1,18 @@
 # Dogan (Android 10+)
 
-Multi-mode Kotlin Android app for vehicle monitoring and driving assistance. Supports Watchman, Spotter, Watchman-Spotter, and Copilot modes with NCNN on-device AI, LiveKit WebRTC streaming, and telemetry upload to a configurable **Dogan** HTTP server.
+Multi-mode Kotlin Android app for vehicle monitoring and driving assistance. Supports Watchman and Copilot modes with motion/sound alerts, LiveKit WebRTC streaming, and telemetry upload to a configurable **Dogan** HTTP server.
 
 ## Overview
 
 | | |
 |---|---|
-| **Purpose** | Parked-vehicle security, departure watch, and driving copilot assistance |
+| **Purpose** | Parked-vehicle security and driving copilot assistance |
 | **Platform** | Android 10+ (Kotlin), rear camera required |
 | **Backend** | Dogan REST API on a server you configure |
 
 ## Modes
 
 - **Watchman** — Detects jolts, people near car, sharp sounds
-- **Spotter** — Watch selected parked vehicles; alert when they leave
-- **Watchman-Spotter** — Both modes simultaneously
 - **Copilot** — Driving assistance: intrusion warnings, speed limits, speed cameras
 
 ## How to use
@@ -32,8 +30,6 @@ The app uploads a fixed 14-field telemetry payload every second (default) via `P
 ## Build
 
 Open in Android Studio (Giraffe+), sync Gradle, run on a physical device with rear camera.
-
-The first Gradle build downloads Tencent NCNN prebuilt libraries (`app/download_ncnn.gradle`) and compiles the native `dogan_ncnn` JNI library. Models themselves are **not** bundled; they are fetched from the Dogan server at runtime.
 
 Server base URL must include `/dogan` (e.g. `http://192.168.1.10:8090/dogan`). Docker compose publishes the API on host port **8090**.
 

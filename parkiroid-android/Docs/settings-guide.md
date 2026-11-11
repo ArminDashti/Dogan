@@ -30,43 +30,25 @@ Each section (except Copilot, unchanged) follows **Configure → Retention → B
 | Preview / History / Logs | — | Browse |
 | Flush history / Flush logs | — | Danger |
 
-Recording runs only when **Record video** is on and mode ≠ OFF (keeps camera continuous while recording). Preview requires an already-active mode (does not auto-enable Copilot/Spotter/Watchman).
+Recording runs only when **Record video** is on and mode ≠ OFF (keeps camera continuous while recording). Preview requires an already-active mode (does not auto-enable Copilot/Watchman).
 
 ## Copilot
 
-Unchanged field set (FPS, AI model, alerts, distance, history frames, alert duration, frame quality, confidence, History frames button).
-
-## Spotter
-
-| Setting | Key | Default |
-|---------|-----|---------|
-| AI model | `ai_model` | Shared |
-| Confidence | `spotter_min_confidence` | 0.7 |
-| FPS (+/−) | `spotter_fps_f` | 0.125 |
-| Frame quality | `spotter_frame_quality` | BALANCED |
-| Keep frames (hours) | `spotter_image_retention_hours` | 24 |
-| Keep logs | `log_retention_days` | 7 |
-| Preview / History / Logs | — | Browse |
-| Flush history / Flush logs | — | Danger |
-
-Spotter also enables Watchman alerts. Preview opens with bounding boxes.
+Field set covers alerts, distance, history frames, alert duration, frame quality, and History frames button when those controls exist.
 
 ## Watchman
 
 | Setting | Key | Default |
 |---------|-----|---------|
-| AI model | `ai_model` | Shared |
-| Confidence | `watcher_min_confidence` | 0.7 |
-| FPS (+/−) | `watcher_fps_f` | 0.125 |
-| Frame quality | `watcher_frame_quality` | BALANCED |
+| Still cadence | `capture_interval_ms` | **5000** (1 frame / 5s when Auto or server capture) |
+| Image upload | `watcher_image_upload_policy` | On demand (camera stays cold until request/Auto) |
 | Sound sensitivity | `sound_sensitivity` | Medium (Low / Medium / High / Custom) |
 | Custom sound threshold | `custom_sound_threshold` | 2500 RMS (shown when Custom) |
 | Jolt sensitivity | `jolt_sensitivity` | Medium (Low / Medium / High / Custom) |
 | Custom jolt scale | `custom_jolt_scale` | 1.0 (shown when Custom) |
-| Keep frames (hours) | `watcher_image_retention_hours` | 24 |
 | Keep logs | `log_retention_days` | 7 |
-| Preview (boxes + jolt/sound HUD) / History / Logs | — | Browse |
-| Flush history / Flush logs | — | Danger |
+
+Battery: Watchman uses duty-cycled stills, balanced GPS, no auto LiveKit, and timed wake locks between work. Jolt/mic stay on for alerts.
 
 UI label is **Watchman**; stored/API mode value remains `watcher`.
 
@@ -74,6 +56,7 @@ UI label is **Watchman**; stored/API mode value remains `watcher`.
 
 | Setting | Key | Notes |
 |---------|-----|-------|
+| Telemetry interval (sec) | `telemetry_interval_sec` | Default **5** |
 | Sync interval (sec) | `settings_sync_interval_sec` | Default **15** (min 10) |
 | Keep alive (min) | `screen_on_interval_min` | 0 = off |
 | Keep logs (days) | `log_retention_days` | |

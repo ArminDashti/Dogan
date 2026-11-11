@@ -26,59 +26,6 @@ The bearer token authorizes REST calls and LiveKit session creation.
 
 Returns HTTP 200 when the server is reachable. Used for latency measurement.
 
-## Models (NCNN)
-
-> **Android note:** The Dogan Android app embeds YOLO26 NCNN weights (`yolo26_nano`, `yolo26_small`, `yolo26_medium`) in the APK and no longer calls these download endpoints. Server model APIs remain available for other clients or tooling.
-
-### GET /models
-
-Requires bearer token. Returns only models that have both `model.param` and `model.bin` on the server.
-
-Response:
-```json
-{
-  "models": [
-    {
-      "id": "yolo26_nano",
-      "param_url": "http://host:8090/dogan/api/v1/models/yolo26_nano/param",
-      "bin_url": "http://host:8090/dogan/api/v1/models/yolo26_nano/bin",
-      "param_sha256": "...",
-      "bin_sha256": "...",
-      "format": "ncnn",
-      "labels": ["person", "bicycle", "car", "..."]
-    }
-  ]
-}
-```
-
-Suggested model `id` values for newer clients: `yolo26_nano`, `yolo26_small`, `yolo26_medium`. Legacy ids (`yolov8_nano`, `yolov8_small`, `mobilenet_ssd`) may still exist on older servers.
-
-### GET /models/:id/param
-
-Requires bearer token. Downloads the NCNN `.param` file for the given model id.
-
-### GET /models/:id/bin
-
-Requires bearer token. Downloads the NCNN `.bin` file for the given model id.
-
-### POST /ai-models (admin registration)
-
-Requires bearer token. Registers or updates model metadata. If `param_sha256` / `bin_sha256` are omitted, the server computes them from files under `DOGAN_MODELS_DIR/{model_name}/`.
-
-Request:
-```json
-{
-  "model_name": "yolo26_nano",
-  "param_sha256": "...",
-  "bin_sha256": "...",
-  "labels": ["person", "car"],
-  "format": "ncnn",
-  "version": "1.0.0"
-}
-```
-
-On-disk layout: `{DOGAN_MODELS_DIR}/{model_name}/model.param` and `model.bin`. Use `scripts/register-models.ps1` on the server to scan and register models.
-
 ## Sounds
 
 ### GET /sounds
@@ -113,14 +60,10 @@ Response:
 {
   "device_id": "<android_id>",
   "operating_mode": "watchman",
-  "ai_model": "yolo26_nano",
   "capture_interval_ms": 15000,
   "telemetry_interval_ms": 1000,
-  "object_detection_on_device": false,
   "screen_on_interval_min": 5,
-  "detection_image_quality": "balanced",
   "sending_image_quality": "balanced",
-  "realtime_fps": 5,
   "alert_volume": "balanced",
   "alert_duration": "3",
   "min_detection_confidence": 0.45,
@@ -130,7 +73,7 @@ Response:
 }
 ```
 
-The client polls this endpoint every `settings_sync_interval_sec` (default 15) while connected. Server address, username/password, active camera, show-detection-boxes, and **object detection on device** remain device-local. The Android client ignores `wifi_only_downloads` if present (alert sounds always download when connected).
+The client polls this endpoint every `settings_sync_interval_sec` (default 15) while connected. Server address, username/password, and active camera remain device-local. The Android client ignores `wifi_only_downloads` if present (alert sounds always download when connected).
 
 ## Telemetry
 

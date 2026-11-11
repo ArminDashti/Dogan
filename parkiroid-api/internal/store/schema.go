@@ -64,17 +64,6 @@ CREATE TABLE IF NOT EXISTS app_settings (
 	UNIQUE (platform, key)
 );
 
-CREATE TABLE IF NOT EXISTS ai_model_paths (
-	id BIGSERIAL PRIMARY KEY,
-	model_name TEXT NOT NULL UNIQUE,
-	param_sha256 TEXT NOT NULL DEFAULT '',
-	bin_sha256 TEXT NOT NULL DEFAULT '',
-	labels JSONB NOT NULL DEFAULT '[]',
-	format TEXT NOT NULL DEFAULT 'ncnn',
-	version TEXT NOT NULL DEFAULT '',
-	updated_at TIMESTAMPTZ NOT NULL
-);
-
 CREATE TABLE IF NOT EXISTS android_telemetry (
 	id BIGSERIAL PRIMARY KEY,
 	device_id BIGINT NOT NULL REFERENCES devices(id),
@@ -118,11 +107,7 @@ CREATE INDEX IF NOT EXISTS idx_diagnostic_audio_device_received_at
 `
 
 const schemaMigrationDDL = `
-ALTER TABLE ai_model_paths ADD COLUMN IF NOT EXISTS param_sha256 TEXT NOT NULL DEFAULT '';
-ALTER TABLE ai_model_paths ADD COLUMN IF NOT EXISTS bin_sha256 TEXT NOT NULL DEFAULT '';
-ALTER TABLE ai_model_paths ADD COLUMN IF NOT EXISTS labels JSONB NOT NULL DEFAULT '[]';
-ALTER TABLE ai_model_paths ADD COLUMN IF NOT EXISTS format TEXT NOT NULL DEFAULT 'ncnn';
-ALTER TABLE ai_model_paths DROP COLUMN IF EXISTS path;
+DROP TABLE IF EXISTS ai_model_paths;
 ALTER TABLE android_telemetry ADD COLUMN IF NOT EXISTS cabin_noise_rms DOUBLE PRECISION;
 ALTER TABLE android_telemetry ADD COLUMN IF NOT EXISTS gps_signal_quality TEXT;
 ALTER TABLE android_telemetry ADD COLUMN IF NOT EXISTS speed_kmh DOUBLE PRECISION;

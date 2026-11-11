@@ -5,7 +5,6 @@
     <string name="settings_title">Settings</string>
     <string name="settings_section_general">General</string>
     <string name="settings_section_watchman">Watchman</string>
-    <string name="settings_section_spotter">Spotter</string>
     <string name="settings_section_copilot">Copilot</string>
     <string name="settings_section_recording">Recording</string>
     <string name="settings_section_connectivity">Connectivity</string>
@@ -23,7 +22,6 @@
     <string name="history_button">History</string>
 
     <string name="mode_copilot">Copilot</string>
-    <string name="mode_spotter">Spotter</string>
     <string name="mode_watchman">Watchman</string>
     <string name="mode_off">OFF</string>
 
@@ -61,7 +59,6 @@
     <string name="fps_label">FPS</string>
     <string name="fps_increase">Increase FPS</string>
     <string name="fps_decrease">Decrease FPS</string>
-    <string name="min_confidence">Confidence</string>
     <string name="record_video">Record video</string>
     <string name="video_audio_mode">Video audio</string>
     <string name="image_retention_hours">Keep processed images (hours)</string>
@@ -74,7 +71,7 @@
     <string name="recording_chunk_minutes">Chunk size (minutes)</string>
     <string name="recording_enabled">Record video</string>
     <string name="recording_sound">Audio</string>
-    <string name="preview_requires_active_mode">Turn on Copilot, Spotter, or Watchman before opening Preview.</string>
+    <string name="preview_requires_active_mode">Turn on Copilot or Watchman before opening Preview.</string>
     <string name="recording_retention_hours">Retention (hours, max 12)</string>
     <string name="frame_quality">Frame quality</string>
     <string name="alert_duration">Alert duration</string>
@@ -82,14 +79,9 @@
     <string name="history_frames">History frames</string>
     <string name="history_frames_title">%1$s history</string>
     <string name="history_frames_empty">No history frames yet.</string>
-    <string name="show_bounding_boxes">Show detection boxes</string>
-    <string name="ai_model">AI model</string>
-
-    <string name="disk_usage_spotter">Spotter disk usage: %1$s</string>
     <string name="disk_usage_watchman">Watchman disk usage: %1$s</string>
     <string name="disk_usage_copilot">Copilot disk usage: %1$s</string>
     <string name="disk_usage_logs">Logs disk usage: %1$s</string>
-    <string name="flush_spotter">Flush Disk for Spotter</string>
     <string name="flush_watchman">Flush Disk for Watchman</string>
     <string name="flush_copilot">Flush Disk for Copilot</string>
     <string name="flush_logs">Flush Disk for Logs</string>
@@ -123,8 +115,6 @@
 
     <string name="dogan_running">Dogan running</string>
     <string name="settings_saved">Settings saved</string>
-
-    <string name="spotter_watching">Now watching: %1$s</string>
 
     <string name="diagnostics_running">Running tests…</string>
     <string name="diagnostics_all_passed">All tests passed</string>

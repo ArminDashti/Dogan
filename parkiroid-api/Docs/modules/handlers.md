@@ -10,7 +10,6 @@ Gin HTTP handlers for the Dogan REST API.
 - `devices_web.go` — web device telemetry/metrics/capture/gallery
 - `actions.go` — phone action queue
 - `settings.go` — Android flat settings + web PATCH prefs
-- `ai_models.go` — NCNN model registry, Android manifest, and file download
 - `sounds.go` — alert sound manifest + file download
 - `diagnostic_audio.go` — cabin diagnostic WAV upload
 - `webrtc.go` — list WebRTC sessions

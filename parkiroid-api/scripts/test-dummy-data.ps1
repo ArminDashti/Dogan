@@ -1,4 +1,4 @@
-Set-StrictMode -Version Latest
+﻿Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $BaseUrl = if ($env:DOGAN_BASE_URL) { $env:DOGAN_BASE_URL } else { 'http://localhost:8080/dogan/api/v1' }
@@ -47,10 +47,10 @@ function Invoke-DoganRequest {
 
 Write-Host "Testing dogan-server at $BaseUrl" -ForegroundColor Cyan
 
-Write-Host '[1/16] GET /health'
+Write-Host '[1/15] GET /health'
 Invoke-DoganRequest -Method GET -Path '/health' | Out-Null
 
-Write-Host '[2/16] POST /auth (admin)'
+Write-Host '[2/15] POST /auth (admin)'
 $authJson = Invoke-DoganRequest -Method POST -Path '/auth' -Body @{
     username = $username
     password = $password
@@ -64,7 +64,7 @@ $deviceHeaders = @{
     Authorization = "Bearer $EmbeddedToken"
 }
 
-Write-Host '[3/16] POST /auth (device api_key)'
+Write-Host '[3/15] POST /auth (device api_key)'
 $deviceAuthJson = Invoke-DoganRequest -Method POST -Path '/auth' -Body @{
     api_key = 'dogan-dev-key'
 }
@@ -72,23 +72,23 @@ if ($deviceAuthJson.token -ne $EmbeddedToken) {
     throw 'Expected /auth with api_key to return embedded API token'
 }
 
-Write-Host '[4/16] POST /frame'
+Write-Host '[4/15] POST /frame'
 $tinyJpegBase64 = '/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//AP//AP//AP//AP//AP//AP//AP//AP//AP//AP//AP//AP//AP//AP//AP//AP//AP//AP//AP//AP//AP//AP//2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDAREAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k='
 Invoke-DoganRequest -Method POST -Path '/frame' -Headers $deviceHeaders -Body @{
     device_id  = 'test-device'
     image_data = $tinyJpegBase64
 } | Out-Null
 
-Write-Host '[5/16] GET /last-frame'
+Write-Host '[5/15] GET /last-frame'
 Invoke-DoganRequest -Method GET -Path '/last-frame?device-id=test-device' -Headers $authHeaders | Out-Null
 
-Write-Host '[6/16] GET /frame/image'
+Write-Host '[6/15] GET /frame/image'
 $imageResponse = Invoke-DoganRequest -Method GET -Path '/frame/image?device-id=test-device' -Headers $authHeaders -RawResponse
 if ($imageResponse.Headers['Content-Type'] -notmatch 'image') {
     throw 'Expected image content type from /frame/image'
 }
 
-Write-Host '[7/16] POST /device-metrics'
+Write-Host '[7/15] POST /device-metrics'
 Invoke-DoganRequest -Method POST -Path '/device-metrics' -Headers $deviceHeaders -Body @{
     device_id             = 'test-device'
     battery_level_percent = 87.5
@@ -99,10 +99,10 @@ Invoke-DoganRequest -Method POST -Path '/device-metrics' -Headers $deviceHeaders
     longitude             = 51.3890
 } | Out-Null
 
-Write-Host '[8/16] GET /device-metrics'
+Write-Host '[8/15] GET /device-metrics'
 Invoke-DoganRequest -Method GET -Path '/device-metrics?device-id=test-device' -Headers $authHeaders | Out-Null
 
-Write-Host '[9/16] POST /actions'
+Write-Host '[9/15] POST /actions'
 $actionJson = Invoke-DoganRequest -Method POST -Path '/actions' -Headers $authHeaders -Body @{
     device_id   = 'test-device'
     action_type = 'ping'
@@ -110,10 +110,10 @@ $actionJson = Invoke-DoganRequest -Method POST -Path '/actions' -Headers $authHe
 }
 $actionId = $actionJson.id
 
-Write-Host '[10/16] GET /actions/pending'
+Write-Host '[10/15] GET /actions/pending'
 Invoke-DoganRequest -Method GET -Path '/actions/pending?device-id=test-device' -Headers $deviceHeaders | Out-Null
 
-Write-Host '[11/16] PUT /settings and GET /settings'
+Write-Host '[11/15] PUT /settings and GET /settings'
 Invoke-DoganRequest -Method PUT -Path '/settings' -Headers $authHeaders -Body @{
     platform = 'web'
     key      = 'theme'
@@ -121,44 +121,22 @@ Invoke-DoganRequest -Method PUT -Path '/settings' -Headers $authHeaders -Body @{
 } | Out-Null
 Invoke-DoganRequest -Method GET -Path '/settings?platform=web' -Headers $authHeaders | Out-Null
 
-Write-Host '[12/16] POST /ai-models and GET /models'
-$modelsDir = if ($env:DOGAN_MODELS_DIR) { $env:DOGAN_MODELS_DIR } else { Join-Path (Join-Path $PSScriptRoot '..') 'models' }
-$testModelDir = Join-Path $modelsDir 'test-model'
-New-Item -ItemType Directory -Force -Path $testModelDir | Out-Null
-Set-Content -LiteralPath (Join-Path $testModelDir 'model.param') -Value 'param-test' -NoNewline
-Set-Content -LiteralPath (Join-Path $testModelDir 'model.bin') -Value 'bin-test' -NoNewline
-$paramHash = (Get-FileHash -LiteralPath (Join-Path $testModelDir 'model.param') -Algorithm SHA256).Hash.ToLowerInvariant()
-$binHash = (Get-FileHash -LiteralPath (Join-Path $testModelDir 'model.bin') -Algorithm SHA256).Hash.ToLowerInvariant()
-Invoke-DoganRequest -Method POST -Path '/ai-models' -Headers $authHeaders -Body @{
-    model_name   = 'test-model'
-    param_sha256 = $paramHash
-    bin_sha256   = $binHash
-    labels       = @('person', 'car')
-    format       = 'ncnn'
-    version      = '1.0.0'
-} | Out-Null
-Invoke-DoganRequest -Method GET -Path '/ai-models' -Headers $authHeaders | Out-Null
-$manifest = Invoke-DoganRequest -Method GET -Path '/models' -Headers $deviceHeaders
-if (-not $manifest.models -or $manifest.models.Count -lt 1) {
-    throw 'GET /models returned no downloadable models'
-}
-
-Write-Host '[13/16] POST /streaming/token'
+Write-Host '[12/15] POST /streaming/token'
 Invoke-DoganRequest -Method POST -Path '/streaming/token' -Headers $authHeaders -Body @{
     device_id = 'test-device'
     role      = 'subscriber'
 } | Out-Null
 
-Write-Host '[14/16] POST /webrtc/session'
+Write-Host '[13/15] POST /webrtc/session'
 Invoke-DoganRequest -Method POST -Path '/webrtc/session' -Headers $deviceHeaders -Body @{
     device_id = 'test-device'
 } | Out-Null
 
-Write-Host '[15/16] GET /devices and GET /devices/:id/stream'
+Write-Host '[14/15] GET /devices and GET /devices/:id/stream'
 Invoke-DoganRequest -Method GET -Path '/devices' -Headers $authHeaders | Out-Null
 Invoke-DoganRequest -Method GET -Path '/devices/test-device/stream' -Headers $authHeaders | Out-Null
 
-Write-Host '[16/16] GET /webrtc/connections'
+Write-Host '[15/15] GET /webrtc/connections'
 Invoke-DoganRequest -Method GET -Path '/webrtc/connections?device-id=test-device' -Headers $authHeaders | Out-Null
 
 Write-Host "Acknowledging action $actionId"

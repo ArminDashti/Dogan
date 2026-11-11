@@ -8,11 +8,10 @@ import (
 )
 
 var (
-	ErrFrameNotFound    = errors.New("frame not found for device")
-	ErrMetricsNotFound  = errors.New("device metrics not found")
-	ErrActionNotFound   = errors.New("action not found")
-	ErrDeviceNotFound   = errors.New("device not found")
-	ErrAIModelNotFound  = errors.New("ai model not found")
+	ErrFrameNotFound   = errors.New("frame not found for device")
+	ErrMetricsNotFound = errors.New("device metrics not found")
+	ErrActionNotFound  = errors.New("action not found")
+	ErrDeviceNotFound  = errors.New("device not found")
 )
 
 type FrameStore interface {
@@ -41,12 +40,6 @@ type ActionStore interface {
 type SettingsStore interface {
 	UpsertSetting(setting models.AppSettingRecord) error
 	GetSettings(platform string) ([]models.AppSettingRecord, error)
-}
-
-type AIModelStore interface {
-	UpsertAIModel(model models.AIModelRecord) (models.AIModelRecord, error)
-	ListAIModels() ([]models.AIModelRecord, error)
-	GetAIModelByName(modelName string) (models.AIModelRecord, error)
 }
 
 type WebRTCStore interface {

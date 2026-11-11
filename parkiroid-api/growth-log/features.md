@@ -1,6 +1,6 @@
 # Features
 
-- REST API for Android + web monitoring (frames, telemetry, settings, AI models)
+- REST API for Android + web monitoring (frames, telemetry, settings)
 - PostgreSQL persistence and LiveKit token issuance
 - Docker Compose stack: dogan-api + postgres + LiveKit
 - YAML-only deploy under `.armin/docker-scripts/` (local and remote SSH)

@@ -24,11 +24,6 @@ JSON wire format is **snake_case** unless noted. Bearer token required except wh
 | GET | /settings | Yes | Android flat map (`?device_id=`), web prefs (default/no query) |
 | PUT | /settings | Yes | Upsert single `{platform,key,value}` setting |
 | PATCH | /settings | Yes | Patch web preferences |
-| GET | /ai-models | Yes | List registered AI models (admin) |
-| POST | /ai-models | Yes | Register/update NCNN model metadata |
-| GET | /models | Yes | Downloadable NCNN models for Android |
-| GET | /models/:id/param | Yes | Download model.param |
-| GET | /models/:id/bin | Yes | Download model.bin |
 | GET | /sounds | Yes | Downloadable alert sounds for Android |
 | GET | /sounds/:id | Yes | Download sound file |
 | POST | /diagnostic-audio | Yes | Multipart cabin diagnostic WAV |

@@ -214,36 +214,6 @@ type AppSettingRecord struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-type AIModelPayload struct {
-	ModelName   string   `json:"model_name" binding:"required"`
-	Version     string   `json:"version"`
-	ParamSHA256 string   `json:"param_sha256"`
-	BinSHA256   string   `json:"bin_sha256"`
-	Labels      []string `json:"labels"`
-	Format      string   `json:"format"`
-}
-
-type AIModelRecord struct {
-	ID          int64     `json:"id"`
-	ModelName   string    `json:"model_name"`
-	ParamSHA256 string    `json:"param_sha256"`
-	BinSHA256   string    `json:"bin_sha256"`
-	Labels      []string  `json:"labels"`
-	Format      string    `json:"format"`
-	Version     string    `json:"version"`
-	UpdatedAt   time.Time `json:"updated_at"`
-}
-
-type AIModelManifestEntry struct {
-	ID          string   `json:"id"`
-	ParamURL    string   `json:"param_url"`
-	BinURL      string   `json:"bin_url"`
-	ParamSHA256 string   `json:"param_sha256"`
-	BinSHA256   string   `json:"bin_sha256"`
-	Format      string   `json:"format"`
-	Labels      []string `json:"labels"`
-}
-
 type WebRTCConnectionRecord struct {
 	ID             int64      `json:"id"`
 	DeviceID       string     `json:"device_id"`
