@@ -3,8 +3,9 @@ package com.dogan
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.os.Bundle
+import android.view.View
+import android.widget.TextView
 import android.os.Process
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -31,7 +32,9 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var modeCopilotBtn: MaterialButton
     private lateinit var modeWatchmanBtn: MaterialButton
-    private lateinit var connectivityBtn: MaterialButton
+    private lateinit var connectivityChip: View
+    private lateinit var connectivityLabel: TextView
+    private lateinit var signalLamp: View
 
     private var monitoringActive = false
     private var currentMode: OperatingMode = OperatingMode.OFF
@@ -44,7 +47,9 @@ class MainActivity : AppCompatActivity() {
 
         modeCopilotBtn = findViewById(R.id.modeCopilotBtn)
         modeWatchmanBtn = findViewById(R.id.modeWatchmanBtn)
-        connectivityBtn = findViewById(R.id.connectivityBtn)
+        connectivityChip = findViewById(R.id.connectivityBtn)
+        connectivityLabel = findViewById(R.id.connectivityLabel)
+        signalLamp = findViewById(R.id.signalLamp)
 
         modeCopilotBtn.setOnClickListener { toggleOrSelectMode(OperatingMode.COPILOT) }
         modeWatchmanBtn.setOnClickListener { toggleOrSelectMode(OperatingMode.WATCHER) }
@@ -55,10 +60,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.watchmanSettingsBtn).setOnClickListener {
             openSettings(SettingsActivity.SECTION_WATCHMAN)
         }
-        connectivityBtn.setOnClickListener {
-            openSettings(SettingsActivity.SECTION_CONNECTIVITY)
-        }
-        findViewById<MaterialButton>(R.id.connectivitySettingsBtn).setOnClickListener {
+        connectivityChip.setOnClickListener {
             openSettings(SettingsActivity.SECTION_CONNECTIVITY)
         }
         findViewById<MaterialButton>(R.id.settingsBtn).setOnClickListener {
@@ -140,22 +142,59 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun styleModeButton(button: MaterialButton, selected: Boolean) {
-        button.setBackgroundColor(
-            ContextCompat.getColor(
-                this,
-                if (selected) R.color.dogan_mode_selected else R.color.dogan_mode_unselected,
-            ),
+        val bg = ContextCompat.getColor(
+            this,
+            if (selected) R.color.dogan_mode_selected else R.color.dogan_mode_unselected,
         )
+        val fg = ContextCompat.getColor(
+            this,
+            if (selected) R.color.dogan_on_primary else R.color.dogan_on_surface,
+        )
+        button.setBackgroundColor(bg)
+        button.setTextColor(fg)
+        button.iconTint = android.content.res.ColorStateList.valueOf(fg)
+        button.alpha = 1f
+        button.animate().cancel()
+        button.animate().alpha(1f).setDuration(180L).start()
     }
 
     private fun updateConnectivityButton(status: ConnectionStatus) {
         val connected = status == ConnectionStatus.CONNECTED
-        connectivityBtn.text = getString(
-            if (connected) R.string.connected_label else R.string.disconnected_label,
+        val connecting = status == ConnectionStatus.CONNECTING
+        connectivityLabel.text = getString(
+            when {
+                connected -> R.string.connected_label
+                connecting -> R.string.connecting_label
+                else -> R.string.disconnected_label
+            },
         )
-        connectivityBtn.setBackgroundColor(
-            Color.parseColor(if (connected) "#2E7D32" else "#C62828"),
+        val lampColor = ContextCompat.getColor(
+            this,
+            when {
+                connected -> R.color.dogan_primary_light
+                connecting -> R.color.dogan_signal
+                else -> R.color.dogan_danger
+            },
         )
+        signalLamp.background.mutate().setTint(lampColor)
+        connectivityLabel.setTextColor(
+            ContextCompat.getColor(
+                this,
+                when {
+                    connected -> R.color.dogan_primary_light
+                    connecting -> R.color.dogan_signal
+                    else -> R.color.dogan_danger
+                },
+            ),
+        )
+        signalLamp.animate().cancel()
+        if (connecting) {
+            signalLamp.animate().alpha(0.35f).setDuration(450L).withEndAction {
+                signalLamp.animate().alpha(1f).setDuration(450L).start()
+            }.start()
+        } else {
+            signalLamp.alpha = 1f
+        }
     }
 
     private fun openSettings(section: String) {

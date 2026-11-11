@@ -2,6 +2,8 @@
 <resources>
     <string name="app_name">Dogan</string>
 
+    <string name="hub_hint">Arm a bay, then leave the phone.</string>
+
     <string name="settings_title">Settings</string>
     <string name="settings_section_general">General</string>
     <string name="settings_section_watchman">Watchman</string>
@@ -90,6 +92,7 @@
 
     <string name="connected_label">Connected</string>
     <string name="disconnected_label">Disconnected</string>
+    <string name="connecting_label">Connecting…</string>
     <string name="username">Username</string>
     <string name="password">Password</string>
     <string name="ping_status_ms">Ping: %1$d ms</string>

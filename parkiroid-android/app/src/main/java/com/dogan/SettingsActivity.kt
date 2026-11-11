@@ -1,7 +1,6 @@
 package com.dogan
 
 import android.content.Intent
-import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -355,8 +354,13 @@ class SettingsActivity : AppCompatActivity() {
     private fun updateConnectionButton(button: MaterialButton, status: ConnectionStatus) {
         val connected = status == ConnectionStatus.CONNECTED
         button.text = getString(if (connected) R.string.connected_label else R.string.disconnected_label)
-        button.setBackgroundColor(
-            Color.parseColor(if (connected) "#2E7D32" else "#C62828"),
+        val bg = androidx.core.content.ContextCompat.getColor(
+            this,
+            if (connected) R.color.dogan_primary else R.color.dogan_danger,
+        )
+        button.setBackgroundColor(bg)
+        button.setTextColor(
+            androidx.core.content.ContextCompat.getColor(this, R.color.dogan_on_primary),
         )
     }
 

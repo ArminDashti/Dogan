@@ -1,36 +1,112 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Dogan" parent="Theme.MaterialComponents.NoActionBar">
-        <item name="colorPrimary">@color/dogan_primary_dark</item>
-        <item name="colorPrimaryVariant">@color/dogan_primary</item>
+    <style name="Theme.Dogan" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/dogan_primary</item>
+        <item name="colorPrimaryDark">@color/dogan_primary_dark</item>
+        <item name="colorPrimaryVariant">@color/dogan_primary_dark</item>
         <item name="colorOnPrimary">@color/dogan_on_primary</item>
-        <item name="colorSecondary">@color/dogan_primary</item>
+        <item name="colorSecondary">@color/dogan_signal</item>
         <item name="colorOnSecondary">@color/dogan_on_primary</item>
         <item name="colorSurface">@color/dogan_surface</item>
         <item name="colorOnSurface">@color/dogan_on_surface</item>
+        <item name="colorSurfaceVariant">@color/dogan_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/dogan_on_surface_secondary</item>
+        <item name="colorOutline">@color/dogan_outline</item>
+        <item name="colorError">@color/dogan_danger</item>
         <item name="android:statusBarColor">@color/dogan_surface</item>
         <item name="android:navigationBarColor">@color/dogan_surface</item>
         <item name="android:windowBackground">@color/dogan_surface</item>
         <item name="android:textColorPrimary">@color/dogan_on_surface</item>
         <item name="android:textColorSecondary">@color/dogan_on_surface_secondary</item>
+        <item name="android:fontFamily">@font/bricolage_grotesque</item>
+        <item name="fontFamily">@font/bricolage_grotesque</item>
         <item name="materialButtonStyle">@style/Widget.Dogan.Button</item>
+        <item name="textInputStyle">@style/Widget.Dogan.TextInput</item>
+        <item name="toolbarStyle">@style/Widget.Dogan.Toolbar</item>
     </style>
 
-    <style name="Widget.Dogan.Button" parent="Widget.MaterialComponents.Button">
+    <style name="Widget.Dogan.Toolbar" parent="Widget.Material3.Toolbar">
+        <item name="android:background">@color/dogan_surface_variant</item>
+        <item name="titleTextColor">@color/dogan_on_surface</item>
+        <item name="navigationIconTint">@color/dogan_on_surface</item>
+    </style>
+
+    <style name="Widget.Dogan.TextInput" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/dogan_outline</item>
+        <item name="hintTextColor">@color/dogan_on_surface_secondary</item>
+        <item name="android:textColorHint">@color/dogan_on_surface_secondary</item>
+    </style>
+
+    <style name="Widget.Dogan.Button" parent="Widget.Material3.Button.TonalButton">
         <item name="backgroundTint">@color/dogan_surface_elevated</item>
         <item name="android:textColor">@color/dogan_on_surface</item>
         <item name="cornerRadius">8dp</item>
         <item name="iconTint">@color/dogan_on_surface</item>
         <item name="iconGravity">textStart</item>
         <item name="iconPadding">8dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:minHeight">48dp</item>
     </style>
 
-    <style name="Widget.Dogan.Button.ModeSelected" parent="Widget.Dogan.Button">
-        <item name="backgroundTint">@color/dogan_mode_selected</item>
+    <style name="Widget.Dogan.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="strokeColor">@color/dogan_outline</item>
+        <item name="android:textColor">@color/dogan_on_surface</item>
+        <item name="cornerRadius">6dp</item>
+        <item name="iconTint">@color/dogan_on_surface</item>
+        <item name="android:minHeight">48dp</item>
     </style>
 
-    <style name="Widget.Dogan.Button.ModeUnselected" parent="Widget.Dogan.Button">
+    <style name="Widget.Dogan.Button.Bay" parent="Widget.Material3.Button.TonalButton">
         <item name="backgroundTint">@color/dogan_mode_unselected</item>
+        <item name="android:textColor">@color/dogan_on_surface</item>
+        <item name="cornerRadius">8dp</item>
+        <item name="iconTint">@color/dogan_on_surface</item>
+        <item name="iconGravity">textStart</item>
+        <item name="iconPadding">12dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:fontFamily">@font/bricolage_grotesque_semibold</item>
+        <item name="android:letterSpacing">-0.01</item>
+        <item name="android:gravity">start|center_vertical</item>
+        <item name="android:paddingStart">20dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="strokeColor">@color/dogan_outline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <style name="Widget.Dogan.Button.BaySelected" parent="Widget.Dogan.Button.Bay">
+        <item name="backgroundTint">@color/dogan_mode_selected</item>
+        <item name="android:textColor">@color/dogan_on_primary</item>
+        <item name="iconTint">@color/dogan_on_primary</item>
+        <item name="strokeColor">@color/dogan_primary</item>
+    </style>
+
+    <style name="Widget.Dogan.Button.ModeSelected" parent="Widget.Dogan.Button.BaySelected" />
+    <style name="Widget.Dogan.Button.ModeUnselected" parent="Widget.Dogan.Button.Bay" />
+
+    <style name="Widget.Dogan.Button.Gear" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="strokeColor">@color/dogan_outline</item>
+        <item name="backgroundTint">@color/dogan_surface_variant</item>
+        <item name="iconTint">@color/dogan_on_surface</item>
+        <item name="cornerRadius">8dp</item>
+        <item name="android:insetLeft">0dp</item>
+        <item name="android:insetRight">0dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="iconPadding">0dp</item>
+        <item name="iconGravity">textStart</item>
+        <item name="android:minWidth">56dp</item>
+        <item name="android:minHeight">56dp</item>
+    </style>
+
+    <style name="Widget.Dogan.Button.Service" parent="Widget.Dogan.Button.Outlined">
+        <item name="android:textSize">14sp</item>
+        <item name="android:minHeight">52dp</item>
+        <item name="iconGravity">textTop</item>
+        <item name="iconPadding">4dp</item>
+        <item name="backgroundTint">@color/dogan_surface_variant</item>
     </style>
 
     <style name="Widget.Dogan.SectionHeader" parent="@android:style/Widget.TextView">
@@ -40,6 +116,21 @@
         <item name="android:textAllCaps">true</item>
         <item name="android:textColor">@color/dogan_on_surface_secondary</item>
         <item name="android:textSize">12sp</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">@font/bricolage_grotesque_semibold</item>
+    </style>
+
+    <style name="TextAppearance.Dogan.Brand" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="android:fontFamily">@font/bricolage_grotesque_bold</item>
+        <item name="fontFamily">@font/bricolage_grotesque_bold</item>
+        <item name="android:textSize">28sp</item>
+        <item name="android:letterSpacing">-0.02</item>
+        <item name="android:textColor">@color/dogan_on_surface</item>
+    </style>
+
+    <style name="TextAppearance.Dogan.Mono" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:fontFamily">@font/ibm_plex_mono_medium</item>
+        <item name="fontFamily">@font/ibm_plex_mono_medium</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/dogan_on_surface_secondary</item>
     </style>
 </resources>
