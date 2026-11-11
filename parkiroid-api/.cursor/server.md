@@ -17,7 +17,7 @@
 | Item | Value |
 |------|-------|
 | Volume dir | `/home/cloud-admin/docker/dogan` |
-| Containers | `dogan-api`, `dogan-pgsql`, `livekit`, `dogan-webui` (on `t3-net`) |
+| Containers | `parkiroid-api` (SQLite on api volume), `parkiroid-livekit`, `dogan-webui` (on `t3-net`) |
 | Image | `dogan-api:latest`; web UI `parkiroid-web:latest` |
 | HAProxy hosts | `dogan-api.xaigrok.ir` → `dogan-api:8080`; `dogan-livekit.xaigrok.ir` → `livekit:7880`; `dogan.xaigrok.ir` → `dogan-webui:80` |
 | Web UI volume | `/cloud-admin/docker-volumes/parkiroid-web:/data` |

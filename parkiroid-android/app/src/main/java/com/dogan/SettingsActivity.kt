@@ -49,7 +49,6 @@ class SettingsActivity : AppCompatActivity() {
         val layoutId = when (section) {
             SECTION_CONNECTIVITY -> R.layout.section_connectivity
             SECTION_COPILOT -> R.layout.section_copilot
-            SECTION_SPOTTER -> R.layout.section_spotter
             SECTION_WATCHMAN -> R.layout.section_watchman
             else -> R.layout.section_general
         }
@@ -66,7 +65,6 @@ class SettingsActivity : AppCompatActivity() {
     private fun sectionTitle(section: String): String = when (section) {
         SECTION_CONNECTIVITY -> getString(R.string.settings_section_connectivity)
         SECTION_COPILOT -> getString(R.string.settings_section_copilot)
-        SECTION_SPOTTER -> getString(R.string.settings_section_spotter)
         SECTION_WATCHMAN -> getString(R.string.settings_section_watchman)
         else -> getString(R.string.settings_title)
     }
@@ -75,7 +73,6 @@ class SettingsActivity : AppCompatActivity() {
         when (section) {
             SECTION_CONNECTIVITY -> bindConnectivity(settings)
             SECTION_COPILOT -> bindCopilot(settings)
-            SECTION_SPOTTER -> Unit
             SECTION_WATCHMAN -> bindWatchman(settings)
             else -> bindGeneral(settings)
         }
@@ -385,7 +382,6 @@ class SettingsActivity : AppCompatActivity() {
         const val EXTRA_SECTION = "section"
         const val SECTION_CONNECTIVITY = "connectivity"
         const val SECTION_COPILOT = "copilot"
-        const val SECTION_SPOTTER = "spotter"
         const val SECTION_WATCHMAN = "watchman"
         const val SECTION_GENERAL = "general"
     }

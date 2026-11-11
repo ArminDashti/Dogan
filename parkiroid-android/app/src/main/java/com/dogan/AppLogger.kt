@@ -129,7 +129,6 @@ object AppLogger {
     private fun sectionForTag(tag: String, explicit: LogSection?): LogSection {
         if (explicit != null) return explicit
         return when (tag) {
-            "Spotter" -> LogSection.SPOTTER
             "Audio", "Watcher", "Watchman" -> LogSection.WATCHMAN
             "Server", "LiveKit", "SSL", "SettingsSync", "Settings" -> LogSection.CONNECTIVITY
             else -> LogSection.GENERAL

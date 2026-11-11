@@ -3,7 +3,7 @@
     Deploy dogan-api on the local Docker daemon.
 
 .DESCRIPTION
-    Builds/runs the Compose stack (postgres, LiveKit, dogan-api) locally.
+    Builds/runs the Compose stack (LiveKit, dogan-api with SQLite) locally.
     Forwards to run-on-docker.ps1 after resolving skill defaults.
 #>
 Set-StrictMode -Version Latest
@@ -38,7 +38,7 @@ NOTES:
   - Null defaults resolve as described in FLAGS.
   - Truthy values for yes/no flags: yes, true, 1, y, on.
   - Default API host port is 8080 if not specified.
-  - Stack: dogan-api + postgres + LiveKit (see docker-compose.yml).
+  - Stack: dogan-api (SQLite) + LiveKit (see docker-compose.yml).
 '@ -ForegroundColor Cyan
 }
 

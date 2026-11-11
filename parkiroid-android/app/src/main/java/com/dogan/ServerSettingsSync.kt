@@ -150,7 +150,6 @@ object ServerSettingsSync {
 
         updated = updated.copy(
             watcherSettings = mergeMode(remote, "watcher", updated.watcherSettings),
-            spotterSettings = mergeMode(remote, "spotter", updated.spotterSettings),
             copilotSettings = mergeMode(remote, "copilot", updated.copilotSettings),
         )
 

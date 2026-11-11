@@ -30,7 +30,6 @@ class MainActivity : AppCompatActivity() {
         }
 
     private lateinit var modeCopilotBtn: MaterialButton
-    private lateinit var modeSpotterBtn: MaterialButton
     private lateinit var modeWatchmanBtn: MaterialButton
     private lateinit var connectivityBtn: MaterialButton
 
@@ -44,19 +43,14 @@ class MainActivity : AppCompatActivity() {
         requestMissingPermissions()
 
         modeCopilotBtn = findViewById(R.id.modeCopilotBtn)
-        modeSpotterBtn = findViewById(R.id.modeSpotterBtn)
         modeWatchmanBtn = findViewById(R.id.modeWatchmanBtn)
         connectivityBtn = findViewById(R.id.connectivityBtn)
 
         modeCopilotBtn.setOnClickListener { toggleOrSelectMode(OperatingMode.COPILOT) }
-        modeSpotterBtn.setOnClickListener { toggleOrSelectMode(OperatingMode.SPOTTER) }
         modeWatchmanBtn.setOnClickListener { toggleOrSelectMode(OperatingMode.WATCHER) }
 
         findViewById<MaterialButton>(R.id.copilotSettingsBtn).setOnClickListener {
             openSettings(SettingsActivity.SECTION_COPILOT)
-        }
-        findViewById<MaterialButton>(R.id.spotterSettingsBtn).setOnClickListener {
-            openSettings(SettingsActivity.SECTION_SPOTTER)
         }
         findViewById<MaterialButton>(R.id.watchmanSettingsBtn).setOnClickListener {
             openSettings(SettingsActivity.SECTION_WATCHMAN)
@@ -142,7 +136,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateModeButtons(mode: OperatingMode) {
         styleModeButton(modeCopilotBtn, mode == OperatingMode.COPILOT)
-        styleModeButton(modeSpotterBtn, mode == OperatingMode.SPOTTER)
         styleModeButton(modeWatchmanBtn, mode == OperatingMode.WATCHER)
     }
 

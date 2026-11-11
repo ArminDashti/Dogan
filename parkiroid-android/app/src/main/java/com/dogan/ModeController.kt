@@ -5,17 +5,13 @@ class ModeController(
     private val watcherEngine: WatcherEngine,
 ) {
     fun onBump(settings: AppSettings, peakMps2: Float) {
-        if (settings.operatingMode == OperatingMode.WATCHER ||
-            settings.operatingMode == OperatingMode.SPOTTER
-        ) {
+        if (settings.operatingMode == OperatingMode.WATCHER) {
             watcherEngine.onBump(settings, peakMps2)
         }
     }
 
     fun onSoundSpike(rms: Double, settings: AppSettings) {
-        if (settings.operatingMode == OperatingMode.WATCHER ||
-            settings.operatingMode == OperatingMode.SPOTTER
-        ) {
+        if (settings.operatingMode == OperatingMode.WATCHER) {
             watcherEngine.onSoundSpike(rms, settings)
         }
     }

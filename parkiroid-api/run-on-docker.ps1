@@ -34,7 +34,7 @@
     Deploy/data directory. Default: <USER-PROFILE-NAME>/docker/dogan-api.
 
 .PARAMETER VolumeName
-    Named volume label (default: dogan-api-vol). Compose still uses dogan-data / dogan-postgres-data.
+    Named volume label (default: dogan-api-vol). Compose stores SQLite + frames on this volume.
 
 .PARAMETER NetworkName
     Docker network name. Default: t3-net from stack manifest.
@@ -1154,7 +1154,7 @@ try {
     if ($target.IsLocal) {
         Write-Host 'Stack is running on localhost.' -ForegroundColor Green
         Write-Host ("  API:      http://localhost:{0}/dogan/api/v1/health" -f $hostApiPort) -ForegroundColor Green
-        Write-Host ("  Postgres: localhost:{0}" -f $hostPostgresPort) -ForegroundColor Green
+        Write-Host '  SQLite:   /data/parkiroid.db (inside API volume)' -ForegroundColor Green
         Write-Host '  LiveKit:  ws://localhost:7880' -ForegroundColor Green
         Write-Host ("  Network:  {0}" -f $networkValue) -ForegroundColor Green
         Write-Host ("  Volume:   {0} ({1})" -f $volumeNameValue, $volumeDirValue) -ForegroundColor Green

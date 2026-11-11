@@ -20,9 +20,9 @@ class LocationTracker(context: Context) {
         private set
 
     @SuppressLint("MissingPermission")
-    fun start(intervalMs: Long) {
+    fun start(intervalMs: Long, priority: Int = Priority.PRIORITY_HIGH_ACCURACY) {
         stop()
-        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, intervalMs)
+        val request = LocationRequest.Builder(priority, intervalMs)
             .setMinUpdateIntervalMillis(intervalMs)
             .build()
         callback = object : LocationCallback() {
@@ -31,7 +31,7 @@ class LocationTracker(context: Context) {
             }
         }
         fusedClient.requestLocationUpdates(request, callback!!, Looper.getMainLooper())
-        AppLogger.info("Location", "GPS tracking started (${intervalMs}ms)")
+        AppLogger.info("Location", "GPS tracking started (${intervalMs}ms, priority=$priority)")
     }
 
     fun stop() {

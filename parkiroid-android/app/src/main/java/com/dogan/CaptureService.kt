@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
+import com.google.android.gms.location.Priority
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
@@ -30,6 +31,7 @@ class CaptureService : Service(), LifecycleOwner {
         private const val CHANNEL = "dogan_capture_channel"
         private const val MOTION_CHANNEL = "dogan_motion_channel"
         private const val NOTIF_ID = 81
+        private const val WORK_WAKE_LOCK_MS = 30_000L
     }
 
     private val lifecycleRegistry = LifecycleRegistry(this)
@@ -64,6 +66,8 @@ class CaptureService : Service(), LifecycleOwner {
     @Volatile private var cachedSettings: AppSettings? = null
     @Volatile private var lastMotionTriggeredCaptureAt = 0L
     @Volatile private var lastScreenWakeAt = 0L
+    @Volatile private var lastWatcherFrameAt = 0L
+    @Volatile private var holdWakeLockIndefinitely = false
 
     private lateinit var sensorManager: SensorManager
     private val vehicleMotionDetector = VehicleMotionDetector { peakMps2 ->
@@ -113,16 +117,16 @@ class CaptureService : Service(), LifecycleOwner {
         createChannels()
         startForeground(NOTIF_ID, buildNotification())
         lifecycleRegistry.currentState = Lifecycle.State.STARTED
-        acquireWakeLock()
 
         cachedSettings = runBlocking { settingsStore.settingsFlow.first() }
         val settings = cachedSettings ?: return
         SessionCredentials.updateFrom(settings)
         AppLogger.activeModeSection = LogSection.forOperatingMode(settings.operatingMode)
+        configureWakeLockForMode(settings.operatingMode)
 
         downloadSounds(settings)
         vehicleMotionDetector.register(sensorManager)
-        locationTracker.start(settings.telemetryIntervalMs)
+        startLocationTracking(settings)
         ambientLightSensor.start()
         audioCapture.start()
         scheduleTelemetryLoop()
@@ -132,7 +136,7 @@ class CaptureService : Service(), LifecycleOwner {
 
         if (ServerConnectionManager.isConnected()) {
             ServerSettingsSync.start(this)
-            liveKitStreamer.start(settings.serverBaseUrl, settings.streamMode)
+            maybeStartLiveKit(settings)
         }
 
         applySensitivity(settings)
@@ -144,11 +148,32 @@ class CaptureService : Service(), LifecycleOwner {
         val settings = cachedSettings ?: return
         SessionCredentials.updateFrom(settings)
         AppLogger.activeModeSection = LogSection.forOperatingMode(settings.operatingMode)
+        configureWakeLockForMode(settings.operatingMode)
+        startLocationTracking(settings)
         applySensitivity(settings)
         logModeActivated(settings.operatingMode)
         startForeground(NOTIF_ID, buildNotification())
         if (ServerConnectionManager.isConnected() && isValidBaseUrl(settings.serverBaseUrl)) {
             ServerSettingsSync.start(this)
+            maybeStartLiveKit(settings)
+        }
+    }
+
+    private fun startLocationTracking(settings: AppSettings) {
+        val priority = if (settings.operatingMode == OperatingMode.WATCHER) {
+            Priority.PRIORITY_BALANCED_POWER_ACCURACY
+        } else {
+            Priority.PRIORITY_HIGH_ACCURACY
+        }
+        locationTracker.start(settings.telemetryIntervalMs, priority)
+    }
+
+    private fun maybeStartLiveKit(settings: AppSettings) {
+        if (settings.operatingMode == OperatingMode.WATCHER) {
+            liveKitStreamer.stop()
+            return
+        }
+        if (ServerConnectionManager.isConnected() && isValidBaseUrl(settings.serverBaseUrl)) {
             liveKitStreamer.start(settings.serverBaseUrl, settings.streamMode)
         }
     }
@@ -162,8 +187,6 @@ class CaptureService : Service(), LifecycleOwner {
 
     private fun logModeActivated(mode: OperatingMode) {
         when (mode) {
-            OperatingMode.SPOTTER ->
-                AppLogger.info(LogSection.SPOTTER, "Spotter", "Spotter activated")
             OperatingMode.WATCHER ->
                 AppLogger.info(LogSection.WATCHMAN, "Watchman", "Watchman activated")
             OperatingMode.COPILOT ->
@@ -227,56 +250,87 @@ class CaptureService : Service(), LifecycleOwner {
     }
 
     private fun collectAndEnqueueTelemetry(settings: AppSettings) {
-        val includeFrames = shouldIncludeFrames(settings)
-        val pendingActionIds = pendingCaptureActionIds(settings)
-        val forceCapture = pendingActionIds.isNotEmpty()
-        val latch = java.util.concurrent.CountDownLatch(
-            when (settings.activeCamera) {
-                CameraFacing.BOTH -> 2
-                else -> 1
-            },
-        )
-        var rearFile: File? = null
-        var frontFile: File? = null
+        withTimedWakeLock {
+            val includeFrames = shouldIncludeFrames(settings)
+            val pendingActionIds = pendingCaptureActionIds(settings)
+            val forceCapture = pendingActionIds.isNotEmpty()
+            val needFrames = includeFrames || forceCapture
+            var takeStill = needFrames
+            if (takeStill && !forceCapture && settings.operatingMode == OperatingMode.WATCHER) {
+                val now = System.currentTimeMillis()
+                if (now - lastWatcherFrameAt < settings.captureIntervalMs) {
+                    takeStill = false
+                }
+            }
 
-        when (settings.activeCamera) {
-            CameraFacing.FRONT -> {
-                DoganCamera.captureFromFacing(this, this, CameraFacing.FRONT, settings.sendingImageQuality.jpegQuality, { file ->
-                    frontFile = file
-                    latch.countDown()
-                }, captureCallbackExecutor)
+            var rearFile: File? = null
+            var frontFile: File? = null
+            if (takeStill) {
+                val latch = java.util.concurrent.CountDownLatch(
+                    when (settings.activeCamera) {
+                        CameraFacing.BOTH -> 2
+                        else -> 1
+                    },
+                )
+                when (settings.activeCamera) {
+                    CameraFacing.FRONT -> {
+                        DoganCamera.captureFromFacing(
+                            this, this, CameraFacing.FRONT, settings.sendingImageQuality.jpegQuality,
+                            { file ->
+                                frontFile = file
+                                latch.countDown()
+                            },
+                            captureCallbackExecutor,
+                        )
+                    }
+                    CameraFacing.REAR -> {
+                        DoganCamera.captureFromFacing(
+                            this, this, CameraFacing.REAR, settings.sendingImageQuality.jpegQuality,
+                            { file ->
+                                rearFile = file
+                                latch.countDown()
+                            },
+                            captureCallbackExecutor,
+                        )
+                    }
+                    CameraFacing.BOTH -> {
+                        DoganCamera.captureFromFacing(
+                            this, this, CameraFacing.REAR, settings.sendingImageQuality.jpegQuality,
+                            { file ->
+                                rearFile = file
+                                latch.countDown()
+                            },
+                            captureCallbackExecutor,
+                        )
+                        DoganCamera.captureFromFacing(
+                            this, this, CameraFacing.FRONT, settings.sendingImageQuality.jpegQuality,
+                            { file ->
+                                frontFile = file
+                                latch.countDown()
+                            },
+                            captureCallbackExecutor,
+                        )
+                    }
+                }
+                latch.await(15, java.util.concurrent.TimeUnit.SECONDS)
+                if (settings.operatingMode == OperatingMode.WATCHER &&
+                    (rearFile != null || frontFile != null)
+                ) {
+                    lastWatcherFrameAt = System.currentTimeMillis()
+                }
             }
-            CameraFacing.REAR -> {
-                DoganCamera.captureFromFacing(this, this, CameraFacing.REAR, settings.sendingImageQuality.jpegQuality, { file ->
-                    rearFile = file
-                    latch.countDown()
-                }, captureCallbackExecutor)
+
+            val health = apiClient.pingHealthWithLatency(settings.serverBaseUrl)
+            val latency = health?.latencyMs ?: -1L
+
+            val payload = telemetryCollector.collectSnapshot(rearFile, frontFile, latency, takeStill)
+            telemetryDatabase.enqueue(payload)
+            if (forceCapture && telemetryHasAttachedFrames(payload)) {
+                acknowledgePendingActions(settings.serverBaseUrl, pendingActionIds)
             }
-            CameraFacing.BOTH -> {
-                DoganCamera.captureFromFacing(this, this, CameraFacing.REAR, settings.sendingImageQuality.jpegQuality, { file ->
-                    rearFile = file
-                    latch.countDown()
-                }, captureCallbackExecutor)
-                DoganCamera.captureFromFacing(this, this, CameraFacing.FRONT, settings.sendingImageQuality.jpegQuality, { file ->
-                    frontFile = file
-                    latch.countDown()
-                }, captureCallbackExecutor)
-            }
+            rearFile?.delete()
+            frontFile?.delete()
         }
-
-        latch.await(15, java.util.concurrent.TimeUnit.SECONDS)
-
-        val health = apiClient.pingHealthWithLatency(settings.serverBaseUrl)
-        val latency = health?.latencyMs ?: -1L
-
-        val attachFrames = includeFrames || forceCapture
-        val payload = telemetryCollector.collectSnapshot(rearFile, frontFile, latency, attachFrames)
-        telemetryDatabase.enqueue(payload)
-        if (forceCapture && telemetryHasAttachedFrames(payload)) {
-            acknowledgePendingActions(settings.serverBaseUrl, pendingActionIds)
-        }
-        rearFile?.delete()
-        frontFile?.delete()
     }
 
     private fun shouldIncludeFrames(settings: AppSettings): Boolean {
@@ -315,9 +369,14 @@ class CaptureService : Service(), LifecycleOwner {
                 try {
                     val settings = cachedSettings ?: runBlocking { settingsStore.settingsFlow.first() }
                     if (ServerConnectionManager.isConnected() && isValidBaseUrl(settings.serverBaseUrl)) {
-                        val stats = telemetryUploader.uploadPending(settings.serverBaseUrl)
-                        if (stats.uploaded > 0) {
-                            AppLogger.info("Telemetry", "Uploaded ${stats.uploaded}, remaining ${stats.remaining}")
+                        withTimedWakeLock {
+                            val stats = telemetryUploader.uploadPending(settings.serverBaseUrl)
+                            if (stats.uploaded > 0) {
+                                AppLogger.info(
+                                    "Telemetry",
+                                    "Uploaded ${stats.uploaded}, remaining ${stats.remaining}",
+                                )
+                            }
                         }
                     }
                     Thread.sleep(2_000L)
@@ -439,11 +498,40 @@ class CaptureService : Service(), LifecycleOwner {
             .build()
     }
 
-    private fun acquireWakeLock() {
+    private fun configureWakeLockForMode(mode: OperatingMode) {
+        holdWakeLockIndefinitely = mode != OperatingMode.WATCHER
         val pm = getSystemService(POWER_SERVICE) as PowerManager
-        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Dogan::Capture").apply {
-            setReferenceCounted(false)
-            acquire()
+        if (wakeLock == null) {
+            wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Dogan::Capture").apply {
+                setReferenceCounted(false)
+            }
+        }
+        val lock = wakeLock ?: return
+        if (holdWakeLockIndefinitely) {
+            if (!lock.isHeld) {
+                lock.acquire()
+            }
+        } else if (lock.isHeld) {
+            lock.release()
+        }
+    }
+
+    private fun withTimedWakeLock(timeoutMs: Long = WORK_WAKE_LOCK_MS, block: () -> Unit) {
+        val lock = wakeLock
+        if (lock == null || holdWakeLockIndefinitely) {
+            block()
+            return
+        }
+        val alreadyHeld = lock.isHeld
+        if (!alreadyHeld) {
+            lock.acquire(timeoutMs)
+        }
+        try {
+            block()
+        } finally {
+            if (!alreadyHeld && lock.isHeld) {
+                lock.release()
+            }
         }
     }
 

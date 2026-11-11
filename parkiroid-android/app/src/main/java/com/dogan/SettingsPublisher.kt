@@ -74,7 +74,6 @@ object SettingsPublisher {
             "copilot_distance_control_enabled" to settings.copilotDistanceControlEnabled,
         )
         putModeKeys(keys, "watcher", settings.watcherSettings)
-        putModeKeys(keys, "spotter", settings.spotterSettings)
         putModeKeys(keys, "copilot", settings.copilotSettings)
         for ((key, value) in keys) {
             if (!apiClient.putSetting(settings.serverBaseUrl, key, value)) {

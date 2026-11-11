@@ -18,6 +18,11 @@ class SoundDownloadManager(
         val format: String,
     )
 
+    data class DownloadResult(
+        val ok: Boolean,
+        val message: String,
+    )
+
     fun soundsDir(): File = File(context.filesDir, "sounds").also { it.mkdirs() }
 
     fun soundFile(id: String, format: String): File = File(soundsDir(), "$id.$format")

@@ -7,7 +7,6 @@ MainActivity hosts a dark button grid (72dp rows). Layout:
 | Left | Right |
 |------|-------|
 | Copilot (mode; re-tap → OFF) | gear → Copilot settings |
-| Spotter (mode; re-tap → OFF) | gear → Spotter settings |
 | Watchman (mode; re-tap → OFF) | gear → Watchman settings |
 | Connectivity status (Connected/Disconnected) | gear → Connectivity |
 | Record → Recording settings | Settings → General |

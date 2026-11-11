@@ -44,7 +44,6 @@ data class AppSettings(
     val customSoundThreshold: Double,
     val logRetentionDays: Int,
     val watcherSettings: ModeSettings,
-    val spotterSettings: ModeSettings,
     val copilotSettings: ModeSettings,
     val copilotAlertVolume: AlertVolume,
     val copilotAlertsEnabled: Boolean,
@@ -58,7 +57,6 @@ data class AppSettings(
 
     fun modeSettings(mode: OperatingMode): ModeSettings = when (mode) {
         OperatingMode.WATCHER -> watcherSettings
-        OperatingMode.SPOTTER -> spotterSettings
         OperatingMode.COPILOT -> copilotSettings
         OperatingMode.OFF -> watcherSettings
     }
@@ -146,7 +144,6 @@ class SettingsStore(private val context: Context) {
             ),
             logRetentionDays = normalizeLogRetentionDays(pref[logRetentionDaysKey] ?: DEFAULT_LOG_RETENTION_DAYS),
             watcherSettings = readModeSettings(pref, "watcher"),
-            spotterSettings = readModeSettings(pref, "spotter"),
             copilotSettings = readModeSettings(pref, "copilot"),
             copilotAlertVolume = AlertVolume.fromStoredValue(pref[copilotAlertVolumeKey]),
             copilotAlertsEnabled = pref[copilotAlertsEnabledKey] ?: false,
@@ -184,7 +181,6 @@ class SettingsStore(private val context: Context) {
             pref[copilotAlertsEnabledKey] = settings.copilotAlertsEnabled
             pref[copilotDistanceControlKey] = settings.copilotDistanceControlEnabled
             writeModeSettings(pref, "watcher", settings.watcherSettings)
-            writeModeSettings(pref, "spotter", settings.spotterSettings)
             writeModeSettings(pref, "copilot", settings.copilotSettings)
         }
     }
@@ -233,8 +229,8 @@ class SettingsStore(private val context: Context) {
         const val DEFAULT_STREAM_PORT = 443
         const val DEFAULT_CUSTOM_JOLT_SCALE = 1.0f
         const val DEFAULT_CUSTOM_SOUND_THRESHOLD = 2500.0
-        const val DEFAULT_INTERVAL_MS = 15_000L
-        const val DEFAULT_TELEMETRY_INTERVAL_SEC = 1
+        const val DEFAULT_INTERVAL_MS = 5_000L
+        const val DEFAULT_TELEMETRY_INTERVAL_SEC = 5
         const val MIN_INTERVAL_MS = 100L
         const val MAX_INTERVAL_MS = 3_600_000L
         const val MIN_TELEMETRY_INTERVAL_SEC = 1
