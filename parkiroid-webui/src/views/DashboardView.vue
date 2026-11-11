@@ -155,7 +155,7 @@ onUnmounted(() => {
     :scrollable="false"
   >
     <div class="space-y-6">
-      <div class="flex flex-wrap items-end gap-4">
+      <div class="flex flex-wrap items-end gap-3">
         <label class="min-w-64 flex-1">
           <span class="mb-1.5 block text-sm font-medium text-[var(--text)]">Device</span>
           <select
@@ -170,20 +170,12 @@ onUnmounted(() => {
           </select>
         </label>
 
-        <div
-          v-if="selectedDevice"
-          class="yoda-card px-4 py-2.5 text-sm text-[var(--muted)]"
-        >
-          <span class="text-[var(--muted)]">Name:</span>
-          <span class="ml-1 font-medium text-[var(--text)]">{{ selectedDevice.name }}</span>
+        <div v-if="selectedDevice" class="meta-chip">
+          Name <strong>{{ selectedDevice.name }}</strong>
         </div>
 
-        <div
-          v-if="selectedDevice"
-          class="yoda-card px-4 py-2.5 text-sm text-[var(--muted)]"
-        >
-          <span class="text-[var(--muted)]">Location:</span>
-          <span class="ml-1 font-medium text-[var(--text)]">{{ selectedDevice.location ?? selectedDevice.id }}</span>
+        <div v-if="selectedDevice" class="meta-chip">
+          Location <strong>{{ selectedDevice.location ?? selectedDevice.id }}</strong>
         </div>
 
         <span v-if="selectedDevice" :class="statusClass(selectedDevice.status)">
@@ -194,38 +186,35 @@ onUnmounted(() => {
       <ErrorAlert v-if="errorMessage" title="Dashboard unavailable" :message="errorMessage" />
 
       <div class="grid gap-6 lg:grid-cols-2">
-        <section class="yoda-card p-6">
+        <section class="yoda-card p-5 sm:p-6">
           <div class="mb-4">
-            <h2 class="text-lg font-semibold text-[var(--text)]">Telemetry</h2>
-            <p class="text-sm text-[var(--muted)]">
-              Live readings from
-              <code class="text-[var(--text)]">GET /devices/:id/telemetry</code>
-            </p>
+            <h2 class="text-lg font-semibold tracking-tight text-[var(--text)]">Telemetry</h2>
+            <p class="text-sm text-[var(--muted)]">Live readings from the selected device.</p>
           </div>
 
           <div v-if="loadingTelemetry" class="py-8 text-center text-sm text-[var(--muted)]">
             Loading telemetry…
           </div>
 
-          <div v-else class="grid gap-4 sm:grid-cols-2">
+          <div v-else class="grid gap-3 sm:grid-cols-2">
             <article
               v-for="card in telemetryCards"
               :key="card.label"
-              class="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-4 py-3"
+              class="instrument-cell"
             >
-              <p class="text-sm text-[var(--muted)]">{{ card.label }}</p>
-              <p class="mt-1 text-2xl font-semibold text-[var(--text)]">{{ card.value }}</p>
+              <p class="instrument-label">{{ card.label }}</p>
+              <p class="instrument-value">{{ card.value }}</p>
             </article>
           </div>
 
-          <p v-if="telemetry" class="mt-4 text-xs text-[var(--muted)]">
+          <p v-if="telemetry" class="mt-4 font-mono text-xs text-[var(--muted)]">
             Last updated {{ formatTimestamp(telemetry.recordedAt) }}
           </p>
         </section>
 
         <div>
           <div class="mb-4">
-            <h2 class="text-lg font-semibold text-[var(--text)]">Camera</h2>
+            <h2 class="text-lg font-semibold tracking-tight text-[var(--text)]">Camera</h2>
             <p class="text-sm text-[var(--muted)]">Live feed with manual stream controls.</p>
           </div>
 

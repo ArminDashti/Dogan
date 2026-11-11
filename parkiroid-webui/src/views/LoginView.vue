@@ -36,21 +36,23 @@ async function handleSubmit(): Promise<void> {
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-[var(--bg)] px-4">
-    <div class="yoda-card w-full max-w-md p-8 shadow-lg">
-      <div class="mb-8 text-center">
-        <div
-          class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--bg)] text-lg font-bold text-[var(--accent)]"
-          aria-hidden="true"
-        >
-          P
+  <div class="login-shell">
+    <div class="login-panel reveal">
+      <div class="mb-8">
+        <div class="flex items-center gap-3">
+          <span class="brand-mark" aria-hidden="true">P</span>
+          <div>
+            <p class="page-kicker">Parkiroid</p>
+            <p class="text-lg font-semibold tracking-tight text-[var(--text)]">Control Center</p>
+          </div>
         </div>
-        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">Parkiroid</p>
-        <h1 class="mt-2 text-2xl font-semibold text-[var(--text)]">Sign in</h1>
-        <p class="mt-2 text-sm text-[var(--muted)]">Access devices, streams, and metrics.</p>
+        <h1 class="mt-6 text-3xl font-semibold tracking-tight text-[var(--text)]">Sign in</h1>
+        <p class="mt-2 text-sm text-[var(--muted)]">
+          Access devices, streams, and field telemetry.
+        </p>
       </div>
 
-      <form class="space-y-4" @submit.prevent="handleSubmit">
+      <form class="yoda-card space-y-4 p-6 sm:p-7" @submit.prevent="handleSubmit">
         <ErrorAlert v-if="errorMessage" title="Sign in failed" :message="errorMessage" />
 
         <label class="block">

@@ -8,7 +8,7 @@ import { resolveApiBaseUrl } from '@/services/api/appConfig'
 import { apiClient } from '@/services/api/client'
 import './assets/main.css'
 
-document.documentElement.dataset.theme = 'admin'
+document.documentElement.dataset.theme = 'lot-signal'
 
 registerSW({ immediate: true })
 

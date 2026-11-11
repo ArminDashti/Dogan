@@ -35,21 +35,18 @@ async function handleLogout(): Promise<void> {
     :class="{ 'app-sidebar--collapsed': collapsed }"
   >
     <div class="flex items-center gap-2 border-b border-[var(--border)] px-3 py-4">
-      <div class="sidebar-brand-row flex min-w-0 flex-1 items-center gap-2 px-1">
-        <span
-          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--bg)] text-xs font-bold text-[var(--accent)]"
-          aria-hidden="true"
-        >
-          P
-        </span>
+      <div class="sidebar-brand-row flex min-w-0 flex-1 items-center gap-2.5 px-1">
+        <span class="brand-mark" aria-hidden="true">P</span>
         <div v-if="!collapsed" class="min-w-0">
-          <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">Parkiroid</p>
-          <p class="sidebar-brand-sub truncate text-sm font-semibold text-[var(--text)]">Control Center</p>
+          <p class="page-kicker !tracking-[0.12em]">Parkiroid</p>
+          <p class="sidebar-brand-sub truncate text-sm font-semibold text-[var(--text)]">
+            Control Center
+          </p>
         </div>
       </div>
       <button
         type="button"
-        class="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-[var(--muted)] transition hover:bg-[var(--bg)] hover:text-[var(--text)]"
+        class="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-[6px] text-[var(--muted)] transition hover:bg-[var(--surface)] hover:text-[var(--text)]"
         :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
         :title="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
         @click="toggleCollapsed"
@@ -115,7 +112,7 @@ async function handleLogout(): Promise<void> {
       <button
         type="button"
         class="mx-3 mb-2 cursor-pointer"
-        :class="collapsed ? 'flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--muted)] hover:bg-[var(--bg)] hover:text-[var(--text)]' : 'yoda-btn yoda-btn--outline w-[calc(100%-1.5rem)]'"
+        :class="collapsed ? 'flex h-9 w-9 items-center justify-center rounded-[6px] border border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--text)]' : 'yoda-btn yoda-btn--outline w-[calc(100%-1.5rem)]'"
         :disabled="authStore.loading"
         :aria-label="collapsed ? 'Sign out' : undefined"
         :title="collapsed ? 'Sign out' : undefined"

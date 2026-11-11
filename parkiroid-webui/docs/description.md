@@ -7,7 +7,7 @@ Vue 3 SPA for monitoring Parkiroid edge devices: sign in, view live telemetry, c
 - Vue 3, Vite, TypeScript
 - Vue Router + Pinia (auth session)
 - Tailwind CSS
-- Inter (Google Fonts) as the global sans typeface
+- Bricolage Grotesque + IBM Plex Mono (Google Fonts)
 - LiveKit client (WebRTC subscriber)
 - PWA via `vite-plugin-pwa` (installable; static asset precache; API/LiveKit stay network-only)
 
