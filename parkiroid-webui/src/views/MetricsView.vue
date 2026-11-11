@@ -56,7 +56,7 @@ async function loadDevices(): Promise<void> {
 
   try {
     devices.value = await fetchDevices()
-    const preferredId = routeDeviceId.value ?? selectedDeviceId.value ?? devices.value[0]?.id
+    const preferredId = routeDeviceId.value || selectedDeviceId.value || devices.value[0]?.id
     if (preferredId) {
       selectedDeviceId.value = preferredId
     }
@@ -125,17 +125,21 @@ onMounted(async () => {
 
       <div class="grid gap-4 md:grid-cols-2">
         <article class="yoda-card p-6">
-          <p class="text-sm text-[var(--muted)]">Current temperature</p>
-          <p class="mt-2 text-4xl font-semibold text-[var(--text)]">{{ temperatureDisplay }}</p>
-          <p v-if="metrics" class="mt-2 text-xs text-[var(--muted)]">
+          <p class="instrument-label">Current temperature</p>
+          <p class="mt-2 font-mono text-4xl font-semibold tracking-tight text-[var(--text)]">
+            {{ temperatureDisplay }}
+          </p>
+          <p v-if="metrics" class="mt-2 font-mono text-xs text-[var(--muted)]">
             Updated {{ formatTimestamp(metrics.current.recordedAt) }}
           </p>
         </article>
 
         <article class="yoda-card p-6">
-          <p class="text-sm text-[var(--muted)]">Current noise level</p>
-          <p class="mt-2 text-4xl font-semibold text-[var(--text)]">{{ noiseDisplay }}</p>
-          <p v-if="metrics" class="mt-2 text-xs text-[var(--muted)]">
+          <p class="instrument-label">Current noise level</p>
+          <p class="mt-2 font-mono text-4xl font-semibold tracking-tight text-[var(--text)]">
+            {{ noiseDisplay }}
+          </p>
+          <p v-if="metrics" class="mt-2 font-mono text-xs text-[var(--muted)]">
             Updated {{ formatTimestamp(metrics.current.recordedAt) }}
           </p>
         </article>
@@ -164,9 +168,9 @@ onMounted(async () => {
                 :key="`${reading.timestamp}-temp`"
                 class="flex flex-1 flex-col items-center gap-2"
               >
-                <div class="flex h-32 w-full items-end rounded-md bg-[var(--bg)]">
+                <div class="flex h-32 w-full items-end rounded-[6px] bg-[var(--surface)]">
                   <div
-                    class="w-full rounded-md bg-[var(--accent)]/80"
+                    class="w-full rounded-[6px] bg-[var(--accent)]"
                     :style="{ height: barHeight(reading.temperatureCelsius, 40) }"
                   />
                 </div>
@@ -183,9 +187,9 @@ onMounted(async () => {
                 :key="`${reading.timestamp}-noise`"
                 class="flex flex-1 flex-col items-center gap-2"
               >
-                <div class="flex h-32 w-full items-end rounded-md bg-[var(--bg)]">
+                <div class="flex h-32 w-full items-end rounded-[6px] bg-[var(--surface)]">
                   <div
-                    class="w-full rounded-md bg-[#64748b]/80"
+                    class="w-full rounded-[6px] bg-[var(--signal)]"
                     :style="{ height: barHeight(reading.noiseDb, 100) }"
                   />
                 </div>

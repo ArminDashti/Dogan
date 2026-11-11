@@ -54,8 +54,10 @@ onMounted(async () => {
             loading="lazy"
           />
           <div class="space-y-1 px-4 py-3">
-            <p class="font-medium text-[var(--text)]">{{ image.caption ?? 'Untitled capture' }}</p>
-            <p class="text-xs text-[var(--muted)]">{{ formatDate(image.capturedAt) }}</p>
+            <p class="font-semibold tracking-tight text-[var(--text)]">
+              {{ image.caption ?? 'Untitled capture' }}
+            </p>
+            <p class="font-mono text-xs text-[var(--muted)]">{{ formatDate(image.capturedAt) }}</p>
           </div>
         </article>
       </div>

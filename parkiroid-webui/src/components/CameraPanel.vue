@@ -161,14 +161,14 @@ onUnmounted(() => {
 
 <template>
   <section class="yoda-card overflow-hidden">
-    <div class="relative aspect-video bg-black">
+    <div class="relative aspect-video bg-[#0d1218]">
       <div ref="videoContainer" class="absolute inset-0" />
       <div
         v-if="connectionState !== 'live'"
-        class="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6 text-center text-[var(--muted)]"
+        class="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6 text-center"
       >
-        <p class="text-lg font-medium text-[var(--text)]">{{ statusLabel }}</p>
-        <p class="text-sm">
+        <p class="text-lg font-medium text-white/90">{{ statusLabel }}</p>
+        <p class="text-sm text-white/55">
           {{
             deviceId
               ? `Press Play to start the stream from ${deviceName ?? 'the selected device'}.`
@@ -215,22 +215,22 @@ onUnmounted(() => {
       </button>
 
       <span
-        class="ml-auto text-sm font-medium"
+        class="ml-auto inline-flex items-center gap-2 text-sm font-semibold"
         :class="{
-          'text-[#86efac]': connectionState === 'live',
-          'text-[#fde047]': connectionState === 'connecting',
-          'text-[#fca5a5]': connectionState === 'error',
+          'text-[var(--signal)]': connectionState === 'live' || connectionState === 'connecting',
+          'text-[var(--danger)]': connectionState === 'error',
           'text-[var(--muted)]': connectionState === 'idle',
         }"
       >
+        <span v-if="connectionState === 'live'" class="stream-live-dot" aria-hidden="true" />
         {{ statusLabel }}
       </span>
     </div>
 
-    <p v-if="captureMessage" class="border-t border-[var(--border)] px-5 py-3 text-sm text-[#86efac]">
+    <p v-if="captureMessage" class="border-t border-[var(--border)] px-5 py-3 text-sm text-[var(--live)]">
       {{ captureMessage }}
     </p>
-    <p v-if="errorMessage" class="border-t border-[var(--border)] px-5 py-3 text-sm text-[#fca5a5]">
+    <p v-if="errorMessage" class="border-t border-[var(--border)] px-5 py-3 text-sm text-[var(--danger)]">
       {{ errorMessage }}
     </p>
   </section>
