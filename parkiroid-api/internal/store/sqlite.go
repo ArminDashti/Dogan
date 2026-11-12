@@ -1,3 +1,8 @@
+//go:build sqlite
+
+// Excluded from the default build: this file redeclares helpers in postgres.go
+// and imports modernc.org/sqlite, which is not a go.mod requirement.
+// The API opens Postgres through store.OpenPostgres. Nothing calls store.Open.
 package store
 
 import (
