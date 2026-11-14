@@ -50,6 +50,14 @@ lean-ctx is active — the MCP tools replace native equivalents.
 Full rules: LEAN-CTX.md (open on demand — do not auto-load).
 <!-- /lean-ctx -->
 
+## Pull requests
+
+- **After each PR is created (and ready), merge it on GitHub.** Do not leave
+  agent PRs open for manual merge unless the user asks to keep them open or CI
+  is failing. Prefer the repo’s default merge method (`gh pr merge` or the
+  equivalent GitHub merge action). If merge is blocked (reviews, branch
+  protection, missing rights), say so and leave the PR link.
+
 # Self-learning (for AI coding agents)
 
 This file makes any coding agent **self-improving**: recognize a hard-won
