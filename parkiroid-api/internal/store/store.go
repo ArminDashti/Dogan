@@ -56,6 +56,13 @@ type DiagnosticAudioStore interface {
 	SaveDiagnosticAudio(deviceID, segmentID, path string, startMs, endMs int64, rmsPeak float64, linkedAlertID, mode string) error
 }
 
+type VisionStore interface {
+	SaveVisionAnalysis(record models.VisionAnalysisRecord) (models.VisionAnalysisRecord, error)
+	GetLatestVisionAnalysis(deviceID string) (models.VisionAnalysisRecord, error)
+}
+
+var ErrVisionAnalysisNotFound = errors.New("vision analysis not found for device")
+
 type RetentionStore interface {
 	PurgeExpiredFrames(cutoff time.Time) ([]string, error)
 	PurgeExpiredMetrics(cutoff time.Time) error

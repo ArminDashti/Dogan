@@ -13,13 +13,15 @@ type TelemetryHandler struct {
 	metricsStore store.MetricsStore
 	frameStore   store.FrameStore
 	framesDir    string
+	vision       *VisionHandler
 }
 
-func NewTelemetryHandler(metricsStore store.MetricsStore, frameStore store.FrameStore, framesDir string) *TelemetryHandler {
+func NewTelemetryHandler(metricsStore store.MetricsStore, frameStore store.FrameStore, framesDir string, vision *VisionHandler) *TelemetryHandler {
 	return &TelemetryHandler{
 		metricsStore: metricsStore,
 		frameStore:   frameStore,
 		framesDir:    framesDir,
+		vision:       vision,
 	}
 }
 
@@ -95,4 +97,13 @@ func (handler *TelemetryHandler) persistOptionalFrame(deviceID string, capturedA
 		CapturedAt: capturedAt,
 		ReceivedAt: time.Now().UTC(),
 	})
+
+	if handler.vision != nil && handler.vision.Enabled() {
+		var imageID *int64
+		if last, err := handler.frameStore.GetLastFrame(deviceID); err == nil && last.Path == framePath {
+			id := last.ID
+			imageID = &id
+		}
+		handler.vision.AnalyzeFrameAsync(deviceID, framePath, imageID)
+	}
 }

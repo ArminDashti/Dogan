@@ -104,6 +104,19 @@ CREATE TABLE IF NOT EXISTS diagnostic_audio (
 
 CREATE INDEX IF NOT EXISTS idx_diagnostic_audio_device_received_at
 	ON diagnostic_audio (device_id, received_at DESC);
+
+CREATE TABLE IF NOT EXISTS vision_analyses (
+	id BIGSERIAL PRIMARY KEY,
+	device_id BIGINT NOT NULL REFERENCES devices(id),
+	image_id BIGINT REFERENCES stored_images(id) ON DELETE SET NULL,
+	model TEXT NOT NULL,
+	prompt TEXT NOT NULL DEFAULT '',
+	analysis TEXT NOT NULL,
+	analyzed_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_vision_analyses_device_analyzed_at
+	ON vision_analyses (device_id, analyzed_at DESC);
 `
 
 const schemaMigrationDDL = `
@@ -117,4 +130,15 @@ ALTER TABLE android_telemetry ADD COLUMN IF NOT EXISTS device_ip_address TEXT;
 ALTER TABLE android_telemetry ADD COLUMN IF NOT EXISTS jolt DOUBLE PRECISION;
 ALTER TABLE android_telemetry ADD COLUMN IF NOT EXISTS cpu_usage_percent DOUBLE PRECISION;
 ALTER TABLE android_telemetry ADD COLUMN IF NOT EXISTS ram_usage_percent DOUBLE PRECISION;
+CREATE TABLE IF NOT EXISTS vision_analyses (
+	id BIGSERIAL PRIMARY KEY,
+	device_id BIGINT NOT NULL REFERENCES devices(id),
+	image_id BIGINT REFERENCES stored_images(id) ON DELETE SET NULL,
+	model TEXT NOT NULL,
+	prompt TEXT NOT NULL DEFAULT '',
+	analysis TEXT NOT NULL,
+	analyzed_at TIMESTAMPTZ NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_vision_analyses_device_analyzed_at
+	ON vision_analyses (device_id, analyzed_at DESC);
 `
