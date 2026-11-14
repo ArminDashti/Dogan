@@ -294,3 +294,28 @@ type WebAuthResponse struct {
 type ErrorResponse struct {
 	Error string `json:"error"`
 }
+
+type VisionAnalyzeRequest struct {
+	DeviceID     string `json:"device_id"`
+	ImageID      int64  `json:"image_id"`
+	ImageBase64  string `json:"image_base64"`
+	Prompt       string `json:"prompt"`
+}
+
+type VisionAnalyzeResponse struct {
+	DeviceID   string    `json:"device_id,omitempty"`
+	ImageID    int64     `json:"image_id,omitempty"`
+	Model      string    `json:"model"`
+	Analysis   string    `json:"analysis"`
+	AnalyzedAt time.Time `json:"analyzed_at"`
+}
+
+type VisionAnalysisRecord struct {
+	ID         int64     `json:"id"`
+	DeviceID   string    `json:"device_id"`
+	ImageID    *int64    `json:"image_id,omitempty"`
+	Model      string    `json:"model"`
+	Prompt     string    `json:"prompt"`
+	Analysis   string    `json:"analysis"`
+	AnalyzedAt time.Time `json:"analyzed_at"`
+}

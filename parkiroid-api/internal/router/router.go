@@ -9,6 +9,7 @@ import (
 	"github.com/dogan/dogan-server/internal/handlers"
 	livekitauth "github.com/dogan/dogan-server/internal/livekit"
 	"github.com/dogan/dogan-server/internal/middleware"
+	"github.com/dogan/dogan-server/internal/opencode"
 	"github.com/dogan/dogan-server/internal/store"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -50,7 +51,14 @@ func New(applicationConfig config.Config) *gin.Engine {
 	endpointsHandler := handlers.NewEndpointsHandler()
 	frameHandler := handlers.NewFrameHandler(postgresStore, applicationConfig.FramesDir)
 	deviceMetricsHandler := handlers.NewDeviceMetricsHandler(postgresStore)
-	telemetryHandler := handlers.NewTelemetryHandler(postgresStore, postgresStore, applicationConfig.FramesDir)
+	openCodeClient := opencode.NewClient(
+		applicationConfig.OpenCodeGoBaseURL,
+		applicationConfig.OpenCodeGoAPIKey,
+		applicationConfig.OpenCodeGoModel,
+		applicationConfig.OpenCodeGoPrompt,
+	)
+	visionHandler := handlers.NewVisionHandler(openCodeClient, postgresStore, postgresStore, applicationConfig.FramesDir)
+	telemetryHandler := handlers.NewTelemetryHandler(postgresStore, postgresStore, applicationConfig.FramesDir, visionHandler)
 	actionsHandler := handlers.NewActionsHandler(postgresStore)
 	settingsHandler := handlers.NewSettingsHandler(postgresStore)
 	soundsHandler := handlers.NewSoundsHandler(applicationConfig.SoundsDir)
@@ -84,6 +92,8 @@ func New(applicationConfig config.Config) *gin.Engine {
 			protected.GET("/frame/image", frameHandler.GetFrameImage)
 			protected.POST("/frame", frameHandler.SubmitFrame)
 			protected.POST("/telemetry", telemetryHandler.SubmitTelemetry)
+			protected.POST("/vision/analyze", visionHandler.Analyze)
+			protected.GET("/vision/latest", visionHandler.GetLatest)
 			protected.GET("/device-metrics", deviceMetricsHandler.GetLatestMetrics)
 			protected.POST("/device-metrics", deviceMetricsHandler.SubmitMetrics)
 			protected.POST("/actions", actionsHandler.CreateAction)

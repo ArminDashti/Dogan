@@ -765,6 +765,67 @@ func (store *PostgresStore) PurgeExpiredMetrics(cutoff time.Time) error {
 	return nil
 }
 
+func (store *PostgresStore) SaveVisionAnalysis(record models.VisionAnalysisRecord) (models.VisionAnalysisRecord, error) {
+	deviceRowID, err := store.resolveDeviceRowID(record.DeviceID)
+	if err != nil {
+		return models.VisionAnalysisRecord{}, err
+	}
+
+	analyzedAt := record.AnalyzedAt
+	if analyzedAt.IsZero() {
+		analyzedAt = time.Now().UTC()
+	}
+
+	err = store.db.QueryRow(
+		`INSERT INTO vision_analyses (device_id, image_id, model, prompt, analysis, analyzed_at)
+		 VALUES ($1, $2, $3, $4, $5, $6)
+		 RETURNING id, analyzed_at`,
+		deviceRowID,
+		record.ImageID,
+		record.Model,
+		record.Prompt,
+		record.Analysis,
+		analyzedAt,
+	).Scan(&record.ID, &record.AnalyzedAt)
+	if err != nil {
+		return models.VisionAnalysisRecord{}, fmt.Errorf("insert vision analysis: %w", err)
+	}
+	return record, nil
+}
+
+func (store *PostgresStore) GetLatestVisionAnalysis(deviceID string) (models.VisionAnalysisRecord, error) {
+	deviceRowID, err := store.resolveDeviceRowID(deviceID)
+	if err != nil {
+		if errors.Is(err, ErrDeviceNotFound) {
+			return models.VisionAnalysisRecord{}, ErrVisionAnalysisNotFound
+		}
+		return models.VisionAnalysisRecord{}, err
+	}
+
+	var record models.VisionAnalysisRecord
+	var imageID sql.NullInt64
+	err = store.db.QueryRow(
+		`SELECT id, image_id, model, prompt, analysis, analyzed_at
+		 FROM vision_analyses
+		 WHERE device_id = $1
+		 ORDER BY analyzed_at DESC, id DESC
+		 LIMIT 1`,
+		deviceRowID,
+	).Scan(&record.ID, &imageID, &record.Model, &record.Prompt, &record.Analysis, &record.AnalyzedAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return models.VisionAnalysisRecord{}, ErrVisionAnalysisNotFound
+		}
+		return models.VisionAnalysisRecord{}, fmt.Errorf("query vision analysis: %w", err)
+	}
+	record.DeviceID = deviceID
+	if imageID.Valid {
+		value := imageID.Int64
+		record.ImageID = &value
+	}
+	return record, nil
+}
+
 func (store *PostgresStore) UpsertDevice(device models.Device) (models.Device, error) {
 	if device.MACAddress == "" {
 		return models.Device{}, fmt.Errorf("mac_address is required")
