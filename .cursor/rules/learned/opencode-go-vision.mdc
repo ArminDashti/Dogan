@@ -6,7 +6,7 @@ alwaysApply: false
 
 # OpenCode Go vision (Dogan)
 
-**Goal:** Android stills already arrive as base64 on `POST /dogan/api/v1/telemetry`. The API forwards them to OpenCode Go; keep the key off the phone.
+**Goal:** Android stills already arrive as base64 on `POST /dogan/api/v1/telemetry`. The API alone forwards them to OpenCode Go; the phone never talks to `opencode.ai` and never holds `OPENCODE_GO_*` / `oc_sk_*`.
 
 **Steps:**
 1. Set `OPENCODE_GO_API_KEY` (and optional `OPENCODE_GO_BASE_URL`, `OPENCODE_GO_MODEL`, `OPENCODE_GO_PROMPT`) on `parkiroid-api` — see `parkiroid-api/.env.example` and `docker-compose.yml`.

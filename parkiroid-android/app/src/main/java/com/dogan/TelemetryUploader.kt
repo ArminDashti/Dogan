@@ -1,6 +1,9 @@
 package com.dogan
 
-/** Uploads pending telemetry rows and flushes SQLite on success. */
+/**
+ * Drains the local telemetry queue to the Dogan API only (`POST /api/v1/telemetry`).
+ * Vision/LLM analysis runs on the server after frames are stored — never from this uploader.
+ */
 class TelemetryUploader(
     private val apiClient: DoganApiClient,
     private val database: TelemetryDatabase,
