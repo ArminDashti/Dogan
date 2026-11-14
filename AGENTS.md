@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **parkiroid** (1707 symbols, 3377 relationships, 127 execution flows).
+This project is indexed by GitNexus as **dogan** (1707 symbols, 3377 relationships, 127 execution flows).
 
 > Index stale? Run `node .gitnexus/run.cjs analyze --index-only` from the project root — it auto-selects an available runner. No `.gitnexus/run.cjs` yet? Bootstrap with `npx`, `bunx`, or `pnpm dlx` — e.g. `bunx gitnexus@latest analyze` (npm 11 npx crash; #1939).
 
@@ -25,10 +25,10 @@ This project is indexed by GitNexus as **parkiroid** (1707 symbols, 3377 relatio
 
 | Resource | Use for |
 | --- | --- |
-| `gitnexus://repo/parkiroid/context` | Codebase overview, check index freshness |
-| `gitnexus://repo/parkiroid/clusters` | All functional areas |
-| `gitnexus://repo/parkiroid/processes` | All execution flows |
-| `gitnexus://repo/parkiroid/process/{name}` | Step-by-step execution trace |
+| `gitnexus://repo/dogan/context` | Codebase overview, check index freshness |
+| `gitnexus://repo/dogan/clusters` | All functional areas |
+| `gitnexus://repo/dogan/processes` | All execution flows |
+| `gitnexus://repo/dogan/process/{name}` | Step-by-step execution trace |
 
 ## CLI
 

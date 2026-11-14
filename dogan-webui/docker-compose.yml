@@ -1,0 +1,28 @@
+name: dogan
+
+services:
+  dogan-webui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+        DOGAN_API_BASE_URL: ${DOGAN_API_BASE_URL:-http://localhost:8080/dogan/api/v1}
+    image: ${IMAGE_TAG:-dogan-webui:latest}
+    container_name: dogan-webui
+    expose:
+      - "80"
+    volumes:
+      - dogan-webui-vol:/data
+    networks:
+      - t3-net
+    restart: "no"
+
+networks:
+  t3-net:
+    name: ${DOCKER_NETWORK:-t3-net}
+    external: true
+
+volumes:
+  dogan-webui-vol:
+    name: dogan-webui-vol

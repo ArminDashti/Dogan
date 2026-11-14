@@ -1,0 +1,23 @@
+---
+description: Run Dogan (dogan-android) on a Windows AVD for UI/UX only. Use when testing Android screens without a physical phone.
+---
+
+# Dogan Android emulator UI
+
+**Goal:** Launch Dogan on a local emulator for hub/settings/logs UI review.
+
+## Steps
+1. SDK root: `%LOCALAPPDATA%\Android\Sdk` (AVD: `Dogan_UI_API33`, API 33 `google_apis` x86_64, Pixel 6).
+2. Start emulator: `emulator -avd Dogan_UI_API33 -gpu auto`
+3. Set `JAVA_HOME` to Microsoft JDK 17 (`C:\Program Files\Microsoft\jdk-17.0.21.21-hotspot`), not Android Studio JBR.
+4. From `dogan-android`: `.\install-on-phone-directly.ps1 -Launch -Serial emulator-5556` (use current `adb devices` serial if ports differ).
+5. `local.properties` `sdk.dir` is local-only (gitignored).
+
+## Gotchas
+- Camera / jolt / NCNN are not valid emulator acceptance criteria.
+- If multiple emulators are running, always pass `-Serial`.
+- First system-image install can fail with zip errors — delete the image folder and reinstall via `sdkmanager`.
+
+## What didn't work
+- Android Studio JBR 25 — AGP/Gradle fails with a bare `25.0.4` error.
+- `Invoke-WebRequest` for cmdline-tools — connection aborted; use `curl.exe -L --retry`.

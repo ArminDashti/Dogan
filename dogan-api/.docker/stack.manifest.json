@@ -1,0 +1,12 @@
+{
+  "stackName": "dogan",
+  "containerName": "dogan-api",
+  "apiContainerName": "dogan-api",
+  "postgresContainerName": "dogan-pgsql",
+  "livekitContainerName": "dogan-livekit",
+  "internalPort": "8080",
+  "apiImageTag": "dogan-api:latest",
+  "apiPublishPort": "8080",
+  "dockerNetwork": "t3-net",
+  "remoteWorkDir": "/cloud-admin/docker/dogan"
+}

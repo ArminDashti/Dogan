@@ -11,9 +11,9 @@
 # Auto-managed: files larger than 5 MB
 .codegraph/codegraph.db
 .gitnexus/lbug
-parkiroid-android/ai-models/yolo26m_ncnn_model/model.ncnn.bin
-parkiroid-android/ai-models/yolo26n_ncnn_model/model.ncnn.bin
-parkiroid-android/ai-models/yolo26s_ncnn_model/model.ncnn.bin
+dogan-android/ai-models/yolo26m_ncnn_model/model.ncnn.bin
+dogan-android/ai-models/yolo26n_ncnn_model/model.ncnn.bin
+dogan-android/ai-models/yolo26s_ncnn_model/model.ncnn.bin
 
 # hygiene
 node_modules/
