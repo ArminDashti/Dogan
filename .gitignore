@@ -36,7 +36,10 @@ graphify-out/
 .gitnexus/
 !.env.example
 /.cursor/skills/caveman-setup/SKILL.md
-.agents/
+# Keep local agent state out of git, but vendor curated skills
+.agents/*
+!.agents/skills/
+!.agents/skills/**
 .cursor/mcp.json
 .cursor/hooks/
 .cursor/hooks.json

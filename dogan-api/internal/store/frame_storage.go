@@ -29,6 +29,11 @@ func PersistFrameImage(framesDir, deviceID string, capturedAt time.Time, imageDa
 	return framePath, nil
 }
 
+// DecodeImagePayload decodes raw or data-URL base64 image payloads.
+func DecodeImagePayload(imageData string) ([]byte, error) {
+	return decodeImagePayload(imageData)
+}
+
 func decodeImagePayload(imageData string) ([]byte, error) {
 	payload := strings.TrimSpace(imageData)
 	if payload == "" {

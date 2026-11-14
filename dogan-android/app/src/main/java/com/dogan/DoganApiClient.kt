@@ -13,7 +13,12 @@ import java.io.File
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 
-/** HTTP client for Dogan server auth, telemetry, sounds, and diagnostics. */
+/**
+ * HTTP client for the Dogan API only (auth, telemetry, sounds, diagnostics, LiveKit session).
+ *
+ * Camera frames leave the phone via [submitTelemetry] → `POST {base}/api/v1/telemetry`.
+ * Do not call LLM providers from Android; the Dogan API forwards stored frames server-side.
+ */
 class DoganApiClient(
     private val httpClient: OkHttpClient = createHttpClient(),
     private val deviceId: String,

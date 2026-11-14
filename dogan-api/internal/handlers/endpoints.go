@@ -24,6 +24,8 @@ func (handler *EndpointsHandler) ListEndpoints(context *gin.Context) {
 		{Method: http.MethodGet, Path: apiBasePath + "/endpoints", Description: "List available API endpoints", Auth: false},
 		{Method: http.MethodGet, Path: apiBasePath + "/health", Description: "Health check", Auth: false},
 		{Method: http.MethodPost, Path: apiBasePath + "/telemetry", Description: "Submit Android unified telemetry (metrics + optional frames)", Auth: true},
+		{Method: http.MethodPost, Path: apiBasePath + "/vision/analyze", Description: "Analyze a stored or inline camera image with OpenCode Go", Auth: true},
+		{Method: http.MethodGet, Path: apiBasePath + "/vision/latest", Description: "Get latest OpenCode Go vision analysis for a device", Auth: true},
 		{Method: http.MethodPost, Path: apiBasePath + "/frame", Description: "Upload camera frame from Android (legacy)", Auth: true},
 		{Method: http.MethodGet, Path: apiBasePath + "/last-frame", Description: "Get latest frame metadata", Auth: true},
 		{Method: http.MethodGet, Path: apiBasePath + "/frame/image", Description: "Download latest frame JPEG", Auth: true},

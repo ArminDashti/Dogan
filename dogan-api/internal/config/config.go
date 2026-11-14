@@ -25,6 +25,9 @@ const (
 	defaultLiveKitTokenTTL  = time.Hour
 	defaultDeviceAPIKey     = auth.DefaultDeviceAPIKey
 	defaultCORSOrigins      = "http://localhost:30808,http://127.0.0.1:30808,https://dogan.xaigrok.ir"
+	defaultOpenCodeGoBaseURL = "https://pont.xaigrok.ir/api/v1"
+	defaultOpenCodeGoModel   = "opencodego-glm-5.3-flash"
+	defaultOpenCodeGoPrompt  = "Describe this camera image briefly. Note people, vehicles, hazards, or anything unusual."
 )
 
 type Config struct {
@@ -44,6 +47,14 @@ type Config struct {
 	LiveKitAPISecret    string
 	LiveKitTokenTTL     time.Duration
 	CORSAllowedOrigins  []string
+	OpenCodeGoAPIKey    string
+	OpenCodeGoBaseURL   string
+	OpenCodeGoModel     string
+	OpenCodeGoPrompt    string
+}
+
+func (config Config) OpenCodeGoEnabled() bool {
+	return strings.TrimSpace(config.OpenCodeGoAPIKey) != ""
 }
 
 func (config Config) ClientLiveKitURL() string {
@@ -71,6 +82,10 @@ func Load() Config {
 		LiveKitAPISecret:   envOrDefault("DOGAN_LIVEKIT_API_SECRET", defaultLiveKitAPISecret),
 		LiveKitTokenTTL:    envDurationOrDefault("DOGAN_LIVEKIT_TOKEN_TTL", defaultLiveKitTokenTTL),
 		CORSAllowedOrigins: envCSVOrDefault("DOGAN_CORS_ALLOWED_ORIGINS", defaultCORSOrigins),
+		OpenCodeGoAPIKey:   envOrDefault("OPENCODE_GO_API_KEY", ""),
+		OpenCodeGoBaseURL:  envOrDefault("OPENCODE_GO_BASE_URL", defaultOpenCodeGoBaseURL),
+		OpenCodeGoModel:    envOrDefault("OPENCODE_GO_MODEL", defaultOpenCodeGoModel),
+		OpenCodeGoPrompt:   envOrDefault("OPENCODE_GO_PROMPT", defaultOpenCodeGoPrompt),
 	}
 }
 
