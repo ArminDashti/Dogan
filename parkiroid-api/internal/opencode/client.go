@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	defaultBaseURL = "https://opencode.ai/inference/go/openai/v1"
-	defaultModel   = "glm-5.3-flash"
+	defaultBaseURL = "https://pont.xaigrok.ir/api/v1"
+	defaultModel   = "opencodego-glm-5.3-flash"
 	defaultPrompt  = "Describe this camera image briefly. Note people, vehicles, hazards, or anything unusual."
 	defaultTimeout = 60 * time.Second
 )
