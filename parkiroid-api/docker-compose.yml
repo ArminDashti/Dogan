@@ -73,8 +73,8 @@ services:
       DOGAN_LIVEKIT_TOKEN_TTL: ${DOGAN_LIVEKIT_TOKEN_TTL:-3600}
       DOGAN_CORS_ALLOWED_ORIGINS: ${DOGAN_CORS_ALLOWED_ORIGINS:-http://localhost:30808,http://127.0.0.1:30808,http://localhost:8083,https://dogan.xaigrok.ir}
       OPENCODE_GO_API_KEY: ${OPENCODE_GO_API_KEY:-}
-      OPENCODE_GO_BASE_URL: ${OPENCODE_GO_BASE_URL:-https://opencode.ai/inference/go/openai/v1}
-      OPENCODE_GO_MODEL: ${OPENCODE_GO_MODEL:-glm-5.3-flash}
+      OPENCODE_GO_BASE_URL: ${OPENCODE_GO_BASE_URL:-https://pont.xaigrok.ir/api/v1}
+      OPENCODE_GO_MODEL: ${OPENCODE_GO_MODEL:-opencodego-glm-5.3-flash}
       OPENCODE_GO_PROMPT: ${OPENCODE_GO_PROMPT:-Describe this camera image briefly. Note people, vehicles, hazards, or anything unusual.}
     volumes:
       - dogan-api-vol:/data

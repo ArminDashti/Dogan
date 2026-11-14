@@ -25,8 +25,8 @@ const (
 	defaultLiveKitTokenTTL  = time.Hour
 	defaultDeviceAPIKey     = auth.DefaultDeviceAPIKey
 	defaultCORSOrigins      = "http://localhost:30808,http://127.0.0.1:30808,https://dogan.xaigrok.ir"
-	defaultOpenCodeGoBaseURL = "https://opencode.ai/inference/go/openai/v1"
-	defaultOpenCodeGoModel   = "glm-5.3-flash"
+	defaultOpenCodeGoBaseURL = "https://pont.xaigrok.ir/api/v1"
+	defaultOpenCodeGoModel   = "opencodego-glm-5.3-flash"
 	defaultOpenCodeGoPrompt  = "Describe this camera image briefly. Note people, vehicles, hazards, or anything unusual."
 )
 

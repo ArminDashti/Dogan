@@ -1,24 +1,25 @@
 ---
-description: Send Dogan Android camera frames to OpenCode Go vision. Use when wiring OPENCODE_GO_API_KEY, /vision/analyze, or telemetry image analysis.
+description: Send Dogan Android camera frames to vision via Pont (OpenCode Go upstream). Use when wiring OPENCODE_GO_API_KEY, /vision/analyze, or telemetry image analysis.
 globs:
 alwaysApply: false
 ---
 
-# OpenCode Go vision (Dogan)
+# Pont vision gateway (Dogan)
 
-**Goal:** Android stills already arrive as base64 on `POST /dogan/api/v1/telemetry`. The API alone forwards them to OpenCode Go; the phone never talks to `opencode.ai` and never holds `OPENCODE_GO_*` / `oc_sk_*`.
+**Goal:** Android stills already arrive as base64 on `POST /dogan/api/v1/telemetry`. The API alone forwards them through Pont to an OpenCode Go vision model; the phone never talks to Pont/OpenCode and never holds `OPENCODE_GO_*` / `pont_sk_*` / `oc_sk_*`.
 
 **Steps:**
-1. Set `OPENCODE_GO_API_KEY` (and optional `OPENCODE_GO_BASE_URL`, `OPENCODE_GO_MODEL`, `OPENCODE_GO_PROMPT`) on `parkiroid-api` — see `parkiroid-api/.env.example` and `docker-compose.yml`.
+1. Set `OPENCODE_GO_API_KEY` (Pont key) and optional `OPENCODE_GO_BASE_URL`, `OPENCODE_GO_MODEL`, `OPENCODE_GO_PROMPT` on `parkiroid-api` — see `parkiroid-api/.env.example` and `docker-compose.yml`.
 2. Client: `parkiroid-api/internal/opencode` → `POST {base}/chat/completions` with Bearer key.
-3. Always send `x-opencode-session` (stable per device, e.g. `dogan-<device>`). Missing header → HTTP 400 `MissingSessionID`.
-4. Default model that accepts images via chat/completions: `glm-5.3-flash` at `https://opencode.ai/inference/go/openai/v1`.
+3. Default gateway: `https://pont.xaigrok.ir/api/v1`. Model ids are Pont ids (prefix picks provider), e.g. `opencodego-glm-5.3-flash` (vision + chat/completions).
+4. Always send `x-opencode-session` (stable per device, e.g. `dogan-<device>`) for OpenCode Go upstreams; Pont accepts the header.
 5. Endpoints: `POST /vision/analyze` (inline base64 or `image_id`), `GET /vision/latest?device-id=`. Telemetry auto-analyzes when the key is set.
 6. Rebuild/recreate `parkiroid-api` after env changes (no hot reload for env).
 
 **Gotchas:**
-- Never put `oc_sk_…` in the APK, git, or compose defaults — env/secret only.
-- Some Go models are Responses-API-only (e.g. Luna); stick to chat/completions vision models.
-- Tiny 1x1 PNGs can be rejected; use a real small image for smoke tests.
+- Never put `pont_sk_…` / `oc_sk_…` in the APK, git, or compose defaults — env/secret only.
+- Some OpenCode Go models are Responses-API-only (e.g. Luna); stick to chat/completions vision models listed by `GET /api/v1/models`.
+- Tiny/invalid JPEGs can be rejected; use a real small image for smoke tests.
+- Direct `opencode.ai` base URL still works if overridden, but defaults go through Pont.
 
-**What didn't work:** Calling OpenCode without `x-opencode-session`; putting the key in Android; relying on Cursor `bind-app-secrets` to inject the key into this VM (values never reach the VM — pass env at compose recreate time).
+**What didn't work:** Calling OpenCode without `x-opencode-session` on the direct Go host; putting the key in Android; relying on Cursor `bind-app-secrets` to inject the key into this VM (values never reach the VM — pass env at compose recreate time); Python `urllib` without a browser-like UA hitting Cloudflare 1010 on Pont (Go `net/http` and curl are fine).
