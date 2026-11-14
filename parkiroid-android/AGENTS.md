@@ -17,6 +17,7 @@
 - Frame quality UI: LOW / BALANCED / HIGH / ORIGINAL; FPS adjusted with +/- steppers
 - Watchman/Recording link to History, Logs, Preview when those screens exist
 - HTTP API prefix is `{base}/api/v1/`; auth is username/password via `POST /auth` (defaults `armin`/`dogan123` in `credentials.txt`); same bearer for API and LiveKit (`POST /webrtc/session`)
+- Camera frames upload only to Dogan API telemetry (`POST /api/v1/telemetry`); never call OpenCode or put `OPENCODE_GO_*` / `oc_sk_*` in the Android app — the API forwards to OpenCode Go server-side
 - Default Connectivity hosts: API `dogan-api.xaigrok.ir:443`, LiveKit `dogan-livekit.xaigrok.ir:443`
 - Telemetry includes `ambient_light_lux`, `cpu_usage_percent`, `ram_usage_percent`
 - SSL cert issues log warnings and use permissive trust for self-hosted servers
