@@ -60,9 +60,9 @@ Full rules: LEAN-CTX.md (open on demand — do not auto-load).
 - **After each PR, bump the semantic version `x.y.z` based on that PR’s
   changes** (before merge when the bump belongs in the same PR, otherwise in a
   follow-up commit on the PR branch). Use SemVer:
-  - **MAJOR (`x.0.0`)** — breaking / incompatible changes
-  - **MINOR (`0.x.0`)** — new backwards-compatible functionality
-  - **PATCH (`0.0.x`)** — bug fixes, docs-only, or other non-breaking fixes
+  - **MAJOR (`X+1.0.0`)** — breaking / incompatible changes (reset minor and patch)
+  - **MINOR (`X.Y+1.0`)** — new backwards-compatible functionality (keep major; reset patch)
+  - **PATCH (`X.Y.Z+1`)** — bug fixes, docs-only, or other non-breaking fixes (keep major and minor)
   Update every version source of truth the PR touches (e.g. `package.json`,
   Android `versionName` / `versionCode`, API `metadata.json`), keep them in
   sync when they share one product version, and record the bump in root
