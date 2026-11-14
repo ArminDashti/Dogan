@@ -1,0 +1,27 @@
+---
+description: Run Dogan Android UI on the Linux cloud VM emulator (not only Windows AVD). Use when a cloud agent needs to see/test the Android app UI.
+---
+
+# Parkiroid Android emulator on Cursor cloud VM
+
+**Goal:** Launch Dogan on an API 33 x86_64 emulator inside the Linux cloud agent VM for hub/settings/logs UI review.
+
+## Steps
+1. Ensure KVM is writable: `/dev/kvm` exists; if permission denied, `sudo chmod 666 /dev/kvm` (device is often `root:docker`).
+2. SDK root: `$HOME/Android/Sdk` with cmdline-tools `latest`, `platform-tools`, `emulator`, `platforms;android-33` + `35`, `build-tools`, `system-images;android-33;google_apis;x86_64`.
+3. AVD: `Dogan_UI_API33` (Pixel 6, google_apis x86_64). Prefer `hw.ramSize=2048`, `hw.gpu.mode=swiftshader_indirect`.
+4. `JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64`. Write gitignored `parkiroid-android/local.properties` with `sdk.dir=$ANDROID_HOME`.
+5. Build: `bash ./scripts/export-apk.sh --variant debug` from `parkiroid-android`.
+6. Start: `emulator -avd Dogan_UI_API33 -gpu swiftshader_indirect -no-audio -no-boot-anim -accel on -memory 2048` with `DISPLAY=:1`.
+7. Wait for `adb wait-for-device` + `getprop sys.boot_completed == 1`, then `adb install -r` the export APK and `am start -n com.dogan/.MainActivity`.
+
+## Gotchas
+- Camera / jolt / NCNN are not valid emulator acceptance criteria.
+- `SettingsActivity` is not exported — do not `am start` it; tap hub controls (or use UIAutomator).
+- With gesture nav, `KEYCODE_BACK` on `MainActivity` finishes the app; only BACK from section screens.
+- First cold boot has no `default_boot` snapshot — expect a longer first start.
+
+## What didn't work
+- Assuming the Windows-only AVD path — this Linux VM does have KVM and can run the emulator.
+- Relying on `am start …SettingsActivity --es section …` — SecurityException (not exported).
+- Pressing BACK from the main hub during automation — drops to the launcher home screen.
