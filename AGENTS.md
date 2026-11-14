@@ -57,6 +57,17 @@ Full rules: LEAN-CTX.md (open on demand — do not auto-load).
   is failing. Prefer the repo’s default merge method (`gh pr merge` or the
   equivalent GitHub merge action). If merge is blocked (reviews, branch
   protection, missing rights), say so and leave the PR link.
+- **After each PR, bump the semantic version `x.y.z` based on that PR’s
+  changes** (before merge when the bump belongs in the same PR, otherwise in a
+  follow-up commit on the PR branch). Use SemVer:
+  - **MAJOR (`x.0.0`)** — breaking / incompatible changes
+  - **MINOR (`0.x.0`)** — new backwards-compatible functionality
+  - **PATCH (`0.0.x`)** — bug fixes, docs-only, or other non-breaking fixes
+  Update every version source of truth the PR touches (e.g. `package.json`,
+  Android `versionName` / `versionCode`, API `metadata.json`), keep them in
+  sync when they share one product version, and record the bump in root
+  `CHANGELOG.md`. Prefer `v`-prefixed git tags (`v1.2.3`). Full rules:
+  `.agents/skills/armin/armin-dev-policies/guides/versioning.md`.
 
 # Self-learning (for AI coding agents)
 
