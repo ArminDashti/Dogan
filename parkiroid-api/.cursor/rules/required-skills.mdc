@@ -1,15 +1,37 @@
 ---
-description: >-
-  
+description: Skills agents should load for Dogan (parkiroid) work
 globs:
 alwaysApply: false
 metadata:
-  version: 1.0.0
+  version: 1.1.0
   author: "Armin Dashti"
-  category: 
-  tags: []
-  last_updated: "2026-08-01 14:51:20"
-  uuid: 31db2ebc-75e6-4cd3-b0ea-1393f6a82ae0
+  category: agents
+  tags: [skills, dogan]
+  last_updated: "2026-11-14"
 ---
 
 # required-skills
+
+Prefer repo-vendored skills under `.agents/skills/` (copied from `~/.cursor/skills`).
+
+## Always useful
+
+- `armin/armin-pre-check-task`
+- `armin/armin-refresh-after-changes`
+- `armin/armin-write-completion-report`
+- `armin/armin-dev-policies`
+- `ponytail/ponytail`
+- `self-learning`
+- `gitnexus/gitnexus-exploring` / `gitnexus-impact-analysis` / `gitnexus-debugging` (per root `AGENTS.md`)
+
+## By surface
+
+| Surface | Skills |
+| --- | --- |
+| API / Postgres / Docker | `database-schema-designer`, `armin/armin-local-t3-docker-deploy`, `security-baseline` |
+| WebUI | `armin/armin-webui-curations`, `design-system-starter`, `frontend-component-build`, `mobile-native`, `impeccable`, `browser-act`, `armin/armin-webapp-functional-test` |
+| Android | `qa-testing`, `qa-test-planner`, `session-handoff` (handoffs across API↔app) |
+| API ↔ Web contracts | `backend-to-frontend-handoff-docs`, `frontend-to-backend-requirements` |
+| Cleanup / git | `armin/code-pruning`, `armin/armin-github-commit-push`, `armin/armin-github-pull` |
+
+Do not invent Desktop-only skill paths under `C:/Users/armin/.cursor/skills` on cloud workers — use `.agents/skills/` instead.
