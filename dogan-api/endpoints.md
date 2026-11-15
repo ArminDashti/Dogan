@@ -37,6 +37,8 @@ JSON wire format is **snake_case** unless noted. Bearer token required except wh
 | POST | /devices/:id/capture | Yes | Queue capture; return latest frame |
 | GET | /images | Yes | Gallery image list |
 | GET | /images/:id | Yes | Download gallery image |
+| POST | /vision/analyze | Yes | Analyze a stored (`image_id`) or inline (`image_base64`) camera image with OpenCode Go |
+| GET | /vision/latest | Yes | Latest OpenCode Go vision analysis (`?device-id=`) |
 
 ## Client base URLs
 
@@ -52,6 +54,16 @@ JSON wire format is **snake_case** unless noted. Bearer token required except wh
 ### GET /devices/:id/telemetry (web)
 
 `device_id`, `battery_percent`, `battery_temperature_celsius`, `noise_db`, `jolt`, `signal_strength`, `network_type`, `server_phone_latency_ms`, `server_web_latency_ms`, `recorded_at`
+
+### POST /vision/analyze
+
+Request: `device_id`, `image_id` (stored frame), `image_base64` (inline JPEG), `prompt` (optional; server default when empty). Either `image_id` or `image_base64` is required.
+
+Response: `device_id`, `image_id`, `model`, `analysis`, `analyzed_at`. Errors: 400 invalid body / missing or unknown image, 502 upstream analysis failure, 503 when `OPENCODE_GO_API_KEY` is not configured.
+
+### GET /vision/latest
+
+Query `device-id` (required). Response: same shape as POST /vision/analyze. 400 when `device-id` is missing, 404 when the device has no analysis.
 
 ### PATCH /settings (web)
 
