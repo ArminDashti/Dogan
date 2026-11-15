@@ -25,6 +25,7 @@ obj/
 __pycache__/
 *.log
 logs/
+dogan-api/scripts/t3-last-run/
 .env
 .env.*
 *.tsbuildinfo
