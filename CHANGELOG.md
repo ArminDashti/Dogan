@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.1
+
+### Fixed
+- Android: CameraX still-capture finish (`unbindAll` / rebind) now runs on the main thread so Watchman/Copilot no longer crash with `Not in application's main thread`.
+- Android: cabin-noise segment IDs continue from `MAX(id)` after process restart so audio monitoring no longer dies on `UNIQUE constraint failed: cabin_segments.id`.
+
 ## 2.1.0
 
 ### Added

@@ -30,6 +30,11 @@ class CabinNoiseArchive(context: Context) {
         const val MAX_SEGMENTS = 500
     }
 
+    init {
+        // Survive process restart: in-memory counter must continue past persisted IDs.
+        segmentId = indexDb.maxSegmentId()
+    }
+
     fun startNewSegment() {
         closeCurrentSegment(null, null)
         segmentId++
@@ -140,6 +145,15 @@ class CabinNoiseArchive(context: Context) {
         }
 
         override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+
+        fun maxSegmentId(): Long {
+            val cursor = readableDatabase.rawQuery("SELECT COALESCE(MAX(id), 0) FROM cabin_segments", null)
+            return try {
+                if (cursor.moveToFirst()) cursor.getLong(0) else 0L
+            } finally {
+                cursor.close()
+            }
+        }
 
         fun insertSegment(id: Long, startMs: Long, alertId: String?, mode: String?) {
             writableDatabase.execSQL(
