@@ -213,14 +213,17 @@ object DoganCamera {
                     override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                         val bitmap = BitmapFactory.decodeFile(file.absolutePath)
                         file.delete()
-                        finishStillCapture(context, lifecycleOwner, provider)
-                        onComplete(bitmap)
+                        // CameraX unbind/bind must run on main; takePicture callbacks use [executor].
+                        finishStillCaptureOnMain(context, lifecycleOwner, provider) {
+                            onComplete(bitmap)
+                        }
                     }
 
                     override fun onError(exception: ImageCaptureException) {
                         file.delete()
-                        finishStillCapture(context, lifecycleOwner, provider)
-                        onComplete(null)
+                        finishStillCaptureOnMain(context, lifecycleOwner, provider) {
+                            onComplete(null)
+                        }
                     }
                 })
             } catch (e: Exception) {
@@ -253,19 +256,33 @@ object DoganCamera {
                 val options = ImageCapture.OutputFileOptions.Builder(file).build()
                 capture.takePicture(options, executor, object : ImageCapture.OnImageSavedCallback {
                     override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                        finishStillCapture(context, lifecycleOwner, provider)
-                        onComplete(file)
+                        finishStillCaptureOnMain(context, lifecycleOwner, provider) {
+                            onComplete(file)
+                        }
                     }
                     override fun onError(exception: ImageCaptureException) {
                         file.delete()
-                        finishStillCapture(context, lifecycleOwner, provider)
-                        onComplete(null)
+                        finishStillCaptureOnMain(context, lifecycleOwner, provider) {
+                            onComplete(null)
+                        }
                     }
                 })
             } catch (e: Exception) {
                 onComplete(null)
             }
         }, ContextCompat.getMainExecutor(context))
+    }
+
+    private fun finishStillCaptureOnMain(
+        context: Context,
+        lifecycleOwner: LifecycleOwner,
+        provider: ProcessCameraProvider,
+        after: () -> Unit,
+    ) {
+        ContextCompat.getMainExecutor(context).execute {
+            finishStillCapture(context, lifecycleOwner, provider)
+            after()
+        }
     }
 
     private fun finishStillCapture(
