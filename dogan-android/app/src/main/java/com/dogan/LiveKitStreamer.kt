@@ -28,7 +28,7 @@ class LiveKitStreamer(
     private var room: Room? = null
     private var eventsJob: Job? = null
 
-    fun start(baseUrl: String, streamMode: StreamMode) {
+    fun start(baseUrl: String, streamMode: StreamMode, streamUrl: String = "") {
         scope.launch {
             stopInternal()
             val session = withContext(Dispatchers.IO) {
@@ -43,6 +43,9 @@ class LiveKitStreamer(
                 AppLogger.error("LiveKit", "Session missing token, url, or room")
                 return@launch
             }
+            // Prefer Connectivity stream host:port (e.g. 10.0.2.2:7880) over API public URL
+            // so emulator can reach host LiveKit when tokens advertise localhost.
+            val connectUrl = streamUrl.trim().ifBlank { session.url }
 
             try {
                 val liveKitRoom = LiveKit.create(context.applicationContext)
@@ -64,7 +67,7 @@ class LiveKitStreamer(
                     }
                 }
 
-                liveKitRoom.connect(session.url, session.token)
+                liveKitRoom.connect(connectUrl, session.token)
                 applyStreamMode(liveKitRoom.localParticipant, streamMode)
                 room = liveKitRoom
                 AppLogger.info("LiveKit", "Streaming started (${streamMode.displayName})")

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.1
+
+### Fixed
+- SQLite timestamp round-trip: store/scan RFC3339Nano (and migrate legacy Go `time.String()` values) so `GET /webrtc/connections` and `GET /devices/:id/telemetry` no longer 500.
+- Local LiveKit signaling published on host `:7880`; default `DOGAN_LIVEKIT_PUBLIC_URL` is `ws://localhost:7880` for local WebUI Play.
+- Android LiveKit publisher prefers Connectivity stream URL (e.g. `10.0.2.2:7880`) over the API public URL so the emulator can reach host LiveKit.
+
 ## 2.0.0
 
 ### Breaking

@@ -11,7 +11,7 @@ description: Verify Dogan Android on emulator can reach local Docker API via Mob
 2. Start AVD: `%LOCALAPPDATA%\Android\Sdk\emulator\emulator.exe -avd Dogan_UI_API33 -gpu auto` (adb serial often `emulator-5556`).
 3. Put `platform-tools` on PATH (bare `adb` may be missing).
 4. Mobile MCP: `mobile_list_available_devices` → device id `Dogan_UI_API33`; launch `com.dogan`.
-5. Connectivity settings → set API URL to `10.0.2.2:8080` (emulator alias for host loopback), user/pass `admin`/`admin`, tap connect.
+5. Connectivity settings → set API URL to `10.0.2.2:8080` (emulator alias for host loopback), stream URL to `10.0.2.2:7880` (host LiveKit), user/pass `admin`/`admin`, tap connect.
 6. Pass: UI shows `API: Connected`, ping ms, button `CONNECTED`. Optional network proof: `adb shell` + `nc 10.0.2.2 8080` HTTP GET `/dogan/api/v1/health` → 200.
 
 ## Gotchas

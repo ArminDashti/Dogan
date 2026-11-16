@@ -11,23 +11,28 @@ func scanWebRTCConnections(rows *sql.Rows) ([]models.WebRTCConnectionRecord, err
 	connections := make([]models.WebRTCConnectionRecord, 0)
 	for rows.Next() {
 		var connection models.WebRTCConnectionRecord
-		var disconnectedAt sql.NullTime
+		var connectedAtRaw string
+		var disconnectedAtRaw sql.NullString
 		if err := rows.Scan(
 			&connection.ID,
 			&connection.DeviceID,
 			&connection.Room,
 			&connection.Identity,
 			&connection.Role,
-			&connection.ConnectedAt,
-			&disconnectedAt,
+			&connectedAtRaw,
+			&disconnectedAtRaw,
 			&connection.Status,
 		); err != nil {
 			return nil, fmt.Errorf("scan webrtc connection: %w", err)
 		}
-		if disconnectedAt.Valid {
-			disconnectedAtValue := disconnectedAt.Time
-			connection.DisconnectedAt = &disconnectedAtValue
+		if err := scanSQLiteTime(connectedAtRaw, &connection.ConnectedAt); err != nil {
+			return nil, fmt.Errorf("scan webrtc connected_at: %w", err)
 		}
+		disconnectedAt, err := scanNullableSQLiteTime(disconnectedAtRaw)
+		if err != nil {
+			return nil, fmt.Errorf("scan webrtc disconnected_at: %w", err)
+		}
+		connection.DisconnectedAt = disconnectedAt
 		connections = append(connections, connection)
 	}
 	if err := rows.Err(); err != nil {
