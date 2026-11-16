@@ -41,13 +41,20 @@ const router = createRouter({
     },
     {
       path: '/metrics',
+      redirect: '/metrics/battery',
+    },
+    {
+      path: '/metrics/:metric',
       name: 'metrics',
       component: () => import('@/views/MetricsView.vue'),
     },
     {
       path: '/devices/:id/metrics',
       name: 'device-metrics',
-      component: () => import('@/views/MetricsView.vue'),
+      redirect: (to) => ({
+        path: '/metrics/battery',
+        query: { device: String(to.params.id) },
+      }),
     },
     {
       path: '/:pathMatch(.*)*',

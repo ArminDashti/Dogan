@@ -24,7 +24,7 @@ type FrameStore interface {
 type MetricsStore interface {
 	SaveMetrics(metrics models.DeviceMetricsRecord) error
 	GetLatestMetrics(deviceID string) (models.DeviceMetricsRecord, error)
-	ListMetricsHistory(deviceID string, limit int) ([]models.DeviceMetricsRecord, error)
+	ListMetricsHistory(deviceID string, from, to time.Time, limit int) ([]models.DeviceMetricsRecord, error)
 }
 
 type LoginLogStore interface {

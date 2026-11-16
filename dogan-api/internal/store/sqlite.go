@@ -276,7 +276,7 @@ func (store *Store) GetLatestMetrics(deviceID string) (models.DeviceMetricsRecor
 	return metrics, nil
 }
 
-func (store *Store) ListMetricsHistory(deviceID string, limit int) ([]models.DeviceMetricsRecord, error) {
+func (store *Store) ListMetricsHistory(deviceID string, from, to time.Time, limit int) ([]models.DeviceMetricsRecord, error) {
 	if limit <= 0 {
 		limit = 50
 	}
@@ -293,6 +293,13 @@ func (store *Store) ListMetricsHistory(deviceID string, limit int) ([]models.Dev
 	}
 
 	cutoff := store.retentionCutoff()
+	if from.Before(cutoff) {
+		from = cutoff
+	}
+	if to.IsZero() || to.Before(from) {
+		to = time.Now().UTC().Add(time.Second)
+	}
+
 	rows, err := store.db.Query(
 		`SELECT battery_level, signal_strength, network_type,
 		        temperature_c, latitude, longitude,
@@ -301,11 +308,12 @@ func (store *Store) ListMetricsHistory(deviceID string, limit int) ([]models.Dev
 		        cpu_usage_percent, ram_usage_percent,
 		        recorded_at, received_at
 		 FROM android_telemetry
-		 WHERE device_id = ? AND recorded_at >= ?
+		 WHERE device_id = ? AND recorded_at >= ? AND recorded_at < ?
 		 ORDER BY recorded_at DESC, id DESC
 		 LIMIT ?`,
 		deviceRowID,
-		cutoff,
+		from,
+		to,
 		limit,
 	)
 	if err != nil {
