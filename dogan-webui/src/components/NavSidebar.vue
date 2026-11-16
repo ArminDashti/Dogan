@@ -10,18 +10,41 @@ const router = useRouter()
 const authStore = useAuthStore()
 const { collapsed, toggleCollapsed } = useSidebarCollapsed()
 
+const metricChildren = [
+  { label: 'Battery', to: '/metrics/battery' },
+  { label: 'Battery Temperature', to: '/metrics/battery-temperature' },
+  { label: 'Noise', to: '/metrics/noise' },
+  { label: 'Jolt', to: '/metrics/jolt' },
+  { label: 'Signal', to: '/metrics/signal' },
+  { label: 'Network Type', to: '/metrics/network-type' },
+  { label: 'Server-Phone Latency', to: '/metrics/server-phone-latency' },
+]
+
 const navigation = [
   { label: 'Dashboard', to: '/dashboard', icon: 'dashboard' as const },
   { label: 'Stream', to: '/stream', icon: 'stream' as const },
   { label: 'Gallery', to: '/gallery', icon: 'gallery' as const },
-  { label: 'Metrics', to: '/metrics', icon: 'metrics' as const },
   { label: 'Settings', to: '/settings', icon: 'settings' as const },
+  {
+    label: 'Metrics',
+    to: '/metrics/battery',
+    icon: 'metrics' as const,
+    children: metricChildren,
+  },
 ]
 
 const activePath = computed(() => route.path)
+const metricsExpanded = computed(() => activePath.value.startsWith('/metrics'))
 
 function isActive(to: string): boolean {
+  if (to === '/metrics/battery') {
+    return activePath.value.startsWith('/metrics')
+  }
   return activePath.value === to || activePath.value.startsWith(`${to}/`)
+}
+
+function isChildActive(to: string): boolean {
+  return activePath.value === to
 }
 
 async function handleLogout(): Promise<void> {
@@ -74,48 +97,63 @@ async function handleLogout(): Promise<void> {
     </div>
 
     <nav class="flex-1 space-y-0.5 p-3" aria-label="Main">
-      <RouterLink
-        v-for="item in navigation"
-        :key="item.to"
-        :to="item.to"
-        class="nav-link"
-        :class="{ 'router-link-active': isActive(item.to) }"
-        :title="collapsed ? item.label : undefined"
-      >
-        <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <template v-if="item.icon === 'dashboard'">
-            <path d="M3 3h8v8H3V3Z" stroke="currentColor" stroke-width="1.75" />
-            <path d="M13 3h8v5h-8V3Z" stroke="currentColor" stroke-width="1.75" />
-            <path d="M13 10h8v11h-8V10Z" stroke="currentColor" stroke-width="1.75" />
-            <path d="M3 13h8v8H3v-8Z" stroke="currentColor" stroke-width="1.75" />
-          </template>
-          <template v-else-if="item.icon === 'stream'">
-            <path d="M5 5l12 7-12 7V5Z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" />
-          </template>
-          <template v-else-if="item.icon === 'gallery'">
-            <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.75" />
-            <circle cx="8.5" cy="10" r="1.5" fill="currentColor" />
-            <path d="M21 16l-5-5L8 19" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
-          </template>
-          <template v-else-if="item.icon === 'settings'">
-            <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.75" />
-            <path
-              d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V19a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H5a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H10a1.7 1.7 0 0 0 1-1.5V5a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V10a1.7 1.7 0 0 0 1.5 1H19a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"
-              stroke="currentColor"
-              stroke-width="1.75"
-              stroke-linejoin="round"
-            />
-          </template>
-          <template v-else>
-            <path d="M4 19V5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
-            <path d="M4 19h16" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
-            <path d="M8 17V11" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
-            <path d="M12 17V7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
-            <path d="M16 17v-4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
-          </template>
-        </svg>
-        <span class="nav-link-label">{{ item.label }}</span>
-      </RouterLink>
+      <div v-for="item in navigation" :key="item.to">
+        <RouterLink
+          :to="item.to"
+          class="nav-link"
+          :class="{ 'router-link-active': isActive(item.to) }"
+          :title="collapsed ? item.label : undefined"
+        >
+          <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <template v-if="item.icon === 'dashboard'">
+              <path d="M3 3h8v8H3V3Z" stroke="currentColor" stroke-width="1.75" />
+              <path d="M13 3h8v5h-8V3Z" stroke="currentColor" stroke-width="1.75" />
+              <path d="M13 10h8v11h-8V10Z" stroke="currentColor" stroke-width="1.75" />
+              <path d="M3 13h8v8H3v-8Z" stroke="currentColor" stroke-width="1.75" />
+            </template>
+            <template v-else-if="item.icon === 'stream'">
+              <path d="M5 5l12 7-12 7V5Z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" />
+            </template>
+            <template v-else-if="item.icon === 'gallery'">
+              <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.75" />
+              <circle cx="8.5" cy="10" r="1.5" fill="currentColor" />
+              <path d="M21 16l-5-5L8 19" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+            </template>
+            <template v-else-if="item.icon === 'settings'">
+              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.75" />
+              <path
+                d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
+                stroke="currentColor"
+                stroke-width="1.75"
+                stroke-linecap="round"
+              />
+            </template>
+            <template v-else>
+              <path d="M4 19V5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+              <path d="M4 19h16" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+              <path d="M8 17V11" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+              <path d="M12 17V7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+              <path d="M16 17v-4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+            </template>
+          </svg>
+          <span class="nav-link-label">{{ item.label }}</span>
+        </RouterLink>
+
+        <div
+          v-if="item.children && metricsExpanded && !collapsed"
+          class="mt-0.5 ml-4 space-y-0.5 border-l border-[var(--border)] pl-2"
+        >
+          <RouterLink
+            v-for="child in item.children"
+            :key="child.to"
+            :to="child.to"
+            class="nav-link !py-1.5 text-sm"
+            :class="{ 'router-link-active': isChildActive(child.to) }"
+          >
+            <span class="nav-link-label">{{ child.label }}</span>
+          </RouterLink>
+        </div>
+      </div>
     </nav>
 
     <div class="mt-auto">

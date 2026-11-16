@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1] - 2026-11-16
+
+### Changed
+- Removed the global WebUI page header from AppLayout.
+- Nested Metrics sidebar children for Battery, Battery Temperature, Noise, Jolt, Signal, Network Type, and Server-Phone Latency.
+- Metric pages show history ranges (today, yesterday, this week, this month, last week, last month) via GET /devices/:id/metrics?range=.
+
 ## [0.3.0] - 2026-11-16
 
 ### Added

@@ -16,18 +16,36 @@ export interface Device {
   location?: string
 }
 
+export type MetricsHistoryRange =
+  | 'today'
+  | 'yesterday'
+  | 'this_week'
+  | 'this_month'
+  | 'last_week'
+  | 'last_month'
+
 export interface MetricReading {
   timestamp: string
-  temperatureCelsius: number
+  batteryPercent: number
+  batteryTemperatureCelsius: number
   noiseDb: number
+  jolt: number
+  signalStrength: number
+  networkType: string
+  serverPhoneLatencyMs: number
 }
 
 export interface DeviceMetrics {
   deviceId: string
   deviceName: string
   current: {
-    temperatureCelsius: number
+    batteryPercent: number
+    batteryTemperatureCelsius: number
     noiseDb: number
+    jolt: number
+    signalStrength: number
+    networkType: string
+    serverPhoneLatencyMs: number
     recordedAt: string
   }
   history: MetricReading[]

@@ -60,7 +60,8 @@ func (handler *DevicesWebHandler) GetDeviceMetrics(context *gin.Context) {
 		return
 	}
 
-	history, err := handler.metricsStore.ListMetricsHistory(deviceID, 50)
+	from, to := metricsRangeBounds(context.Query("range"))
+	history, err := handler.metricsStore.ListMetricsHistory(deviceID, from, to, 500)
 	if err != nil {
 		if errors.Is(err, store.ErrMetricsNotFound) {
 			context.JSON(http.StatusNotFound, models.ErrorResponse{Error: "no metrics found for device"})
@@ -81,16 +82,18 @@ func (handler *DevicesWebHandler) GetDeviceMetrics(context *gin.Context) {
 		History:    make([]models.MetricReading, 0, len(history)),
 	}
 	latest := history[0]
-	response.Current.TemperatureCelsius = floatOrZero(latest.TemperatureC)
-	response.Current.NoiseDb = floatOrZero(latest.CabinNoiseRMS)
+	current := toMetricReading(latest)
+	response.Current.BatteryPercent = current.BatteryPercent
+	response.Current.BatteryTemperatureCelsius = current.BatteryTemperatureCelsius
+	response.Current.NoiseDb = current.NoiseDb
+	response.Current.Jolt = current.Jolt
+	response.Current.SignalStrength = current.SignalStrength
+	response.Current.NetworkType = current.NetworkType
+	response.Current.ServerPhoneLatencyMs = current.ServerPhoneLatencyMs
 	response.Current.RecordedAt = latest.RecordedAt
 
 	for _, item := range history {
-		response.History = append(response.History, models.MetricReading{
-			Timestamp:          item.RecordedAt,
-			TemperatureCelsius: floatOrZero(item.TemperatureC),
-			NoiseDb:            floatOrZero(item.CabinNoiseRMS),
-		})
+		response.History = append(response.History, toMetricReading(item))
 	}
 
 	context.JSON(http.StatusOK, response)
@@ -189,6 +192,51 @@ func toTelemetrySnapshot(metrics models.DeviceMetricsRecord) models.DeviceTeleme
 		ServerPhoneLatencyMs:      float64(intOrZero(metrics.ServerLatencyMs)),
 		ServerWebLatencyMs:        0,
 		RecordedAt:                metrics.RecordedAt,
+	}
+}
+
+
+func toMetricReading(item models.DeviceMetricsRecord) models.MetricReading {
+	return models.MetricReading{
+		Timestamp:                 item.RecordedAt,
+		BatteryPercent:            floatOrZero(item.BatteryLevel),
+		BatteryTemperatureCelsius: floatOrZero(item.TemperatureC),
+		NoiseDb:                   floatOrZero(item.CabinNoiseRMS),
+		Jolt:                      floatOrZero(item.Jolt),
+		SignalStrength:            float64(intOrZero(item.SignalStrength)),
+		NetworkType:               item.NetworkType,
+		ServerPhoneLatencyMs:      float64(intOrZero(item.ServerLatencyMs)),
+	}
+}
+
+func metricsRangeBounds(rangeKey string) (time.Time, time.Time) {
+	now := time.Now().UTC()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	switch rangeKey {
+	case "yesterday":
+		return today.AddDate(0, 0, -1), today
+	case "this_week":
+		weekday := int(today.Weekday())
+		if weekday == 0 {
+			weekday = 7
+		}
+		start := today.AddDate(0, 0, -(weekday - 1))
+		return start, today.AddDate(0, 0, 1)
+	case "last_week":
+		weekday := int(today.Weekday())
+		if weekday == 0 {
+			weekday = 7
+		}
+		thisWeekStart := today.AddDate(0, 0, -(weekday - 1))
+		return thisWeekStart.AddDate(0, 0, -7), thisWeekStart
+	case "this_month":
+		start := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+		return start, today.AddDate(0, 0, 1)
+	case "last_month":
+		firstThisMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+		return firstThisMonth.AddDate(0, -1, 0), firstThisMonth
+	default:
+		return today, today.AddDate(0, 0, 1)
 	}
 }
 

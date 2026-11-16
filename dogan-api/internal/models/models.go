@@ -120,18 +120,28 @@ type DeviceTelemetrySnapshot struct {
 }
 
 type MetricReading struct {
-	Timestamp           time.Time `json:"timestamp"`
-	TemperatureCelsius  float64   `json:"temperature_celsius"`
-	NoiseDb             float64   `json:"noise_db"`
+	Timestamp                 time.Time `json:"timestamp"`
+	BatteryPercent            float64   `json:"battery_percent"`
+	BatteryTemperatureCelsius float64   `json:"battery_temperature_celsius"`
+	NoiseDb                   float64   `json:"noise_db"`
+	Jolt                      float64   `json:"jolt"`
+	SignalStrength            float64   `json:"signal_strength"`
+	NetworkType               string    `json:"network_type"`
+	ServerPhoneLatencyMs      float64   `json:"server_phone_latency_ms"`
 }
 
 type DeviceMetricsHistory struct {
 	DeviceID   string `json:"device_id"`
 	DeviceName string `json:"device_name"`
 	Current    struct {
-		TemperatureCelsius float64   `json:"temperature_celsius"`
-		NoiseDb            float64   `json:"noise_db"`
-		RecordedAt         time.Time `json:"recorded_at"`
+		BatteryPercent            float64   `json:"battery_percent"`
+		BatteryTemperatureCelsius float64   `json:"battery_temperature_celsius"`
+		NoiseDb                   float64   `json:"noise_db"`
+		Jolt                      float64   `json:"jolt"`
+		SignalStrength            float64   `json:"signal_strength"`
+		NetworkType               string    `json:"network_type"`
+		ServerPhoneLatencyMs      float64   `json:"server_phone_latency_ms"`
+		RecordedAt                time.Time `json:"recorded_at"`
 	} `json:"current"`
 	History []MetricReading `json:"history"`
 }

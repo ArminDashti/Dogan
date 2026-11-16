@@ -259,7 +259,7 @@ func (store *PostgresStore) GetLatestMetrics(deviceID string) (models.DeviceMetr
 	return metrics, nil
 }
 
-func (store *PostgresStore) ListMetricsHistory(deviceID string, limit int) ([]models.DeviceMetricsRecord, error) {
+func (store *PostgresStore) ListMetricsHistory(deviceID string, from, to time.Time, limit int) ([]models.DeviceMetricsRecord, error) {
 	if limit <= 0 {
 		limit = 50
 	}
@@ -276,22 +276,30 @@ func (store *PostgresStore) ListMetricsHistory(deviceID string, limit int) ([]mo
 	}
 
 	cutoff := store.retentionCutoff()
+	if from.Before(cutoff) {
+		from = cutoff
+	}
+	if to.IsZero() || to.Before(from) {
+		to = time.Now().UTC().Add(time.Second)
+	}
+
 	rows, err := store.db.Query(
-		`SELECT battery_level, signal_strength, network_type,
+		SELECT battery_level, signal_strength, network_type,
 		        temperature_c, latitude, longitude,
 		        cabin_noise_rms, gps_signal_quality, speed_kmh, ambient_light_lux,
 		        server_latency_ms, device_ip_address, jolt,
 		        cpu_usage_percent, ram_usage_percent,
 		        recorded_at, received_at
 		 FROM android_telemetry
-		 WHERE device_id = $1 AND recorded_at >= $2
+		 WHERE device_id =  AND recorded_at >=  AND recorded_at < 
 		 ORDER BY recorded_at DESC, id DESC
-		 LIMIT $3`,
+		 LIMIT ,
 		deviceRowID,
-		cutoff,
+		from,
+		to,
 		limit,
 	)
-	if err != nil {
+if err != nil {
 		return nil, fmt.Errorf("query metrics history: %w", err)
 	}
 	defer rows.Close()
