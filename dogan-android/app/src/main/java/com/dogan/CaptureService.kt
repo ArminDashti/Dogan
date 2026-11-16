@@ -14,7 +14,6 @@ import androidx.core.app.NotificationCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
-import com.google.android.gms.location.Priority
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
@@ -122,13 +121,13 @@ class CaptureService : Service(), LifecycleOwner {
         val settings = cachedSettings ?: return
         SessionCredentials.updateFrom(settings)
         AppLogger.activeModeSection = LogSection.forOperatingMode(settings.operatingMode)
-        configureWakeLockForMode(settings.operatingMode)
+        configureWakeLockForMode(settings)
 
         downloadSounds(settings)
-        vehicleMotionDetector.register(sensorManager)
+        vehicleMotionDetector.register(sensorManager, settings.motionSamplingRate)
         startLocationTracking(settings)
-        ambientLightSensor.start()
-        audioCapture.start()
+        applyAmbientLight(settings)
+        applySoundMonitoring(settings)
         scheduleTelemetryLoop()
         scheduleKeepAliveLoop()
         scheduleUploadLoop()
@@ -148,8 +147,11 @@ class CaptureService : Service(), LifecycleOwner {
         val settings = cachedSettings ?: return
         SessionCredentials.updateFrom(settings)
         AppLogger.activeModeSection = LogSection.forOperatingMode(settings.operatingMode)
-        configureWakeLockForMode(settings.operatingMode)
+        configureWakeLockForMode(settings)
+        vehicleMotionDetector.register(sensorManager, settings.motionSamplingRate)
         startLocationTracking(settings)
+        applyAmbientLight(settings)
+        applySoundMonitoring(settings)
         applySensitivity(settings)
         logModeActivated(settings.operatingMode)
         startForeground(NOTIF_ID, buildNotification())
@@ -160,21 +162,35 @@ class CaptureService : Service(), LifecycleOwner {
     }
 
     private fun startLocationTracking(settings: AppSettings) {
-        val priority = if (settings.operatingMode == OperatingMode.WATCHER) {
-            Priority.PRIORITY_BALANCED_POWER_ACCURACY
-        } else {
-            Priority.PRIORITY_HIGH_ACCURACY
-        }
-        locationTracker.start(settings.telemetryIntervalMs, priority)
+        locationTracker.start(
+            settings.telemetryIntervalMs,
+            settings.gpsAccuracyForMode(settings.operatingMode).toPriority(),
+        )
     }
 
     private fun maybeStartLiveKit(settings: AppSettings) {
-        if (settings.operatingMode == OperatingMode.WATCHER) {
+        if (settings.operatingMode == OperatingMode.WATCHER || !settings.copilotLiveStreamEnabled) {
             liveKitStreamer.stop()
             return
         }
         if (ServerConnectionManager.isConnected() && isValidBaseUrl(settings.serverBaseUrl)) {
             liveKitStreamer.start(settings.serverBaseUrl, settings.streamMode, settings.streamBaseUrl)
+        }
+    }
+
+    private fun applyAmbientLight(settings: AppSettings) {
+        if (settings.ambientLightEnabled) {
+            ambientLightSensor.start()
+        } else {
+            ambientLightSensor.stop()
+        }
+    }
+
+    private fun applySoundMonitoring(settings: AppSettings) {
+        if (settings.soundMonitoringEnabled) {
+            audioCapture.start()
+        } else {
+            audioCapture.stop()
         }
     }
 
@@ -231,6 +247,9 @@ class CaptureService : Service(), LifecycleOwner {
                     SessionCredentials.updateFrom(settings)
                     AppLogger.activeModeSection = LogSection.forOperatingMode(settings.operatingMode)
                     applySensitivity(settings)
+                    applyAmbientLight(settings)
+                    applySoundMonitoring(settings)
+                    configureWakeLockForMode(settings)
 
                     if (ServerConnectionManager.isConnected() && isValidBaseUrl(settings.serverBaseUrl)) {
                         collectAndEnqueueTelemetry(settings)
@@ -379,7 +398,10 @@ class CaptureService : Service(), LifecycleOwner {
                             }
                         }
                     }
-                    Thread.sleep(2_000L)
+                    val sleepMs = (cachedSettings ?: settings).uploadIntervalMs.coerceAtLeast(
+                        SettingsStore.MIN_UPLOAD_INTERVAL_SEC * 1000L,
+                    )
+                    Thread.sleep(sleepMs)
                 } catch (_: InterruptedException) {
                     Thread.currentThread().interrupt()
                     break
@@ -498,8 +520,9 @@ class CaptureService : Service(), LifecycleOwner {
             .build()
     }
 
-    private fun configureWakeLockForMode(mode: OperatingMode) {
-        holdWakeLockIndefinitely = mode != OperatingMode.WATCHER
+    private fun configureWakeLockForMode(settings: AppSettings) {
+        holdWakeLockIndefinitely =
+            settings.operatingMode == OperatingMode.COPILOT && settings.copilotHoldWakeLock
         val pm = getSystemService(POWER_SERVICE) as PowerManager
         if (wakeLock == null) {
             wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Dogan::Capture").apply {

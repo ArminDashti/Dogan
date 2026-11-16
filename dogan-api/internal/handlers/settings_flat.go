@@ -17,7 +17,9 @@ func settingsToFlatMap(settings []models.AppSettingRecord) map[string]any {
 
 func coerceSettingValue(key, value string) any {
 	switch key {
-	case "object_detection_on_device", "wifi_only_downloads", "copilot_distance_control_enabled":
+	case "object_detection_on_device", "wifi_only_downloads", "copilot_distance_control_enabled",
+		"copilot_alerts_enabled", "sound_monitoring_enabled", "ambient_light_enabled",
+		"copilot_hold_wake_lock", "copilot_live_stream_enabled":
 		parsed, err := strconv.ParseBool(strings.TrimSpace(value))
 		if err == nil {
 			return parsed
@@ -27,7 +29,7 @@ func coerceSettingValue(key, value string) any {
 		if err == nil {
 			return parsed
 		}
-	case "telemetry_interval_sec", "telemetry_retention_hours", "log_retention_days",
+	case "telemetry_interval_sec", "upload_interval_sec", "telemetry_retention_hours", "log_retention_days",
 		"screen_on_interval_min", "realtime_fps", "settings_sync_interval_sec",
 		"api_port", "stream_port", "copilot_video_chunk_minutes":
 		parsed, err := strconv.ParseInt(strings.TrimSpace(value), 10, 32)

@@ -12,8 +12,8 @@
 - Preview opens from section settings only when a mode is already active (CameraActivity); Watchman preview shows jolt/sound HUD; Exit kills the process
 - Connect/Disconnect lives in Connectivity settings (manual only; default Disconnected; no auto-connect); API URL / Stream URL are combined host:port fields
 - Settings are section screens (Connectivity, Recording, Copilot, Watchman, General) ordered Configure→Retention→Browse→Danger; each change auto-saves to DataStore and `PUT /api/v1/settings` when connected
-- Defaults: operating mode OFF, image upload on-demand, sync 15s, telemetry 5s, Watchman still cadence `capture_interval_ms` 5s (when Auto/server capture); recording off when present
-- Capture camera is duty-cycled (open → still → close); Watchman skips camera when On demand and no pending capture, uses balanced GPS, no auto LiveKit, timed wake locks
+- Defaults: operating mode OFF, image upload on-demand, sync 15s, telemetry 5s, upload 2s, Watchman still cadence `capture_interval_ms` 5s (when Auto/server capture); recording off when present; sound monitoring on; motion sampling High; ambient light on; Watchman GPS Balanced; Copilot GPS High + hold wake lock + LiveKit on
+- Capture camera is duty-cycled (open → still → close); Watchman skips camera when On demand and no pending capture, uses settings GPS accuracy (default balanced), no auto LiveKit, timed wake locks; battery knobs in General/Watchman/Copilot Settings
 - Frame quality UI: LOW / BALANCED / HIGH / ORIGINAL; FPS adjusted with +/- steppers
 - Watchman/Recording link to History, Logs, Preview when those screens exist
 - HTTP API prefix is `{base}/api/v1/`; auth is username/password via `POST /auth` (defaults `armin`/`dogan123` in `credentials.txt`); same bearer for API and LiveKit (`POST /webrtc/session`)
