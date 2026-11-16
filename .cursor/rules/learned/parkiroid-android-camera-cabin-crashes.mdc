@@ -1,0 +1,21 @@
+---
+description: Fix Dogan Android crashes that kill Watchman/Copilot before LiveKit. Use when FATAL Not in main thread (DoganCamera) or UNIQUE cabin_segments.id.
+---
+
+# Dogan Android camera + cabin-noise crash fixes
+
+**Goal:** Keep CaptureService alive so Copilot can reach LiveKit connect.
+
+## Steps
+1. Camera stills: `takePicture` callbacks run on `captureCallbackExecutor` (background). Always post `ProcessCameraProvider.unbindAll` / rebind via `ContextCompat.getMainExecutor` (`finishStillCaptureOnMain` in `DoganCamera.kt`).
+2. Cabin noise: on `CabinNoiseArchive` init, set `segmentId = indexDb.maxSegmentId()` so new IDs continue past persisted rows after process restart.
+3. Verify: install APK, arm Watchman with sound on; `logcat -b crash` must show no `Not in application's main thread` and no `UNIQUE constraint failed: cabin_segments.id`.
+
+## Gotchas
+- UI “LiveKit Connected (N sessions)” is a token/session-count probe, not media publish.
+- Watchman calls `liveKitStreamer.stop()`; Copilot (+ live stream enabled) starts LiveKit.
+- Emulator may still `SIGSEGV` in `libjingle_peerconnection_so.so` on LiveKit signaling — separate from these Java fixes.
+
+## What didn't work
+- Leaving `finishStillCapture` on the ImageCapture callback executor — CameraX requires main thread.
+- Restarting `segmentId` from 0 while SQLite still has old `cabin_segments` rows.
