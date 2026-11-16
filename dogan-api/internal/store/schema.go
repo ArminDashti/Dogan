@@ -165,6 +165,10 @@ CREATE INDEX IF NOT EXISTS idx_vision_analyses_device_analyzed_at
 		return fmt.Errorf("ensure vision_analyses: %w", err)
 	}
 
+	if err := rewriteLegacySQLiteTimestamps(database); err != nil {
+		return fmt.Errorf("rewrite legacy sqlite timestamps: %w", err)
+	}
+
 	return nil
 }
 

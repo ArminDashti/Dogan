@@ -17,7 +17,9 @@ services:
       - "7882"
     # Media must hit the host directly; HAProxy only terminates signaling on 443.
     # Keep UDP publish range small - large ranges hang docker-proxy on this host.
+    # 7880 is LiveKit HTTP/WS signaling (needed for local WebUI + Android).
     ports:
+      - "7880:7880"
       - "7881:7881"
       - "50000-50050:50000-50050/udp"
 
@@ -45,7 +47,7 @@ services:
       DOGAN_DATABASE_URL: file:/data/dogan.db
       DOGAN_FRAMES_DIR: /data/frames
       DOGAN_LIVEKIT_URL: ${DOGAN_LIVEKIT_URL:-ws://dogan-livekit:7880}
-      DOGAN_LIVEKIT_PUBLIC_URL: ${DOGAN_LIVEKIT_PUBLIC_URL:-wss://dogan-livekit.xaigrok.ir}
+      DOGAN_LIVEKIT_PUBLIC_URL: ${DOGAN_LIVEKIT_PUBLIC_URL:-ws://localhost:7880}
       DOGAN_LIVEKIT_API_KEY: ${DOGAN_LIVEKIT_API_KEY:-devkey}
       DOGAN_LIVEKIT_API_SECRET: ${DOGAN_LIVEKIT_API_SECRET:-secret}
       DOGAN_LIVEKIT_TOKEN_TTL: ${DOGAN_LIVEKIT_TOKEN_TTL:-3600}

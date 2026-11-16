@@ -98,7 +98,7 @@ func (store *Store) SaveLoginLog(ip, username, browserInfo string, success bool)
 		ip,
 		username,
 		browserInfo,
-		time.Now().UTC(),
+		formatSQLiteTime(time.Now().UTC()),
 		success,
 	)
 	if err != nil {
@@ -124,8 +124,8 @@ func (store *Store) SaveFrame(frame models.FrameRecord) error {
 		 VALUES (?, ?, ?, ?)`,
 		deviceRowID,
 		frame.Path,
-		capturedAt,
-		receivedAt,
+		formatSQLiteTime(capturedAt),
+		formatSQLiteTime(receivedAt),
 	)
 	if err != nil {
 		return fmt.Errorf("insert stored image: %w", err)
@@ -146,6 +146,8 @@ func (store *Store) GetLastFrame(deviceID string) (models.FrameRecord, error) {
 	var frame models.FrameRecord
 	cutoff := store.retentionCutoff()
 
+	var capturedAtRaw string
+	var receivedAtRaw string
 	err = store.db.QueryRow(
 		`SELECT id, path, captured_at, received_at
 		 FROM stored_images
@@ -153,8 +155,15 @@ func (store *Store) GetLastFrame(deviceID string) (models.FrameRecord, error) {
 		 ORDER BY captured_at DESC, id DESC
 		 LIMIT 1`,
 		deviceRowID,
-		cutoff,
-	).Scan(&frame.ID, &frame.Path, &frame.CapturedAt, &frame.ReceivedAt)
+		formatSQLiteTime(cutoff),
+	).Scan(&frame.ID, &frame.Path, &capturedAtRaw, &receivedAtRaw)
+	if err == nil {
+		if scanErr := scanSQLiteTime(capturedAtRaw, &frame.CapturedAt); scanErr != nil {
+			err = fmt.Errorf("scan frame captured_at: %w", scanErr)
+		} else if scanErr := scanSQLiteTime(receivedAtRaw, &frame.ReceivedAt); scanErr != nil {
+			err = fmt.Errorf("scan frame received_at: %w", scanErr)
+		}
+	}
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return models.FrameRecord{}, ErrFrameNotFound
@@ -203,8 +212,8 @@ func (store *Store) SaveMetrics(metrics models.DeviceMetricsRecord) error {
 		nullableFloat(metrics.Jolt),
 		nullableFloat(metrics.CPUUsagePercent),
 		nullableFloat(metrics.RAMUsagePercent),
-		recordedAt,
-		receivedAt,
+		formatSQLiteTime(recordedAt),
+		formatSQLiteTime(receivedAt),
 	)
 	if err != nil {
 		return fmt.Errorf("insert android telemetry: %w", err)
@@ -238,6 +247,8 @@ func (store *Store) GetLatestMetrics(deviceID string) (models.DeviceMetricsRecor
 	var jolt sql.NullFloat64
 	var cpuUsagePercent sql.NullFloat64
 	var ramUsagePercent sql.NullFloat64
+	var recordedAtRaw string
+	var receivedAtRaw string
 	cutoff := store.retentionCutoff()
 
 	err = store.db.QueryRow(
@@ -252,7 +263,7 @@ func (store *Store) GetLatestMetrics(deviceID string) (models.DeviceMetricsRecor
 		 ORDER BY recorded_at DESC, id DESC
 		 LIMIT 1`,
 		deviceRowID,
-		cutoff,
+		formatSQLiteTime(cutoff),
 	).Scan(
 		&batteryLevel,
 		&signalStrength,
@@ -269,14 +280,20 @@ func (store *Store) GetLatestMetrics(deviceID string) (models.DeviceMetricsRecor
 		&jolt,
 		&cpuUsagePercent,
 		&ramUsagePercent,
-		&metrics.RecordedAt,
-		&metrics.ReceivedAt,
+		&recordedAtRaw,
+		&receivedAtRaw,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return models.DeviceMetricsRecord{}, ErrMetricsNotFound
 		}
 		return models.DeviceMetricsRecord{}, fmt.Errorf("query latest metrics: %w", err)
+	}
+	if err := scanSQLiteTime(recordedAtRaw, &metrics.RecordedAt); err != nil {
+		return models.DeviceMetricsRecord{}, fmt.Errorf("scan latest recorded_at: %w", err)
+	}
+	if err := scanSQLiteTime(receivedAtRaw, &metrics.ReceivedAt); err != nil {
+		return models.DeviceMetricsRecord{}, fmt.Errorf("scan latest received_at: %w", err)
 	}
 
 	metrics.DeviceID = deviceID
@@ -335,8 +352,8 @@ func (store *Store) ListMetricsHistory(deviceID string, from, to time.Time, limi
 		 ORDER BY recorded_at DESC, id DESC
 		 LIMIT ?`,
 		deviceRowID,
-		from,
-		to,
+		formatSQLiteTime(from),
+		formatSQLiteTime(to),
 		limit,
 	)
 	if err != nil {
@@ -362,6 +379,8 @@ func (store *Store) ListMetricsHistory(deviceID string, from, to time.Time, limi
 		var jolt sql.NullFloat64
 		var cpuUsagePercent sql.NullFloat64
 		var ramUsagePercent sql.NullFloat64
+		var recordedAtRaw string
+		var receivedAtRaw string
 
 		if err := rows.Scan(
 			&batteryLevel,
@@ -379,10 +398,16 @@ func (store *Store) ListMetricsHistory(deviceID string, from, to time.Time, limi
 			&jolt,
 			&cpuUsagePercent,
 			&ramUsagePercent,
-			&metrics.RecordedAt,
-			&metrics.ReceivedAt,
+			&recordedAtRaw,
+			&receivedAtRaw,
 		); err != nil {
 			return nil, fmt.Errorf("scan metrics history: %w", err)
+		}
+		if err := scanSQLiteTime(recordedAtRaw, &metrics.RecordedAt); err != nil {
+			return nil, fmt.Errorf("scan metrics recorded_at: %w", err)
+		}
+		if err := scanSQLiteTime(receivedAtRaw, &metrics.ReceivedAt); err != nil {
+			return nil, fmt.Errorf("scan metrics received_at: %w", err)
 		}
 
 		metrics.DeviceID = deviceID
@@ -430,7 +455,7 @@ func (store *Store) ListFrames(limit int) ([]models.FrameRecord, error) {
 		 WHERE si.captured_at >= ?
 		 ORDER BY si.captured_at DESC, si.id DESC
 		 LIMIT ?`,
-		cutoff,
+		formatSQLiteTime(cutoff),
 		limit,
 	)
 	if err != nil {
@@ -441,8 +466,16 @@ func (store *Store) ListFrames(limit int) ([]models.FrameRecord, error) {
 	frames := make([]models.FrameRecord, 0)
 	for rows.Next() {
 		var frame models.FrameRecord
-		if err := rows.Scan(&frame.ID, &frame.DeviceID, &frame.Path, &frame.CapturedAt, &frame.ReceivedAt); err != nil {
+		var capturedAtRaw string
+		var receivedAtRaw string
+		if err := rows.Scan(&frame.ID, &frame.DeviceID, &frame.Path, &capturedAtRaw, &receivedAtRaw); err != nil {
 			return nil, fmt.Errorf("scan frame: %w", err)
+		}
+		if err := scanSQLiteTime(capturedAtRaw, &frame.CapturedAt); err != nil {
+			return nil, fmt.Errorf("scan frame captured_at: %w", err)
+		}
+		if err := scanSQLiteTime(receivedAtRaw, &frame.ReceivedAt); err != nil {
+			return nil, fmt.Errorf("scan frame received_at: %w", err)
 		}
 		frames = append(frames, frame)
 	}
@@ -454,6 +487,8 @@ func (store *Store) ListFrames(limit int) ([]models.FrameRecord, error) {
 
 func (store *Store) GetFrameByID(imageID int64) (models.FrameRecord, error) {
 	var frame models.FrameRecord
+	var capturedAtRaw string
+	var receivedAtRaw string
 	cutoff := store.retentionCutoff()
 	err := store.db.QueryRow(
 		`SELECT si.id, d.mac_address, si.path, si.captured_at, si.received_at
@@ -461,13 +496,19 @@ func (store *Store) GetFrameByID(imageID int64) (models.FrameRecord, error) {
 		 JOIN devices d ON d.id = si.device_id
 		 WHERE si.id = ? AND si.captured_at >= ?`,
 		imageID,
-		cutoff,
-	).Scan(&frame.ID, &frame.DeviceID, &frame.Path, &frame.CapturedAt, &frame.ReceivedAt)
+		formatSQLiteTime(cutoff),
+	).Scan(&frame.ID, &frame.DeviceID, &frame.Path, &capturedAtRaw, &receivedAtRaw)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return models.FrameRecord{}, ErrFrameNotFound
 		}
 		return models.FrameRecord{}, fmt.Errorf("query frame by id: %w", err)
+	}
+	if err := scanSQLiteTime(capturedAtRaw, &frame.CapturedAt); err != nil {
+		return models.FrameRecord{}, fmt.Errorf("scan frame captured_at: %w", err)
+	}
+	if err := scanSQLiteTime(receivedAtRaw, &frame.ReceivedAt); err != nil {
+		return models.FrameRecord{}, fmt.Errorf("scan frame received_at: %w", err)
 	}
 	return frame, nil
 }
@@ -507,7 +548,7 @@ func (store *Store) SaveDiagnosticAudio(deviceID, segmentID, path string, startM
 		rmsPeak,
 		nullIfEmpty(linkedAlertID),
 		nullIfEmpty(mode),
-		time.Now().UTC(),
+		formatSQLiteTime(time.Now().UTC()),
 	)
 	if err != nil {
 		return fmt.Errorf("insert diagnostic audio: %w", err)
@@ -550,7 +591,7 @@ func (store *Store) CreateAction(action models.PhoneActionRecord) (models.PhoneA
 		deviceRowID,
 		action.ActionType,
 		payloadJSON,
-		sentAt,
+		formatSQLiteTime(sentAt),
 		status,
 	).Scan(&action.ID)
 	if err != nil {
@@ -587,8 +628,12 @@ func (store *Store) GetPendingActions(deviceID string) ([]models.PhoneActionReco
 	for rows.Next() {
 		var action models.PhoneActionRecord
 		var payloadJSON []byte
-		if err := rows.Scan(&action.ID, &action.ActionType, &payloadJSON, &action.SentAt, &action.Status); err != nil {
+		var sentAtRaw string
+		if err := rows.Scan(&action.ID, &action.ActionType, &payloadJSON, &sentAtRaw, &action.Status); err != nil {
 			return nil, fmt.Errorf("scan pending action: %w", err)
+		}
+		if err := scanSQLiteTime(sentAtRaw, &action.SentAt); err != nil {
+			return nil, fmt.Errorf("scan pending action sent_at: %w", err)
 		}
 		action.DeviceID = deviceID
 		if len(payloadJSON) > 0 {
@@ -645,7 +690,7 @@ func (store *Store) UpsertSetting(setting models.AppSettingRecord) error {
 		setting.Platform,
 		setting.Key,
 		setting.Value,
-		updatedAt,
+		formatSQLiteTime(updatedAt),
 	)
 	if err != nil {
 		return fmt.Errorf("upsert app setting: %w", err)
@@ -670,8 +715,12 @@ func (store *Store) GetSettings(platform string) ([]models.AppSettingRecord, err
 	settings := make([]models.AppSettingRecord, 0)
 	for rows.Next() {
 		var setting models.AppSettingRecord
-		if err := rows.Scan(&setting.Platform, &setting.Key, &setting.Value, &setting.UpdatedAt); err != nil {
+		var updatedAtRaw string
+		if err := rows.Scan(&setting.Platform, &setting.Key, &setting.Value, &updatedAtRaw); err != nil {
 			return nil, fmt.Errorf("scan app setting: %w", err)
+		}
+		if err := scanSQLiteTime(updatedAtRaw, &setting.UpdatedAt); err != nil {
+			return nil, fmt.Errorf("scan app setting updated_at: %w", err)
 		}
 		settings = append(settings, setting)
 	}
@@ -683,7 +732,7 @@ func (store *Store) GetSettings(platform string) ([]models.AppSettingRecord, err
 	return settings, nil
 }
 
-	func (store *Store) SaveConnection(connection models.WebRTCConnectionRecord) (models.WebRTCConnectionRecord, error) {
+func (store *Store) SaveConnection(connection models.WebRTCConnectionRecord) (models.WebRTCConnectionRecord, error) {
 	deviceRowID, err := store.resolveDeviceRowID(connection.DeviceID)
 	if err != nil {
 		return models.WebRTCConnectionRecord{}, err
@@ -699,6 +748,11 @@ func (store *Store) GetSettings(platform string) ([]models.AppSettingRecord, err
 		status = "active"
 	}
 
+	var disconnectedAt any
+	if connection.DisconnectedAt != nil {
+		disconnectedAt = formatSQLiteTime(*connection.DisconnectedAt)
+	}
+
 	err = store.db.QueryRow(
 		`INSERT INTO webrtc_connections (device_id, room, identity, role, connected_at, disconnected_at, status)
 		 VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -707,8 +761,8 @@ func (store *Store) GetSettings(platform string) ([]models.AppSettingRecord, err
 		connection.Room,
 		connection.Identity,
 		connection.Role,
-		connectedAt,
-		connection.DisconnectedAt,
+		formatSQLiteTime(connectedAt),
+		disconnectedAt,
 		status,
 	).Scan(&connection.ID)
 	if err != nil {
@@ -769,7 +823,7 @@ func (store *Store) ListConnections(deviceID string, limit int) ([]models.WebRTC
 func (store *Store) PurgeExpiredFrames(cutoff time.Time) ([]string, error) {
 	rows, err := store.db.Query(
 		`SELECT path FROM stored_images WHERE captured_at < ?`,
-		cutoff.UTC(),
+		formatSQLiteTime(cutoff.UTC()),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("query expired frames: %w", err)
@@ -789,7 +843,7 @@ func (store *Store) PurgeExpiredFrames(cutoff time.Time) ([]string, error) {
 		return nil, fmt.Errorf("iterate expired frames: %w", err)
 	}
 
-	if _, err := store.db.Exec(`DELETE FROM stored_images WHERE captured_at < ?`, cutoff.UTC()); err != nil {
+	if _, err := store.db.Exec(`DELETE FROM stored_images WHERE captured_at < ?`, formatSQLiteTime(cutoff.UTC())); err != nil {
 		return nil, fmt.Errorf("delete expired frames: %w", err)
 	}
 
@@ -797,7 +851,7 @@ func (store *Store) PurgeExpiredFrames(cutoff time.Time) ([]string, error) {
 }
 
 func (store *Store) PurgeExpiredMetrics(cutoff time.Time) error {
-	if _, err := store.db.Exec(`DELETE FROM android_telemetry WHERE recorded_at < ?`, cutoff.UTC()); err != nil {
+	if _, err := store.db.Exec(`DELETE FROM android_telemetry WHERE recorded_at < ?`, formatSQLiteTime(cutoff.UTC())); err != nil {
 		return fmt.Errorf("delete expired metrics: %w", err)
 	}
 	return nil
@@ -815,6 +869,7 @@ func (store *Store) SaveVisionAnalysis(record models.VisionAnalysisRecord) (mode
 		analyzedAt = time.Now().UTC()
 	}
 
+	var analyzedAtRaw string
 	err = store.db.QueryRow(
 		`INSERT INTO vision_analyses (device_id, image_id, model, prompt, analysis, analyzed_at)
 		 VALUES (?, ?, ?, ?, ?, ?)
@@ -824,10 +879,13 @@ func (store *Store) SaveVisionAnalysis(record models.VisionAnalysisRecord) (mode
 		record.Model,
 		record.Prompt,
 		record.Analysis,
-		analyzedAt,
-	).Scan(&record.ID, &record.AnalyzedAt)
+		formatSQLiteTime(analyzedAt),
+	).Scan(&record.ID, &analyzedAtRaw)
 	if err != nil {
 		return models.VisionAnalysisRecord{}, fmt.Errorf("insert vision analysis: %w", err)
+	}
+	if err := scanSQLiteTime(analyzedAtRaw, &record.AnalyzedAt); err != nil {
+		return models.VisionAnalysisRecord{}, fmt.Errorf("scan vision analyzed_at: %w", err)
 	}
 	return record, nil
 }
@@ -843,6 +901,7 @@ func (store *Store) GetLatestVisionAnalysis(deviceID string) (models.VisionAnaly
 
 	var record models.VisionAnalysisRecord
 	var imageID sql.NullInt64
+	var analyzedAtRaw string
 	err = store.db.QueryRow(
 		`SELECT id, image_id, model, prompt, analysis, analyzed_at
 		 FROM vision_analyses
@@ -850,12 +909,15 @@ func (store *Store) GetLatestVisionAnalysis(deviceID string) (models.VisionAnaly
 		 ORDER BY analyzed_at DESC, id DESC
 		 LIMIT 1`,
 		deviceRowID,
-	).Scan(&record.ID, &imageID, &record.Model, &record.Prompt, &record.Analysis, &record.AnalyzedAt)
+	).Scan(&record.ID, &imageID, &record.Model, &record.Prompt, &record.Analysis, &analyzedAtRaw)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return models.VisionAnalysisRecord{}, ErrVisionAnalysisNotFound
 		}
 		return models.VisionAnalysisRecord{}, fmt.Errorf("query vision analysis: %w", err)
+	}
+	if err := scanSQLiteTime(analyzedAtRaw, &record.AnalyzedAt); err != nil {
+		return models.VisionAnalysisRecord{}, fmt.Errorf("scan vision analyzed_at: %w", err)
 	}
 	record.DeviceID = deviceID
 	if imageID.Valid {
@@ -952,8 +1014,8 @@ func (store *Store) ListDevices() ([]models.DeviceListItem, error) {
 		        END AS status
 		 FROM devices d
 		 ORDER BY d.device_name ASC, d.mac_address ASC`,
-		onlineCutoff,
-		onlineCutoff,
+		formatSQLiteTime(onlineCutoff),
+		formatSQLiteTime(onlineCutoff),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("list devices: %w", err)
