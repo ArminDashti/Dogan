@@ -231,121 +231,125 @@ onUnmounted(() => {
     subtitle="Live ops status for API, fleet, gallery, settings, and streams."
     :scrollable="false"
   >
-    <div class="space-y-6">
+    <div class="flex h-full min-h-0 flex-col gap-3">
       <ErrorAlert v-if="errorMessage" title="Dashboard unavailable" :message="errorMessage" />
 
-      <div v-if="loadingOps" class="yoda-card px-5 py-12 text-center text-[var(--muted)]">
+      <div
+        v-if="loadingOps"
+        class="yoda-card flex flex-1 items-center justify-center px-5 py-8 text-[var(--muted)]"
+      >
         Loading ops status…
       </div>
 
       <template v-else>
-        <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <article class="instrument-cell">
-            <p class="instrument-label">API health</p>
-            <p class="instrument-value">{{ health?.status ?? '--' }}</p>
-            <p class="mt-1 font-mono text-xs text-[var(--muted)]">
-              {{ formatTimestamp(health?.timestamp) }}
-            </p>
-          </article>
+        <div class="grid shrink-0 gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(220px,0.34fr)]">
+          <section class="grid grid-cols-2 gap-2 xl:grid-cols-3">
+            <article class="instrument-cell !p-2.5">
+              <p class="instrument-label">API health</p>
+              <p class="instrument-value !mt-0.5 !text-lg">{{ health?.status ?? '--' }}</p>
+              <p class="mt-0.5 truncate font-mono text-[0.65rem] text-[var(--muted)]">
+                {{ formatTimestamp(health?.timestamp) }}
+              </p>
+            </article>
 
-          <article class="instrument-cell">
-            <p class="instrument-label">LiveKit</p>
-            <p class="instrument-value">
-              {{ health?.livekitConfigured ? 'Configured' : 'Not configured' }}
-            </p>
-          </article>
+            <article class="instrument-cell !p-2.5">
+              <p class="instrument-label">LiveKit</p>
+              <p class="instrument-value !mt-0.5 !text-lg">
+                {{ health?.livekitConfigured ? 'Configured' : 'Not configured' }}
+              </p>
+            </article>
 
-          <article class="instrument-cell">
-            <p class="instrument-label">Devices</p>
-            <p class="instrument-value">{{ devices.length }}</p>
-            <p class="mt-1 text-xs text-[var(--muted)]">
-              {{ onlineCount }} online · {{ offlineCount }} offline
-            </p>
-          </article>
+            <article class="instrument-cell !p-2.5">
+              <p class="instrument-label">Devices</p>
+              <p class="instrument-value !mt-0.5 !text-lg">{{ devices.length }}</p>
+              <p class="mt-0.5 text-[0.65rem] text-[var(--muted)]">
+                {{ onlineCount }} online · {{ offlineCount }} offline
+              </p>
+            </article>
 
-          <article class="instrument-cell">
-            <p class="instrument-label">Gallery images</p>
-            <p class="instrument-value">{{ galleryCount }}</p>
-          </article>
+            <article class="instrument-cell !p-2.5">
+              <p class="instrument-label">Gallery images</p>
+              <p class="instrument-value !mt-0.5 !text-lg">{{ galleryCount }}</p>
+            </article>
 
-          <article class="instrument-cell">
-            <p class="instrument-label">Settings</p>
-            <p class="instrument-value">
-              {{ settings ? `${settings.noiseAlertThresholdDb} dB` : '--' }}
-            </p>
-            <p class="mt-1 text-xs text-[var(--muted)]">
-              Alerts {{ settings?.notificationsEnabled ? 'on' : 'off' }} ·
-              {{ settings?.temperatureUnit ?? '--' }}
-            </p>
-          </article>
+            <article class="instrument-cell !p-2.5">
+              <p class="instrument-label">Settings</p>
+              <p class="instrument-value !mt-0.5 !text-lg">
+                {{ settings ? `${settings.noiseAlertThresholdDb} dB` : '--' }}
+              </p>
+              <p class="mt-0.5 text-[0.65rem] text-[var(--muted)]">
+                Alerts {{ settings?.notificationsEnabled ? 'on' : 'off' }} ·
+                {{ settings?.temperatureUnit ?? '--' }}
+              </p>
+            </article>
 
-          <article class="instrument-cell">
-            <p class="instrument-label">WebRTC sessions</p>
-            <p class="instrument-value">{{ connections.length }}</p>
-            <p class="mt-1 text-xs text-[var(--muted)]">Recent listed below</p>
-          </article>
-        </section>
+            <article class="instrument-cell !p-2.5">
+              <p class="instrument-label">WebRTC sessions</p>
+              <p class="instrument-value !mt-0.5 !text-lg">{{ connections.length }}</p>
+            </article>
+          </section>
 
-        <section class="yoda-card p-5 sm:p-6">
-          <div class="mb-4">
-            <h2 class="text-lg font-semibold tracking-tight text-[var(--text)]">Recent WebRTC</h2>
-            <p class="text-sm text-[var(--muted)]">Latest publisher and subscriber sessions.</p>
-          </div>
+          <section class="yoda-card flex max-h-28 min-h-0 flex-col overflow-hidden p-3 xl:max-h-none">
+            <div class="mb-2 shrink-0">
+              <h2 class="text-sm font-semibold tracking-tight text-[var(--text)]">Recent WebRTC</h2>
+              <p class="text-xs text-[var(--muted)]">Latest publisher / subscriber sessions.</p>
+            </div>
 
-          <div
-            v-if="connections.length === 0"
-            class="border border-dashed border-[var(--border)] px-4 py-8 text-center text-sm text-[var(--muted)]"
-          >
-            No WebRTC sessions recorded yet.
-          </div>
-
-          <ul v-else class="divide-y divide-[var(--border)]">
-            <li
-              v-for="connection in connections"
-              :key="connection.id"
-              class="flex flex-wrap items-center justify-between gap-2 py-3 text-sm"
+            <div
+              v-if="connections.length === 0"
+              class="flex flex-1 items-center justify-center border border-dashed border-[var(--border)] px-3 py-2 text-center text-xs text-[var(--muted)]"
             >
-              <div>
-                <p class="font-medium text-[var(--text)]">
-                  {{ connection.deviceId }} · {{ connection.role }}
-                </p>
-                <p class="font-mono text-xs text-[var(--muted)]">
-                  {{ connection.room }} · {{ connection.identity }}
-                </p>
-              </div>
-              <div class="text-right">
-                <span class="status-pill">{{ connection.status }}</span>
-                <p class="mt-1 font-mono text-xs text-[var(--muted)]">
-                  {{ formatTimestamp(connection.connectedAt) }}
-                </p>
-              </div>
-            </li>
-          </ul>
-        </section>
+              No WebRTC sessions recorded yet.
+            </div>
+
+            <ul v-else class="min-h-0 flex-1 divide-y divide-[var(--border)] overflow-y-auto">
+              <li
+                v-for="connection in connections"
+                :key="connection.id"
+                class="flex flex-wrap items-center justify-between gap-2 py-1.5 text-xs"
+              >
+                <div class="min-w-0">
+                  <p class="truncate font-medium text-[var(--text)]">
+                    {{ connection.deviceId }} · {{ connection.role }}
+                  </p>
+                  <p class="truncate font-mono text-[0.65rem] text-[var(--muted)]">
+                    {{ connection.room }} · {{ connection.identity }}
+                  </p>
+                </div>
+                <div class="shrink-0 text-right">
+                  <span class="status-pill">{{ connection.status }}</span>
+                  <p class="mt-0.5 font-mono text-[0.65rem] text-[var(--muted)]">
+                    {{ formatTimestamp(connection.connectedAt) }}
+                  </p>
+                </div>
+              </li>
+            </ul>
+          </section>
+        </div>
 
         <section
           v-if="!hasDevices"
-          class="yoda-card border-dashed px-5 py-12 text-center text-[var(--muted)]"
+          class="yoda-card flex flex-1 items-center justify-center border-dashed px-5 py-8 text-center text-sm text-[var(--muted)]"
         >
           {{ EMPTY_FLEET_MESSAGE }}
         </section>
 
         <template v-else>
-          <div class="flex flex-wrap items-end gap-3">
-            <label class="min-w-64 flex-1">
-              <span class="mb-1.5 block text-sm font-medium text-[var(--text)]">Device</span>
-              <select v-model="selectedDeviceId" class="yoda-select">
+          <div class="flex shrink-0 flex-wrap items-center gap-2">
+            <label class="min-w-48 flex-1">
+              <span class="mb-1 block text-xs font-medium text-[var(--text)]">Device</span>
+              <select v-model="selectedDeviceId" class="yoda-select py-2 text-sm">
                 <option v-for="device in devices" :key="device.id" :value="device.id">
                   {{ device.name }}
                 </option>
               </select>
             </label>
 
-            <div v-if="selectedDevice" class="meta-chip">
+            <div v-if="selectedDevice" class="meta-chip !py-1.5 !text-xs">
               Name <strong>{{ selectedDevice.name }}</strong>
             </div>
 
-            <div v-if="selectedDevice" class="meta-chip">
+            <div v-if="selectedDevice" class="meta-chip !py-1.5 !text-xs">
               Location <strong>{{ selectedDevice.location ?? selectedDevice.id }}</strong>
             </div>
 
@@ -354,40 +358,50 @@ onUnmounted(() => {
             </span>
           </div>
 
-          <div class="grid gap-6 lg:grid-cols-2">
-            <section class="yoda-card p-5 sm:p-6">
-              <div class="mb-4">
-                <h2 class="text-lg font-semibold tracking-tight text-[var(--text)]">Telemetry</h2>
-                <p class="text-sm text-[var(--muted)]">Live readings from the selected device.</p>
+          <div
+            class="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(0,1fr)] gap-3 md:grid-rows-none md:grid-cols-2"
+          >
+            <section class="yoda-card flex min-h-0 flex-col overflow-hidden p-3">
+              <div class="mb-2 shrink-0">
+                <h2 class="text-sm font-semibold tracking-tight text-[var(--text)]">Telemetry</h2>
+                <p class="text-xs text-[var(--muted)]">Live readings from the selected device.</p>
               </div>
 
-              <div v-if="loadingTelemetry" class="py-8 text-center text-sm text-[var(--muted)]">
+              <div
+                v-if="loadingTelemetry"
+                class="flex flex-1 items-center justify-center text-sm text-[var(--muted)]"
+              >
                 Loading telemetry…
               </div>
 
-              <div v-else class="grid gap-3 sm:grid-cols-2">
+              <div v-else class="grid min-h-0 flex-1 grid-cols-2 content-start gap-2 overflow-y-auto">
                 <article
                   v-for="card in telemetryCards"
                   :key="card.label"
-                  class="instrument-cell"
+                  class="instrument-cell !p-2"
                 >
                   <p class="instrument-label">{{ card.label }}</p>
-                  <p class="instrument-value">{{ card.value }}</p>
+                  <p class="instrument-value !mt-0.5 !text-base">{{ card.value }}</p>
                 </article>
               </div>
 
-              <p v-if="telemetry" class="mt-4 font-mono text-xs text-[var(--muted)]">
+              <p
+                v-if="telemetry"
+                class="mt-2 shrink-0 font-mono text-[0.65rem] text-[var(--muted)]"
+              >
                 Last updated {{ formatTimestamp(telemetry.recordedAt) }}
               </p>
             </section>
 
-            <div>
-              <div class="mb-4">
-                <h2 class="text-lg font-semibold tracking-tight text-[var(--text)]">Camera</h2>
-                <p class="text-sm text-[var(--muted)]">Live feed with manual stream controls.</p>
+            <div class="flex min-h-0 flex-col gap-2">
+              <div class="shrink-0">
+                <h2 class="text-sm font-semibold tracking-tight text-[var(--text)]">Camera</h2>
+                <p class="text-xs text-[var(--muted)]">Live feed with manual stream controls.</p>
               </div>
 
               <CameraPanel
+                class="min-h-0 flex-1"
+                fill
                 :device-id="selectedDeviceId"
                 :device-name="selectedDevice?.name"
               />

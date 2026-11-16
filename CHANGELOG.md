@@ -5,6 +5,11 @@
 ### Breaking
 - dogan-api now uses SQLite (`file:/data/dogan.db` on the API volume) instead of PostgreSQL; `dogan-pgsql` Compose service and `pgx` are removed. Fresh empty DB on upgrade (no Postgres dump migration).
 
+## [0.3.2] - 2026-11-16
+
+### Changed
+- Dashboard fits one viewport without page scroll: denser KPI/WebRTC/device chrome and a fill-height Telemetry + Camera split (`CameraPanel` `fill` mode; tighter non-scrollable `AppLayout` padding).
+
 ## [0.3.1] - 2026-11-16
 
 ### Changed

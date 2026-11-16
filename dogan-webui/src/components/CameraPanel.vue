@@ -10,6 +10,8 @@ export type ConnectionState = 'idle' | 'connecting' | 'live' | 'error'
 const props = defineProps<{
   deviceId: string
   deviceName?: string
+  /** Fill parent height instead of locking to 16:9 (Dashboard one-shot). */
+  fill?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -160,8 +162,14 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section class="yoda-card overflow-hidden">
-    <div class="relative aspect-video bg-[#0d1218]">
+  <section
+    class="yoda-card overflow-hidden"
+    :class="fill ? 'flex h-full min-h-0 flex-col' : undefined"
+  >
+    <div
+      class="relative bg-[#0d1218]"
+      :class="fill ? 'min-h-0 flex-1' : 'aspect-video'"
+    >
       <div ref="videoContainer" class="absolute inset-0" />
       <div
         v-if="connectionState !== 'live'"
@@ -178,7 +186,10 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div class="flex flex-wrap items-center gap-3 border-t border-[var(--border)] px-5 py-4">
+    <div
+      class="flex flex-wrap items-center gap-3 border-t border-[var(--border)]"
+      :class="fill ? 'shrink-0 px-3 py-2' : 'px-5 py-4'"
+    >
       <button
         type="button"
         class="yoda-btn yoda-btn--primary cursor-pointer"
