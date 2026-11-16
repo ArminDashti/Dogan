@@ -1,34 +1,34 @@
 # Dogan Web — Design System
 
-**World:** Lot Signal  
+**World:** Cursor Dark  
 **Mode:** Operate  
-**Anti-reference:** Previous dark Inter + generic blue admin chrome (`#1e1e1e` / `#2563eb`)
+**Anti-reference:** Light Lot Signal teal console; generic Dark+ blue admin (`#1e1e1e` / `#2563eb`)
 
 ## Intent
 
-A light field-ops console that feels like a municipal lot board and barrier arm: cool concrete, bay-open teal, barrier amber for live attention. Precision and scanability over expression. Brand lives in the mark, type, and signal color — not purple glow or dashboard clutter.
+A dark ops console using Cursor Dark editor chrome: near-black surfaces, soft Nord-blue primary, barrier amber for live attention. Precision and scanability over expression. Brand lives in the mark, type, and signal color — not purple glow or dashboard clutter.
 
 ## Color
 
 | Role | Hex | Token |
 |------|-----|-------|
-| Background | `#E8EDF1` | `--bg` |
-| Surface | `#F7FAFC` | `--surface` |
-| Raised | `#FFFFFF` | `--surface-raised` |
-| Border | `#C5D0DA` | `--border` |
-| Text | `#15202B` | `--text` |
-| Muted | `#5A6B7A` | `--muted` |
-| Primary / bay | `#0B6E4F` | `--accent` |
-| On primary | `#FFFFFF` | `--primary-fg` |
-| Accent soft | `#D4EFE4` | `--accent-soft` |
+| Background | `#181818` | `--bg` |
+| Surface | `#141414` | `--surface` |
+| Raised | `#1C1C1C` | `--surface-raised` |
+| Border | `#2E2E2E` | `--border` |
+| Text | `#F0F0F0` | `--text` |
+| Muted | `#F0F0F0BD` | `--muted` |
+| Primary | `#81A1C1` | `--accent` |
+| On primary | `#191C22` | `--primary-fg` |
+| Accent soft | `#81A1C126` | `--accent-soft` |
 | Signal / live | `#C9780E` | `--signal` |
-| Live (status) | `#0B6E4F` | `--live` |
-| Danger | `#B42318` | `--danger` |
-| Danger bg | `#FCEBEA` | `--danger-bg` |
-| Switch off | `#C5D0DA` | `--switch-off` |
-| Switch on | `#0B6E4F` | `--switch-on` |
+| Live (status) | `#3FA266` | `--live` |
+| Danger | `#E34671` | `--danger` |
+| Danger bg | `#3A1524` | `--danger-bg` |
+| Switch off | `#39393D` | `--switch-off` |
+| Switch on | `#34C759` | `--switch-on` |
 
-`color-scheme: light`. Camera viewport stays black (media surface).
+`color-scheme: dark`. `data-theme="cursor-dark"`. Camera viewport stays black (media surface).
 
 ## Typography
 
@@ -45,11 +45,11 @@ A light field-ops console that feels like a municipal lot board and barrier arm:
 
 ## Components
 
-- **Panels (`.yoda-card`):** raised white, 1px border, no heavy shadow
-- **Buttons:** primary teal fill; outline border; 180ms transitions
-- **Nav:** muted links; active = left signal bar + soft teal wash
-- **Status pills:** online = teal wash; offline = danger wash; unknown = muted
-- **Inputs:** white fill, focus ring teal 25%
+- **Panels (`.yoda-card`):** raised dark surface, 1px border, no heavy shadow
+- **Buttons:** primary Cursor blue fill + dark label; outline border; 180ms transitions
+- **Nav:** muted links; active = left signal bar + soft accent wash
+- **Status pills:** online = accent wash; offline = danger wash; unknown = muted
+- **Inputs:** raised fill, focus ring accent ~22%
 
 ## Motion
 
@@ -61,6 +61,6 @@ Respect `prefers-reduced-motion`.
 
 ## Do not
 
-- Dark-default admin skins, Inter, purple accents, glow, cream+serif+terracotta
+- Light Lot Signal default; Inter; purple accents; glow; cream+serif+terracotta; Dark+ `#2563eb` chrome
 - Emoji icons; layout-shifting scale hovers; invisible focus rings
 - Hero marketing clutter on Operate screens
