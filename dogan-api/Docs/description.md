@@ -7,6 +7,10 @@ Dogan is a Go REST API for a personal Android + web monitoring stack. It stores 
 **Run (preferred):**
 ```powershell
 .\.armin\docker-scripts\run-on-docker-local.ps1
+```
+
+Optional API smoke test only (does **not** populate the admin WebUI for day-to-day use — devices appear when Android phones report in):
+```powershell
 .\scripts\test-dummy-data.ps1
 ```
 

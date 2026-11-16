@@ -62,7 +62,16 @@ onMounted(async () => {
 
       <ErrorAlert v-if="errorMessage" title="Stream unavailable" :message="errorMessage" />
 
+      <div
+        v-if="!loadingDevices && devices.length === 0"
+        class="yoda-card border-dashed px-5 py-12 text-center text-[var(--muted)]"
+      >
+        No registered devices yet. Connect the Dogan Android app so a phone reports in — no seed
+        script or mock API needed.
+      </div>
+
       <CameraPanel
+        v-else
         :device-id="selectedDeviceId"
         :device-name="selectedDevice?.name"
       />

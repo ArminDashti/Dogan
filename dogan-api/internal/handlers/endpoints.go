@@ -40,7 +40,7 @@ func (handler *EndpointsHandler) ListEndpoints(context *gin.Context) {
 		{Method: http.MethodGet, Path: apiBasePath + "/sounds", Description: "List downloadable alert sounds for Android", Auth: true},
 		{Method: http.MethodGet, Path: apiBasePath + "/sounds/:id", Description: "Download alert sound file", Auth: true},
 		{Method: http.MethodPost, Path: apiBasePath + "/diagnostic-audio", Description: "Upload cabin diagnostic WAV audio", Auth: true},
-		{Method: http.MethodGet, Path: apiBasePath + "/webrtc/connections", Description: "List recent WebRTC sessions", Auth: true},
+		{Method: http.MethodGet, Path: apiBasePath + "/webrtc/connections", Description: "List recent WebRTC sessions (optional device-id filter)", Auth: true},
 		{Method: http.MethodPost, Path: apiBasePath + "/streaming/token", Description: "Issue LiveKit WebRTC token", Auth: true},
 		{Method: http.MethodPost, Path: apiBasePath + "/webrtc/session", Description: "Create LiveKit publisher session for Android", Auth: true},
 		{Method: http.MethodGet, Path: apiBasePath + "/devices", Description: "List registered devices", Auth: true},

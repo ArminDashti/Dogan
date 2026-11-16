@@ -14,8 +14,9 @@ type AuthResponse struct {
 }
 
 type HealthResponse struct {
-	Status    string    `json:"status"`
-	Timestamp time.Time `json:"timestamp"`
+	Status            string    `json:"status"`
+	Timestamp         time.Time `json:"timestamp"`
+	LiveKitConfigured bool      `json:"livekit_configured"`
 }
 
 type EndpointDescriptor struct {

@@ -21,11 +21,19 @@ Set `VITE_API_BASE_URL` in `.env` to your backend API base URL (no trailing slas
 
 ## Development
 
+Run the live Dogan API (Docker) first — this UI talks only to that backend, not a mock server:
+
+```bash
+# from dogan-api
+docker compose up -d --build
+# API: http://localhost:8080/dogan/api/v1/health
+```
+
 ```bash
 npm run dev
 ```
 
-Open the URL shown in the terminal (default `http://localhost:5173`).
+Open the URL shown in the terminal (default `http://localhost:5173`). For the Docker WebUI image use `http://localhost:8083` (login `admin@local.local` / `admin`). Devices appear when a real Android phone reports in; do not seed fake devices for the admin panel.
 
 ## Production build
 
