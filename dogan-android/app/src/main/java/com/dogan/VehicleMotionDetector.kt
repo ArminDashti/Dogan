@@ -30,12 +30,16 @@ class VehicleMotionDetector(
     private var lastTriggerAtMs = 0L
     private var hasBaseline = false
 
-    /** Subscribes to linear acceleration or accelerometer updates at game rate. */
-    fun register(sensorManager: SensorManager): Boolean {
+    /** Subscribes to linear acceleration or accelerometer updates at the given rate. */
+    fun register(
+        sensorManager: SensorManager,
+        samplingRate: MotionSamplingRate = MotionSamplingRate.HIGH,
+    ): Boolean {
+        unregister(sensorManager)
         val linearSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
         val sensor = linearSensor ?: sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) ?: return false
         usesLinearAcceleration = linearSensor != null
-        sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_GAME)
+        sensorManager.registerListener(this, sensor, samplingRate.toSensorDelay())
         return true
     }
 

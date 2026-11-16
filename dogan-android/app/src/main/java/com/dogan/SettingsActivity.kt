@@ -197,10 +197,17 @@ class SettingsActivity : AppCompatActivity() {
     private fun bindCopilot(settings: AppSettings) {
         val alert = findViewById<SwitchMaterial>(R.id.copilotAlertSwitch)
         val distance = findViewById<SwitchMaterial>(R.id.copilotDistanceSwitch)
+        val holdWake = findViewById<SwitchMaterial>(R.id.copilotHoldWakeLockSwitch)
+        val liveStream = findViewById<SwitchMaterial>(R.id.copilotLiveStreamSwitch)
+        val gps = findViewById<AutoCompleteTextView>(R.id.copilotGpsAccuracyInput)
         val alertDuration = findViewById<AutoCompleteTextView>(R.id.alertDurationInput)
 
         alert.isChecked = settings.copilotAlertsEnabled
         distance.isChecked = settings.copilotDistanceControlEnabled
+        holdWake.isChecked = settings.copilotHoldWakeLock
+        liveStream.isChecked = settings.copilotLiveStreamEnabled
+        setupDropdown(gps, GpsAccuracy.all.map { it.displayName })
+        gps.setText(settings.copilotGpsAccuracy.displayName, false)
         setupDropdown(alertDuration, AlertDuration.all.map { it.displayName })
         alertDuration.setText(settings.alertDuration.displayName, false)
 
@@ -214,6 +221,22 @@ class SettingsActivity : AppCompatActivity() {
                 it.copy(copilotDistanceControlEnabled = checked)
             }
         }
+        holdWake.setOnCheckedChangeListener { _, checked ->
+            if (suppressAutoSave) return@setOnCheckedChangeListener
+            persist(mapOf("copilot_hold_wake_lock" to checked)) { it.copy(copilotHoldWakeLock = checked) }
+        }
+        liveStream.setOnCheckedChangeListener { _, checked ->
+            if (suppressAutoSave) return@setOnCheckedChangeListener
+            persist(mapOf("copilot_live_stream_enabled" to checked)) {
+                it.copy(copilotLiveStreamEnabled = checked)
+            }
+        }
+        gps.setOnItemClickListener { _, _, position, _ ->
+            val accuracy = GpsAccuracy.all.getOrElse(position) { GpsAccuracy.HIGH }
+            persist(mapOf("copilot_gps_accuracy" to accuracy.toStoredValue())) {
+                it.copy(copilotGpsAccuracy = accuracy)
+            }
+        }
         alertDuration.setOnItemClickListener { _, _, position, _ ->
             val duration = AlertDuration.all.getOrElse(position) { AlertDuration.THREE }
             persist(mapOf("alert_duration" to duration.toStoredValue())) { it.copy(alertDuration = duration) }
@@ -221,17 +244,25 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun bindWatchman(settings: AppSettings) {
+        val soundMonitoring = findViewById<SwitchMaterial>(R.id.soundMonitoringSwitch)
         val jolt = findViewById<AutoCompleteTextView>(R.id.joltSensitivityInput)
         val sound = findViewById<AutoCompleteTextView>(R.id.soundSensitivityInput)
+        val motionRate = findViewById<AutoCompleteTextView>(R.id.motionSamplingRateInput)
+        val gps = findViewById<AutoCompleteTextView>(R.id.watcherGpsAccuracyInput)
         val customJoltLayout = findViewById<View>(R.id.customJoltScaleLayout)
         val customSoundLayout = findViewById<View>(R.id.customSoundThresholdLayout)
         val customJoltInput = findViewById<TextInputEditText>(R.id.customJoltScaleInput)
         val customSoundInput = findViewById<TextInputEditText>(R.id.customSoundThresholdInput)
 
+        soundMonitoring.isChecked = settings.soundMonitoringEnabled
         setupDropdown(jolt, SensitivityLevel.all.map { it.displayName })
         jolt.setText(settings.joltSensitivity.displayName, false)
         setupDropdown(sound, SensitivityLevel.all.map { it.displayName })
         sound.setText(settings.soundSensitivity.displayName, false)
+        setupDropdown(motionRate, MotionSamplingRate.all.map { it.displayName })
+        motionRate.setText(settings.motionSamplingRate.displayName, false)
+        setupDropdown(gps, GpsAccuracy.all.map { it.displayName })
+        gps.setText(settings.watcherGpsAccuracy.displayName, false)
         customJoltInput.setText(settings.customJoltScale.toString())
         customSoundInput.setText(settings.customSoundThreshold.toString())
         fun refreshCustomVisibility() {
@@ -254,6 +285,12 @@ class SettingsActivity : AppCompatActivity() {
         }
         refreshCustomVisibility()
 
+        soundMonitoring.setOnCheckedChangeListener { _, checked ->
+            if (suppressAutoSave) return@setOnCheckedChangeListener
+            persist(mapOf("sound_monitoring_enabled" to checked)) {
+                it.copy(soundMonitoringEnabled = checked)
+            }
+        }
         jolt.setOnItemClickListener { _, _, position, _ ->
             val level = SensitivityLevel.all.getOrElse(position) { SensitivityLevel.MEDIUM }
             customJoltLayout.visibility = if (level == SensitivityLevel.CUSTOM) View.VISIBLE else View.GONE
@@ -263,6 +300,18 @@ class SettingsActivity : AppCompatActivity() {
             val level = SensitivityLevel.all.getOrElse(position) { SensitivityLevel.MEDIUM }
             customSoundLayout.visibility = if (level == SensitivityLevel.CUSTOM) View.VISIBLE else View.GONE
             persist(mapOf("sound_sensitivity" to level.toStoredValue())) { it.copy(soundSensitivity = level) }
+        }
+        motionRate.setOnItemClickListener { _, _, position, _ ->
+            val rate = MotionSamplingRate.all.getOrElse(position) { MotionSamplingRate.HIGH }
+            persist(mapOf("motion_sampling_rate" to rate.toStoredValue())) {
+                it.copy(motionSamplingRate = rate)
+            }
+        }
+        gps.setOnItemClickListener { _, _, position, _ ->
+            val accuracy = GpsAccuracy.all.getOrElse(position) { GpsAccuracy.BALANCED }
+            persist(mapOf("watcher_gps_accuracy" to accuracy.toStoredValue())) {
+                it.copy(watcherGpsAccuracy = accuracy)
+            }
         }
         bindText(customJoltInput) { text ->
             val value = SettingsStore.normalizeCustomJoltScale(
@@ -279,12 +328,30 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun bindGeneral(settings: AppSettings) {
+        val telemetry = findViewById<TextInputEditText>(R.id.telemetryIntervalInput)
+        val upload = findViewById<TextInputEditText>(R.id.uploadIntervalInput)
         val sync = findViewById<TextInputEditText>(R.id.syncIntervalInput)
         val keepAlive = findViewById<TextInputEditText>(R.id.screenOnIntervalInput)
+        val ambientLight = findViewById<SwitchMaterial>(R.id.ambientLightSwitch)
 
+        telemetry.setText(settings.telemetryIntervalSec.toString())
+        upload.setText(settings.uploadIntervalSec.toString())
         sync.setText(settings.settingsSyncIntervalSec.toString())
         keepAlive.setText(settings.screenOnIntervalMin.toString())
+        ambientLight.isChecked = settings.ambientLightEnabled
 
+        bindText(telemetry) { text ->
+            val value = SettingsStore.normalizeTelemetryIntervalSec(
+                text.toIntOrNull() ?: SettingsStore.DEFAULT_TELEMETRY_INTERVAL_SEC,
+            )
+            persist(mapOf("telemetry_interval_sec" to value)) { it.copy(telemetryIntervalSec = value) }
+        }
+        bindText(upload) { text ->
+            val value = SettingsStore.normalizeUploadIntervalSec(
+                text.toIntOrNull() ?: SettingsStore.DEFAULT_UPLOAD_INTERVAL_SEC,
+            )
+            persist(mapOf("upload_interval_sec" to value)) { it.copy(uploadIntervalSec = value) }
+        }
         bindText(sync) { text ->
             val value = SettingsStore.normalizeSettingsSyncIntervalSec(
                 text.toIntOrNull() ?: SettingsStore.DEFAULT_SETTINGS_SYNC_INTERVAL_SEC,
@@ -296,6 +363,10 @@ class SettingsActivity : AppCompatActivity() {
                 text.toIntOrNull() ?: SettingsStore.DEFAULT_SCREEN_ON_INTERVAL_MIN,
             )
             persist(mapOf("screen_on_interval_min" to value)) { it.copy(screenOnIntervalMin = value) }
+        }
+        ambientLight.setOnCheckedChangeListener { _, checked ->
+            if (suppressAutoSave) return@setOnCheckedChangeListener
+            persist(mapOf("ambient_light_enabled" to checked)) { it.copy(ambientLightEnabled = checked) }
         }
     }
 

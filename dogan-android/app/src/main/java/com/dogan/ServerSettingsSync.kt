@@ -79,6 +79,11 @@ object ServerSettingsSync {
                 ),
             )
         }
+        if (remote.has("upload_interval_sec")) {
+            updated = updated.copy(
+                uploadIntervalSec = SettingsStore.normalizeUploadIntervalSec(remote.getInt("upload_interval_sec")),
+            )
+        }
         if (remote.has("api_endpoint")) {
             updated = updated.copy(apiEndpoint = remote.getString("api_endpoint"))
         }
@@ -146,6 +151,39 @@ object ServerSettingsSync {
         }
         if (remote.has("copilot_alerts_enabled")) {
             updated = updated.copy(copilotAlertsEnabled = remote.getBoolean("copilot_alerts_enabled"))
+        }
+        if (remote.has("sound_monitoring_enabled")) {
+            updated = updated.copy(soundMonitoringEnabled = remote.getBoolean("sound_monitoring_enabled"))
+        }
+        if (remote.has("motion_sampling_rate")) {
+            updated = updated.copy(
+                motionSamplingRate = MotionSamplingRate.fromStoredValue(remote.getString("motion_sampling_rate")),
+            )
+        }
+        if (remote.has("ambient_light_enabled")) {
+            updated = updated.copy(ambientLightEnabled = remote.getBoolean("ambient_light_enabled"))
+        }
+        if (remote.has("watcher_gps_accuracy")) {
+            updated = updated.copy(
+                watcherGpsAccuracy = GpsAccuracy.fromStoredValue(
+                    remote.getString("watcher_gps_accuracy"),
+                    GpsAccuracy.BALANCED,
+                ),
+            )
+        }
+        if (remote.has("copilot_gps_accuracy")) {
+            updated = updated.copy(
+                copilotGpsAccuracy = GpsAccuracy.fromStoredValue(
+                    remote.getString("copilot_gps_accuracy"),
+                    GpsAccuracy.HIGH,
+                ),
+            )
+        }
+        if (remote.has("copilot_hold_wake_lock")) {
+            updated = updated.copy(copilotHoldWakeLock = remote.getBoolean("copilot_hold_wake_lock"))
+        }
+        if (remote.has("copilot_live_stream_enabled")) {
+            updated = updated.copy(copilotLiveStreamEnabled = remote.getBoolean("copilot_live_stream_enabled"))
         }
 
         updated = updated.copy(

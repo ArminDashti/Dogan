@@ -1,6 +1,12 @@
 # Changelog
 
+## 2.1.0
+
+### Added
+- Android battery-related Settings: telemetry/upload intervals, ambient light toggle, sound monitoring toggle, motion sampling rate, Watchman/Copilot GPS accuracy, Copilot wake-lock and LiveKit switches (defaults preserve prior behavior).
+
 ## 2.0.1
+
 
 ### Fixed
 - SQLite timestamp round-trip: store/scan RFC3339Nano (and migrate legacy Go `time.String()` values) so `GET /webrtc/connections` and `GET /devices/:id/telemetry` no longer 500.

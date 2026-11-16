@@ -29,6 +29,7 @@ data class AppSettings(
     val password: String,
     val captureIntervalMs: Long,
     val telemetryIntervalSec: Int,
+    val uploadIntervalSec: Int,
     val activeCamera: CameraFacing,
     val operatingMode: OperatingMode,
     val screenOnIntervalMin: Int,
@@ -43,6 +44,13 @@ data class AppSettings(
     val customJoltScale: Float,
     val customSoundThreshold: Double,
     val logRetentionDays: Int,
+    val soundMonitoringEnabled: Boolean,
+    val motionSamplingRate: MotionSamplingRate,
+    val ambientLightEnabled: Boolean,
+    val watcherGpsAccuracy: GpsAccuracy,
+    val copilotGpsAccuracy: GpsAccuracy,
+    val copilotHoldWakeLock: Boolean,
+    val copilotLiveStreamEnabled: Boolean,
     val watcherSettings: ModeSettings,
     val copilotSettings: ModeSettings,
     val copilotAlertVolume: AlertVolume,
@@ -52,6 +60,7 @@ data class AppSettings(
     val serverBaseUrl: String get() = EndpointUrlBuilder.buildApiBaseUrl(apiEndpoint, apiPort)
     val streamBaseUrl: String get() = EndpointUrlBuilder.buildStreamUrl(streamEndpoint, streamPort)
     val telemetryIntervalMs: Long get() = telemetryIntervalSec * 1000L
+    val uploadIntervalMs: Long get() = uploadIntervalSec * 1000L
     val intervalSec: Float get() = captureIntervalMs / 1000f
     val periodSec: Int get() = (captureIntervalMs / 1000L).toInt().coerceAtLeast(1)
 
@@ -63,6 +72,11 @@ data class AppSettings(
 
     fun imageUploadPolicyForMode(mode: OperatingMode): ImageUploadPolicy =
         modeSettings(mode).imageUploadPolicy
+
+    fun gpsAccuracyForMode(mode: OperatingMode): GpsAccuracy = when (mode) {
+        OperatingMode.WATCHER, OperatingMode.OFF -> watcherGpsAccuracy
+        OperatingMode.COPILOT -> copilotGpsAccuracy
+    }
 }
 
 /** Persists and exposes Dogan settings via DataStore preferences. */
@@ -77,6 +91,7 @@ class SettingsStore(private val context: Context) {
     private val intervalKey = longPreferencesKey("capture_interval_ms")
     private val telemetryIntervalSecKey = intPreferencesKey("telemetry_interval_sec")
     private val legacyTelemetryIntervalKey = longPreferencesKey("telemetry_interval_ms")
+    private val uploadIntervalSecKey = intPreferencesKey("upload_interval_sec")
     private val cameraKey = stringPreferencesKey("active_camera")
     private val operatingModeKey = stringPreferencesKey("operating_mode")
     private val screenOnIntervalMinKey = intPreferencesKey("screen_on_interval_min")
@@ -92,6 +107,13 @@ class SettingsStore(private val context: Context) {
     private val customJoltScaleKey = floatPreferencesKey("custom_jolt_scale")
     private val customSoundThresholdKey = floatPreferencesKey("custom_sound_threshold")
     private val logRetentionDaysKey = intPreferencesKey("log_retention_days")
+    private val soundMonitoringEnabledKey = booleanPreferencesKey("sound_monitoring_enabled")
+    private val motionSamplingRateKey = stringPreferencesKey("motion_sampling_rate")
+    private val ambientLightEnabledKey = booleanPreferencesKey("ambient_light_enabled")
+    private val watcherGpsAccuracyKey = stringPreferencesKey("watcher_gps_accuracy")
+    private val copilotGpsAccuracyKey = stringPreferencesKey("copilot_gps_accuracy")
+    private val copilotHoldWakeLockKey = booleanPreferencesKey("copilot_hold_wake_lock")
+    private val copilotLiveStreamEnabledKey = booleanPreferencesKey("copilot_live_stream_enabled")
     private val copilotAlertVolumeKey = stringPreferencesKey("copilot_alert_volume")
     private val copilotAlertsEnabledKey = booleanPreferencesKey("copilot_alerts_enabled")
     private val copilotDistanceControlKey = booleanPreferencesKey("copilot_distance_control_enabled")
@@ -121,6 +143,9 @@ class SettingsStore(private val context: Context) {
                     ?: legacyTelemetryMs?.let { (it / 1000).toInt() }
                     ?: DEFAULT_TELEMETRY_INTERVAL_SEC,
             ),
+            uploadIntervalSec = normalizeUploadIntervalSec(
+                pref[uploadIntervalSecKey] ?: DEFAULT_UPLOAD_INTERVAL_SEC,
+            ),
             activeCamera = CameraFacing.fromStoredValue(pref[cameraKey]),
             operatingMode = OperatingMode.fromStoredValue(pref[operatingModeKey]),
             screenOnIntervalMin = readScreenOnIntervalMin(pref),
@@ -143,6 +168,19 @@ class SettingsStore(private val context: Context) {
                 (pref[customSoundThresholdKey] ?: DEFAULT_CUSTOM_SOUND_THRESHOLD.toFloat()).toDouble(),
             ),
             logRetentionDays = normalizeLogRetentionDays(pref[logRetentionDaysKey] ?: DEFAULT_LOG_RETENTION_DAYS),
+            soundMonitoringEnabled = pref[soundMonitoringEnabledKey] ?: true,
+            motionSamplingRate = MotionSamplingRate.fromStoredValue(pref[motionSamplingRateKey]),
+            ambientLightEnabled = pref[ambientLightEnabledKey] ?: true,
+            watcherGpsAccuracy = GpsAccuracy.fromStoredValue(
+                pref[watcherGpsAccuracyKey],
+                GpsAccuracy.BALANCED,
+            ),
+            copilotGpsAccuracy = GpsAccuracy.fromStoredValue(
+                pref[copilotGpsAccuracyKey],
+                GpsAccuracy.HIGH,
+            ),
+            copilotHoldWakeLock = pref[copilotHoldWakeLockKey] ?: true,
+            copilotLiveStreamEnabled = pref[copilotLiveStreamEnabledKey] ?: true,
             watcherSettings = readModeSettings(pref, "watcher"),
             copilotSettings = readModeSettings(pref, "copilot"),
             copilotAlertVolume = AlertVolume.fromStoredValue(pref[copilotAlertVolumeKey]),
@@ -162,6 +200,7 @@ class SettingsStore(private val context: Context) {
             pref[legacyUrlKey] = settings.serverBaseUrl
             pref[intervalKey] = normalizeIntervalMs(settings.captureIntervalMs)
             pref[telemetryIntervalSecKey] = settings.telemetryIntervalSec
+            pref[uploadIntervalSecKey] = normalizeUploadIntervalSec(settings.uploadIntervalSec)
             pref[cameraKey] = settings.activeCamera.toStoredValue()
             pref[operatingModeKey] = settings.operatingMode.toStoredValue()
             pref[screenOnIntervalMinKey] = normalizeScreenOnIntervalMin(settings.screenOnIntervalMin)
@@ -177,6 +216,13 @@ class SettingsStore(private val context: Context) {
             pref[customJoltScaleKey] = settings.customJoltScale
             pref[customSoundThresholdKey] = settings.customSoundThreshold.toFloat()
             pref[logRetentionDaysKey] = settings.logRetentionDays
+            pref[soundMonitoringEnabledKey] = settings.soundMonitoringEnabled
+            pref[motionSamplingRateKey] = settings.motionSamplingRate.toStoredValue()
+            pref[ambientLightEnabledKey] = settings.ambientLightEnabled
+            pref[watcherGpsAccuracyKey] = settings.watcherGpsAccuracy.toStoredValue()
+            pref[copilotGpsAccuracyKey] = settings.copilotGpsAccuracy.toStoredValue()
+            pref[copilotHoldWakeLockKey] = settings.copilotHoldWakeLock
+            pref[copilotLiveStreamEnabledKey] = settings.copilotLiveStreamEnabled
             pref[copilotAlertVolumeKey] = settings.copilotAlertVolume.toStoredValue()
             pref[copilotAlertsEnabledKey] = settings.copilotAlertsEnabled
             pref[copilotDistanceControlKey] = settings.copilotDistanceControlEnabled
@@ -231,10 +277,13 @@ class SettingsStore(private val context: Context) {
         const val DEFAULT_CUSTOM_SOUND_THRESHOLD = 2500.0
         const val DEFAULT_INTERVAL_MS = 5_000L
         const val DEFAULT_TELEMETRY_INTERVAL_SEC = 5
+        const val DEFAULT_UPLOAD_INTERVAL_SEC = 2
         const val MIN_INTERVAL_MS = 100L
         const val MAX_INTERVAL_MS = 3_600_000L
         const val MIN_TELEMETRY_INTERVAL_SEC = 1
         const val MAX_TELEMETRY_INTERVAL_SEC = 60
+        const val MIN_UPLOAD_INTERVAL_SEC = 1
+        const val MAX_UPLOAD_INTERVAL_SEC = 60
         const val DEFAULT_SCREEN_ON_INTERVAL_MIN = 0
         const val MAX_SCREEN_ON_INTERVAL_MIN = 60
         const val DEFAULT_SETTINGS_SYNC_INTERVAL_SEC = 15
@@ -248,6 +297,9 @@ class SettingsStore(private val context: Context) {
 
         fun normalizeTelemetryIntervalSec(seconds: Int): Int =
             seconds.coerceIn(MIN_TELEMETRY_INTERVAL_SEC, MAX_TELEMETRY_INTERVAL_SEC)
+
+        fun normalizeUploadIntervalSec(seconds: Int): Int =
+            seconds.coerceIn(MIN_UPLOAD_INTERVAL_SEC, MAX_UPLOAD_INTERVAL_SEC)
 
         fun normalizeScreenOnIntervalMin(minutes: Int): Int =
             minutes.coerceIn(0, MAX_SCREEN_ON_INTERVAL_MIN)

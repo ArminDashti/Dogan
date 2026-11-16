@@ -50,8 +50,17 @@
     <string name="camera_both">Both</string>
     <string name="keep_alive_interval">Keep alive interval (minutes, 0 = off)</string>
     <string name="telemetry_interval_sec">Send telemetry every (seconds)</string>
+    <string name="upload_interval_sec">Upload pending telemetry every (seconds)</string>
     <string name="telemetry_retention_hours">Keep telemetry data (hours)</string>
     <string name="settings_sync_interval">Settings sync interval (seconds)</string>
+    <string name="foreground_service_hint">Monitoring uses a foreground service while Copilot or Watchman is on. Turn the mode OFF to stop it.</string>
+    <string name="ambient_light_enabled">Ambient light sensor</string>
+    <string name="sound_monitoring_enabled">Sound monitoring (microphone)</string>
+    <string name="motion_sampling_rate">Motion sampling rate</string>
+    <string name="watcher_gps_accuracy">Watchman GPS accuracy</string>
+    <string name="copilot_gps_accuracy">Copilot GPS accuracy</string>
+    <string name="copilot_hold_wake_lock">Keep CPU awake (wake lock)</string>
+    <string name="copilot_live_stream_enabled">Live stream (LiveKit)</string>
     <string name="jolt_sensitivity">Jolt sensitivity</string>
     <string name="sound_sensitivity">Sound sensitivity</string>
     <string name="custom_jolt_scale">Custom jolt scale</string>
