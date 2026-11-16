@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/dogan/dogan-server/internal/models"
@@ -693,6 +694,22 @@ func (store *Store) ListConnections(deviceID string, limit int) ([]models.WebRTC
 		limit = 50
 	}
 
+	if strings.TrimSpace(deviceID) == "" {
+		rows, err := store.db.Query(
+			`SELECT w.id, d.mac_address, w.room, w.identity, w.role, w.connected_at, w.disconnected_at, w.status
+			 FROM webrtc_connections w
+			 JOIN devices d ON d.id = w.device_id
+			 ORDER BY w.connected_at DESC, w.id DESC
+			 LIMIT ?`,
+			limit,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("list webrtc connections: %w", err)
+		}
+		defer rows.Close()
+		return scanWebRTCConnections(rows)
+	}
+
 	deviceRowID, err := store.resolveDeviceRowID(deviceID)
 	if err != nil {
 		if errors.Is(err, ErrDeviceNotFound) {
@@ -702,10 +719,11 @@ func (store *Store) ListConnections(deviceID string, limit int) ([]models.WebRTC
 	}
 
 	rows, err := store.db.Query(
-		`SELECT id, room, identity, role, connected_at, disconnected_at, status
-		 FROM webrtc_connections
-		 WHERE device_id = ?
-		 ORDER BY connected_at DESC, id DESC
+		`SELECT w.id, d.mac_address, w.room, w.identity, w.role, w.connected_at, w.disconnected_at, w.status
+		 FROM webrtc_connections w
+		 JOIN devices d ON d.id = w.device_id
+		 WHERE w.device_id = ?
+		 ORDER BY w.connected_at DESC, w.id DESC
 		 LIMIT ?`,
 		deviceRowID,
 		limit,
@@ -714,35 +732,7 @@ func (store *Store) ListConnections(deviceID string, limit int) ([]models.WebRTC
 		return nil, fmt.Errorf("list webrtc connections: %w", err)
 	}
 	defer rows.Close()
-
-	connections := make([]models.WebRTCConnectionRecord, 0)
-	for rows.Next() {
-		var connection models.WebRTCConnectionRecord
-		var disconnectedAt sql.NullTime
-		if err := rows.Scan(
-			&connection.ID,
-			&connection.Room,
-			&connection.Identity,
-			&connection.Role,
-			&connection.ConnectedAt,
-			&disconnectedAt,
-			&connection.Status,
-		); err != nil {
-			return nil, fmt.Errorf("scan webrtc connection: %w", err)
-		}
-		connection.DeviceID = deviceID
-		if disconnectedAt.Valid {
-			disconnectedAtValue := disconnectedAt.Time
-			connection.DisconnectedAt = &disconnectedAtValue
-		}
-		connections = append(connections, connection)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate webrtc connections: %w", err)
-	}
-
-	return connections, nil
+	return scanWebRTCConnections(rows)
 }
 
 func (store *Store) PurgeExpiredFrames(cutoff time.Time) ([]string, error) {

@@ -15,6 +15,7 @@ const navigation = [
   { label: 'Stream', to: '/stream', icon: 'stream' as const },
   { label: 'Gallery', to: '/gallery', icon: 'gallery' as const },
   { label: 'Metrics', to: '/metrics', icon: 'metrics' as const },
+  { label: 'Settings', to: '/settings', icon: 'settings' as const },
 ]
 
 const activePath = computed(() => route.path)
@@ -95,6 +96,15 @@ async function handleLogout(): Promise<void> {
             <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.75" />
             <circle cx="8.5" cy="10" r="1.5" fill="currentColor" />
             <path d="M21 16l-5-5L8 19" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+          </template>
+          <template v-else-if="item.icon === 'settings'">
+            <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.75" />
+            <path
+              d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V19a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H5a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H10a1.7 1.7 0 0 0 1-1.5V5a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V10a1.7 1.7 0 0 0 1.5 1H19a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linejoin="round"
+            />
           </template>
           <template v-else>
             <path d="M4 19V5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />

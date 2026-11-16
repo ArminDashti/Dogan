@@ -80,3 +80,20 @@ export interface ApiErrorBody {
   message?: string
   errors?: Record<string, string[]>
 }
+
+export interface HealthStatus {
+  status: string
+  timestamp: string
+  livekitConfigured: boolean
+}
+
+export interface WebRtcConnection {
+  id: number
+  deviceId: string
+  room: string
+  identity: string
+  role: string
+  connectedAt: string
+  disconnectedAt?: string
+  status: string
+}

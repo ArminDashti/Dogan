@@ -18,11 +18,8 @@ func NewWebRTCHandler(webrtcStore store.WebRTCStore) *WebRTCHandler {
 }
 
 func (handler *WebRTCHandler) ListConnections(context *gin.Context) {
+	// device-id optional: omit to list recent connections across all devices (ops dashboard).
 	deviceID := context.Query("device-id")
-	if deviceID == "" {
-		context.JSON(http.StatusBadRequest, models.ErrorResponse{Error: "device-id query parameter is required"})
-		return
-	}
 
 	limit := 50
 	if limitRaw := context.Query("limit"); limitRaw != "" {

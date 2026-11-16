@@ -123,82 +123,99 @@ onMounted(async () => {
 
       <ErrorAlert v-if="errorMessage" title="Metrics unavailable" :message="errorMessage" />
 
-      <div class="grid gap-4 md:grid-cols-2">
-        <article class="yoda-card p-6">
-          <p class="instrument-label">Current temperature</p>
-          <p class="mt-2 font-mono text-4xl font-semibold tracking-tight text-[var(--text)]">
-            {{ temperatureDisplay }}
-          </p>
-          <p v-if="metrics" class="mt-2 font-mono text-xs text-[var(--muted)]">
-            Updated {{ formatTimestamp(metrics.current.recordedAt) }}
-          </p>
-        </article>
-
-        <article class="yoda-card p-6">
-          <p class="instrument-label">Current noise level</p>
-          <p class="mt-2 font-mono text-4xl font-semibold tracking-tight text-[var(--text)]">
-            {{ noiseDisplay }}
-          </p>
-          <p v-if="metrics" class="mt-2 font-mono text-xs text-[var(--muted)]">
-            Updated {{ formatTimestamp(metrics.current.recordedAt) }}
-          </p>
-        </article>
+      <div
+        v-if="!loadingDevices && devices.length === 0"
+        class="yoda-card border-dashed px-5 py-12 text-center text-[var(--muted)]"
+      >
+        No registered devices yet. Connect the Dogan Android app so a phone reports in — no seed
+        script or mock API needed.
       </div>
 
-      <section class="yoda-card p-6">
-        <div class="mb-4">
-          <h2 class="text-lg font-semibold text-[var(--text)]">Recent history</h2>
-          <p class="text-sm text-[var(--muted)]">Lightweight bar view of the latest readings.</p>
+      <template v-else>
+        <div class="grid gap-4 md:grid-cols-2">
+          <article class="yoda-card p-6">
+            <p class="instrument-label">Current temperature</p>
+            <p class="mt-2 font-mono text-4xl font-semibold tracking-tight text-[var(--text)]">
+              {{ temperatureDisplay }}
+            </p>
+            <p v-if="metrics" class="mt-2 font-mono text-xs text-[var(--muted)]">
+              Updated {{ formatTimestamp(metrics.current.recordedAt) }}
+            </p>
+          </article>
+
+          <article class="yoda-card p-6">
+            <p class="instrument-label">Current noise level</p>
+            <p class="mt-2 font-mono text-4xl font-semibold tracking-tight text-[var(--text)]">
+              {{ noiseDisplay }}
+            </p>
+            <p v-if="metrics" class="mt-2 font-mono text-xs text-[var(--muted)]">
+              Updated {{ formatTimestamp(metrics.current.recordedAt) }}
+            </p>
+          </article>
         </div>
 
-        <div v-if="loadingMetrics" class="py-8 text-center text-sm text-[var(--muted)]">
-          Loading metrics…
-        </div>
+        <section class="yoda-card p-6">
+          <div class="mb-4">
+            <h2 class="text-lg font-semibold text-[var(--text)]">Recent history</h2>
+            <p class="text-sm text-[var(--muted)]">Lightweight bar view of the latest readings.</p>
+          </div>
 
-        <div v-else-if="!metrics || metrics.history.length === 0" class="py-8 text-center text-sm text-[var(--muted)]">
-          No historical readings yet.
-        </div>
+          <div v-if="loadingMetrics" class="py-8 text-center text-sm text-[var(--muted)]">
+            Loading metrics…
+          </div>
 
-        <div v-else class="grid gap-6 lg:grid-cols-2">
-          <div>
-            <p class="mb-3 text-sm font-medium text-[var(--text)]">Temperature (°C)</p>
-            <div class="flex h-40 items-end gap-2">
-              <div
-                v-for="reading in recentHistory(metrics.history)"
-                :key="`${reading.timestamp}-temp`"
-                class="flex flex-1 flex-col items-center gap-2"
-              >
-                <div class="flex h-32 w-full items-end rounded-[6px] bg-[var(--surface)]">
-                  <div
-                    class="w-full rounded-[6px] bg-[var(--accent)]"
-                    :style="{ height: barHeight(reading.temperatureCelsius, 40) }"
-                  />
+          <div
+            v-else-if="!metrics || metrics.history.length === 0"
+            class="py-8 text-center text-sm text-[var(--muted)]"
+          >
+            No historical readings yet.
+          </div>
+
+          <div v-else class="grid gap-6 lg:grid-cols-2">
+            <div>
+              <p class="mb-3 text-sm font-medium text-[var(--text)]">Temperature (°C)</p>
+              <div class="flex h-40 items-end gap-2">
+                <div
+                  v-for="reading in recentHistory(metrics.history)"
+                  :key="`${reading.timestamp}-temp`"
+                  class="flex flex-1 flex-col items-center gap-2"
+                >
+                  <div class="flex h-32 w-full items-end rounded-[6px] bg-[var(--surface)]">
+                    <div
+                      class="w-full rounded-[6px] bg-[var(--accent)]"
+                      :style="{ height: barHeight(reading.temperatureCelsius, 40) }"
+                    />
+                  </div>
+                  <span class="text-[10px] text-[var(--muted)]">{{
+                    formatTimestamp(reading.timestamp)
+                  }}</span>
                 </div>
-                <span class="text-[10px] text-[var(--muted)]">{{ formatTimestamp(reading.timestamp) }}</span>
+              </div>
+            </div>
+
+            <div>
+              <p class="mb-3 text-sm font-medium text-[var(--text)]">Noise (dB)</p>
+              <div class="flex h-40 items-end gap-2">
+                <div
+                  v-for="reading in recentHistory(metrics.history)"
+                  :key="`${reading.timestamp}-noise`"
+                  class="flex flex-1 flex-col items-center gap-2"
+                >
+                  <div class="flex h-32 w-full items-end rounded-[6px] bg-[var(--surface)]">
+                    <div
+                      class="w-full rounded-[6px] bg-[var(--signal)]"
+                      :style="{ height: barHeight(reading.noiseDb, 100) }"
+                    />
+                  </div>
+                  <span class="text-[10px] text-[var(--muted)]">{{
+                    formatTimestamp(reading.timestamp)
+                  }}</span>
+                </div>
               </div>
             </div>
           </div>
-
-          <div>
-            <p class="mb-3 text-sm font-medium text-[var(--text)]">Noise (dB)</p>
-            <div class="flex h-40 items-end gap-2">
-              <div
-                v-for="reading in recentHistory(metrics.history)"
-                :key="`${reading.timestamp}-noise`"
-                class="flex flex-1 flex-col items-center gap-2"
-              >
-                <div class="flex h-32 w-full items-end rounded-[6px] bg-[var(--surface)]">
-                  <div
-                    class="w-full rounded-[6px] bg-[var(--signal)]"
-                    :style="{ height: barHeight(reading.noiseDb, 100) }"
-                  />
-                </div>
-                <span class="text-[10px] text-[var(--muted)]">{{ formatTimestamp(reading.timestamp) }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
+      </template>
     </div>
   </AppLayout>
 </template>

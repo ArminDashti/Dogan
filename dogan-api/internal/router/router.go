@@ -47,7 +47,6 @@ func New(applicationConfig config.Config) *gin.Engine {
 		applicationConfig.DeviceAPIKey,
 		applicationConfig.TokenTTL,
 	)
-	healthHandler := handlers.NewHealthHandler()
 	endpointsHandler := handlers.NewEndpointsHandler()
 	frameHandler := handlers.NewFrameHandler(postgresStore, applicationConfig.FramesDir)
 	deviceMetricsHandler := handlers.NewDeviceMetricsHandler(postgresStore)
@@ -71,6 +70,7 @@ func New(applicationConfig config.Config) *gin.Engine {
 		APISecret: applicationConfig.LiveKitAPISecret,
 		TokenTTL:  applicationConfig.LiveKitTokenTTL,
 	})
+	healthHandler := handlers.NewHealthHandler(liveKitTokenIssuer)
 	liveKitHandler := handlers.NewLiveKitHandler(liveKitTokenIssuer, postgresStore)
 	webrtcSessionHandler := handlers.NewWebRTCSessionHandler(liveKitTokenIssuer, postgresStore)
 	devicesHandler := handlers.NewDevicesHandler(postgresStore, liveKitTokenIssuer, postgresStore)
