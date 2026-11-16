@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.0
+
+### Breaking
+- dogan-api now uses SQLite (`file:/data/dogan.db` on the API volume) instead of PostgreSQL; `dogan-pgsql` Compose service and `pgx` are removed. Fresh empty DB on upgrade (no Postgres dump migration).
+
 ## [0.3.1] - 2026-11-16
 
 ### Changed
