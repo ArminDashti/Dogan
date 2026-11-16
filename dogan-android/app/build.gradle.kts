@@ -12,8 +12,8 @@ android {
         applicationId = "com.dogan"
         minSdk = 29
         targetSdk = 33
-        versionCode = 5
-        versionName = "2.1.1"
+        versionCode = 6
+        versionName = "2.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -14,7 +14,7 @@ Primary users are vehicle owners and operators who leave an Android phone in or 
 
 ## Product Purpose
 
-Dogan is the Android field device for Dogan: multi-mode vehicle monitoring and driving assistance. It captures camera stills on a duty cycle, detects jolts and cabin sound spikes (Watchman), supports Copilot driving alerts, uploads telemetry to a Dogan server, and can stream via LiveKit. Success means reliable background monitoring with low-friction start/stop and clear connection state before the owner walks away.
+Dogan is the Android field device for Dogan: multi-mode vehicle monitoring and driving assistance. It captures camera stills on a duty cycle, detects jolts and cabin sound spikes (Watchman), supports Copilot driving alerts, uploads telemetry to a Dogan server, and streams via LiveKit in Watchman when connected. Success means reliable background monitoring with low-friction start/stop and clear connection state before the owner walks away.
 
 *(inferred from README.md, Docs/product-overview.md, Docs/features-and-capabilities.md)*
 
@@ -41,7 +41,7 @@ Confirmed in code/docs:
 - Modes: Watchman, Copilot, OFF (re-tap active mode → OFF)
 - Main hub navigates to section settings, Connectivity, Logs, Exit (process kill); Diagnostics available
 - Camera duty-cycled unless preview/recording needs continuous power
-- Telemetry upload on interval; LiveKit streaming when configured
+- Telemetry upload on interval; LiveKit streaming in Watchman when connected
 - Material Components (Views), Kotlin, minSdk 29; CameraX, DataStore, OkHttp, LiveKit
 - Preserve existing IDs, navigation intents, SettingsStore keys, and CaptureService behavior unless a redesign requires a layout ID remount with matching Kotlin wiring
 

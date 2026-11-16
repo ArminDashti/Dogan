@@ -198,14 +198,12 @@ class SettingsActivity : AppCompatActivity() {
         val alert = findViewById<SwitchMaterial>(R.id.copilotAlertSwitch)
         val distance = findViewById<SwitchMaterial>(R.id.copilotDistanceSwitch)
         val holdWake = findViewById<SwitchMaterial>(R.id.copilotHoldWakeLockSwitch)
-        val liveStream = findViewById<SwitchMaterial>(R.id.copilotLiveStreamSwitch)
         val gps = findViewById<AutoCompleteTextView>(R.id.copilotGpsAccuracyInput)
         val alertDuration = findViewById<AutoCompleteTextView>(R.id.alertDurationInput)
 
         alert.isChecked = settings.copilotAlertsEnabled
         distance.isChecked = settings.copilotDistanceControlEnabled
         holdWake.isChecked = settings.copilotHoldWakeLock
-        liveStream.isChecked = settings.copilotLiveStreamEnabled
         setupDropdown(gps, GpsAccuracy.all.map { it.displayName })
         gps.setText(settings.copilotGpsAccuracy.displayName, false)
         setupDropdown(alertDuration, AlertDuration.all.map { it.displayName })
@@ -224,12 +222,6 @@ class SettingsActivity : AppCompatActivity() {
         holdWake.setOnCheckedChangeListener { _, checked ->
             if (suppressAutoSave) return@setOnCheckedChangeListener
             persist(mapOf("copilot_hold_wake_lock" to checked)) { it.copy(copilotHoldWakeLock = checked) }
-        }
-        liveStream.setOnCheckedChangeListener { _, checked ->
-            if (suppressAutoSave) return@setOnCheckedChangeListener
-            persist(mapOf("copilot_live_stream_enabled" to checked)) {
-                it.copy(copilotLiveStreamEnabled = checked)
-            }
         }
         gps.setOnItemClickListener { _, _, position, _ ->
             val accuracy = GpsAccuracy.all.getOrElse(position) { GpsAccuracy.HIGH }

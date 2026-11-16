@@ -1,6 +1,6 @@
 # Dogan — Project Description
 
-Dogan is a Kotlin Android app for multi-mode vehicle monitoring and driving assistance (Watchman, Copilot, OFF). It captures camera frames on a duty cycle (open → still → close), detects vehicle jolts and cabin sound spikes, uploads telemetry to a Dogan server, and can stream via LiveKit.
+Dogan is a Kotlin Android app for multi-mode vehicle monitoring and driving assistance (Watchman, Copilot, OFF). It captures camera frames on a duty cycle (open → still → close), detects vehicle jolts and cabin sound spikes, uploads telemetry to a Dogan server, and streams via LiveKit in Watchman when connected.
 
 ## Tech stack
 

@@ -60,7 +60,6 @@
     <string name="watcher_gps_accuracy">Watchman GPS accuracy</string>
     <string name="copilot_gps_accuracy">Copilot GPS accuracy</string>
     <string name="copilot_hold_wake_lock">Keep CPU awake (wake lock)</string>
-    <string name="copilot_live_stream_enabled">Live stream (LiveKit)</string>
     <string name="jolt_sensitivity">Jolt sensitivity</string>
     <string name="sound_sensitivity">Sound sensitivity</string>
     <string name="custom_jolt_scale">Custom jolt scale</string>

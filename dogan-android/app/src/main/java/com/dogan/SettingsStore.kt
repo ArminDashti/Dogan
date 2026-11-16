@@ -50,7 +50,6 @@ data class AppSettings(
     val watcherGpsAccuracy: GpsAccuracy,
     val copilotGpsAccuracy: GpsAccuracy,
     val copilotHoldWakeLock: Boolean,
-    val copilotLiveStreamEnabled: Boolean,
     val watcherSettings: ModeSettings,
     val copilotSettings: ModeSettings,
     val copilotAlertVolume: AlertVolume,
@@ -113,7 +112,6 @@ class SettingsStore(private val context: Context) {
     private val watcherGpsAccuracyKey = stringPreferencesKey("watcher_gps_accuracy")
     private val copilotGpsAccuracyKey = stringPreferencesKey("copilot_gps_accuracy")
     private val copilotHoldWakeLockKey = booleanPreferencesKey("copilot_hold_wake_lock")
-    private val copilotLiveStreamEnabledKey = booleanPreferencesKey("copilot_live_stream_enabled")
     private val copilotAlertVolumeKey = stringPreferencesKey("copilot_alert_volume")
     private val copilotAlertsEnabledKey = booleanPreferencesKey("copilot_alerts_enabled")
     private val copilotDistanceControlKey = booleanPreferencesKey("copilot_distance_control_enabled")
@@ -180,7 +178,6 @@ class SettingsStore(private val context: Context) {
                 GpsAccuracy.HIGH,
             ),
             copilotHoldWakeLock = pref[copilotHoldWakeLockKey] ?: true,
-            copilotLiveStreamEnabled = pref[copilotLiveStreamEnabledKey] ?: true,
             watcherSettings = readModeSettings(pref, "watcher"),
             copilotSettings = readModeSettings(pref, "copilot"),
             copilotAlertVolume = AlertVolume.fromStoredValue(pref[copilotAlertVolumeKey]),
@@ -222,7 +219,6 @@ class SettingsStore(private val context: Context) {
             pref[watcherGpsAccuracyKey] = settings.watcherGpsAccuracy.toStoredValue()
             pref[copilotGpsAccuracyKey] = settings.copilotGpsAccuracy.toStoredValue()
             pref[copilotHoldWakeLockKey] = settings.copilotHoldWakeLock
-            pref[copilotLiveStreamEnabledKey] = settings.copilotLiveStreamEnabled
             pref[copilotAlertVolumeKey] = settings.copilotAlertVolume.toStoredValue()
             pref[copilotAlertsEnabledKey] = settings.copilotAlertsEnabled
             pref[copilotDistanceControlKey] = settings.copilotDistanceControlEnabled

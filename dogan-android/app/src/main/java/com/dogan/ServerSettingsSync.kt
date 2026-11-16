@@ -182,9 +182,6 @@ object ServerSettingsSync {
         if (remote.has("copilot_hold_wake_lock")) {
             updated = updated.copy(copilotHoldWakeLock = remote.getBoolean("copilot_hold_wake_lock"))
         }
-        if (remote.has("copilot_live_stream_enabled")) {
-            updated = updated.copy(copilotLiveStreamEnabled = remote.getBoolean("copilot_live_stream_enabled"))
-        }
 
         updated = updated.copy(
             watcherSettings = mergeMode(remote, "watcher", updated.watcherSettings),

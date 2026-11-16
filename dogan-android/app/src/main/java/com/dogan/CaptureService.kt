@@ -169,7 +169,8 @@ class CaptureService : Service(), LifecycleOwner {
     }
 
     private fun maybeStartLiveKit(settings: AppSettings) {
-        if (settings.operatingMode == OperatingMode.WATCHER || !settings.copilotLiveStreamEnabled) {
+        // LiveKit publisher is Watchman-only; Copilot/OFF never stream.
+        if (settings.operatingMode != OperatingMode.WATCHER) {
             liveKitStreamer.stop()
             return
         }

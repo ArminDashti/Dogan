@@ -31,12 +31,6 @@
             android:layout_height="wrap_content"
             android:text="@string/copilot_hold_wake_lock" />
 
-        <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/copilotLiveStreamSwitch"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/copilot_live_stream_enabled" />
-
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
             android:layout_width="match_parent"

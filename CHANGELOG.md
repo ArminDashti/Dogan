@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.2.0
+
+### Changed
+- Android LiveKit publisher is Watchman-only; removed Copilot LiveKit switch and `copilot_live_stream_enabled` setting/sync.
+
 ## 2.1.1
 
 ### Fixed

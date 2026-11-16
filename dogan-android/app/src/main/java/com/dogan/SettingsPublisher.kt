@@ -76,7 +76,6 @@ object SettingsPublisher {
             "watcher_gps_accuracy" to settings.watcherGpsAccuracy.toStoredValue(),
             "copilot_gps_accuracy" to settings.copilotGpsAccuracy.toStoredValue(),
             "copilot_hold_wake_lock" to settings.copilotHoldWakeLock,
-            "copilot_live_stream_enabled" to settings.copilotLiveStreamEnabled,
             "alert_duration" to settings.alertDuration.toStoredValue(),
             "copilot_alerts_enabled" to settings.copilotAlertsEnabled,
             "copilot_distance_control_enabled" to settings.copilotDistanceControlEnabled,
