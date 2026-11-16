@@ -1,6 +1,6 @@
 # Dogan (Android 10+)
 
-Multi-mode Kotlin Android app for vehicle monitoring and driving assistance. Supports Watchman and Copilot modes with motion/sound alerts, LiveKit WebRTC streaming, and telemetry upload to a configurable **Dogan** HTTP server.
+Multi-mode Kotlin Android app for vehicle monitoring and driving assistance. Supports Watchman and Copilot modes with motion/sound alerts, Watchman-only LiveKit WebRTC streaming, and telemetry upload to a configurable **Dogan** HTTP server.
 
 ## Overview
 

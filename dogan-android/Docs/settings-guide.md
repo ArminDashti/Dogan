@@ -48,7 +48,7 @@ Field set covers alerts, distance, history frames, alert duration, frame quality
 | Custom jolt scale | `custom_jolt_scale` | 1.0 (shown when Custom) |
 | Keep logs | `log_retention_days` | 7 |
 
-Battery: Watchman uses duty-cycled stills, balanced GPS, no auto LiveKit, and timed wake locks between work. Jolt/mic stay on for alerts.
+Battery: Watchman uses duty-cycled stills, balanced GPS, LiveKit when connected, and timed wake locks between work. Jolt/mic stay on for alerts. Copilot does not publish LiveKit.
 
 UI label is **Watchman**; stored/API mode value remains `watcher`.
 

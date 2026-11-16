@@ -4,7 +4,7 @@ description: Fix Dogan Android crashes that kill Watchman/Copilot before LiveKit
 
 # Dogan Android camera + cabin-noise crash fixes
 
-**Goal:** Keep CaptureService alive so Copilot can reach LiveKit connect.
+**Goal:** Keep CaptureService alive so Watchman can reach LiveKit connect.
 
 ## Steps
 1. Camera stills: `takePicture` callbacks run on `captureCallbackExecutor` (background). Always post `ProcessCameraProvider.unbindAll` / rebind via `ContextCompat.getMainExecutor` (`finishStillCaptureOnMain` in `DoganCamera.kt`).
@@ -13,7 +13,7 @@ description: Fix Dogan Android crashes that kill Watchman/Copilot before LiveKit
 
 ## Gotchas
 - UI “LiveKit Connected (N sessions)” is a token/session-count probe, not media publish.
-- Watchman calls `liveKitStreamer.stop()`; Copilot (+ live stream enabled) starts LiveKit.
+- LiveKit publisher starts only in Watchman when connected; Copilot/OFF call `liveKitStreamer.stop()`.
 - Emulator may still `SIGSEGV` in `libjingle_peerconnection_so.so` on LiveKit signaling — separate from these Java fixes.
 
 ## What didn't work

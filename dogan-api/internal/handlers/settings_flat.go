@@ -19,7 +19,7 @@ func coerceSettingValue(key, value string) any {
 	switch key {
 	case "object_detection_on_device", "wifi_only_downloads", "copilot_distance_control_enabled",
 		"copilot_alerts_enabled", "sound_monitoring_enabled", "ambient_light_enabled",
-		"copilot_hold_wake_lock", "copilot_live_stream_enabled":
+		"copilot_hold_wake_lock":
 		parsed, err := strconv.ParseBool(strings.TrimSpace(value))
 		if err == nil {
 			return parsed
