@@ -1,0 +1,26 @@
+---
+description: Verify Dogan Android on emulator can reach local Docker API via Mobile MCP. Use when testing Android→dogan-api connectivity on Windows AVD.
+---
+
+# Dogan Android → local Docker API (Mobile MCP)
+
+**Goal:** Confirm `com.dogan` on AVD `Dogan_UI_API33` can auth/health-check against host Docker `dogan-api` on `:8080`.
+
+## Steps
+1. Ensure stack healthy: `docker ps` shows `dogan-api` healthy; `http://localhost:8080/dogan/api/v1/health` → 200.
+2. Start AVD: `%LOCALAPPDATA%\Android\Sdk\emulator\emulator.exe -avd Dogan_UI_API33 -gpu auto` (adb serial often `emulator-5556`).
+3. Put `platform-tools` on PATH (bare `adb` may be missing).
+4. Mobile MCP: `mobile_list_available_devices` → device id `Dogan_UI_API33`; launch `com.dogan`.
+5. Connectivity settings → set API URL to `10.0.2.2:8080` (emulator alias for host loopback), user/pass `admin`/`admin`, tap connect.
+6. Pass: UI shows `API: Connected`, ping ms, button `CONNECTED`. Optional network proof: `adb shell` + `nc 10.0.2.2 8080` HTTP GET `/dogan/api/v1/health` → 200.
+
+## Gotchas
+- App default is remote `dogan-api.xaigrok.ir:443` — hub shows DISCONNECTED until local host/port set.
+- Use `10.0.2.2`, not `localhost`/`127.0.0.1`, unless you also `adb reverse tcp:8080 tcp:8080`.
+- Cleartext allowed via `network_security_config` (`cleartextTrafficPermitted=true`).
+- Emulator image has no `curl`/`wget`; use `nc` for HTTP probes.
+- Mobile MCP `DPAD_END` unsupported — clear fields with BACKSPACE/`adb shell input` instead.
+
+## What didn't work
+- Assuming default API URL talks to local Docker — it points at production host.
+- `curl`/`wget` from emulator shell — not installed on this AVD system image.
