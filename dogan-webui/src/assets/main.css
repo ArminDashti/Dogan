@@ -6,24 +6,25 @@
 }
 
 :root,
-:root[data-theme='lot-signal'] {
-  color-scheme: light;
+:root[data-theme='cursor-dark'] {
+  color-scheme: dark;
 
-  --bg: #e8edf1;
-  --surface: #f7fafc;
-  --surface-raised: #ffffff;
-  --border: #c5d0da;
-  --text: #15202b;
-  --muted: #5a6b7a;
-  --accent: #0b6e4f;
-  --accent-soft: #d4efe4;
-  --primary-fg: #ffffff;
+  /* Cursor Dark — editor.background / sideBar / button mapped to app tokens */
+  --bg: #181818;
+  --surface: #141414;
+  --surface-raised: #1c1c1c;
+  --border: #2e2e2e;
+  --text: #f0f0f0;
+  --muted: #f0f0f0bd;
+  --accent: #81a1c1;
+  --accent-soft: #81a1c126;
+  --primary-fg: #191c22;
   --signal: #c9780e;
-  --danger: #b42318;
-  --danger-bg: #fcebea;
-  --live: #0b6e4f;
-  --switch-off: #c5d0da;
-  --switch-on: #0b6e4f;
+  --danger: #e34671;
+  --danger-bg: #3a1524;
+  --live: #3fa266;
+  --switch-off: #39393d;
+  --switch-on: #34c759;
 
   --sidebar-width: 15.5rem;
   --sidebar-width-collapsed: 3.25rem;
@@ -46,8 +47,8 @@ body {
       -18deg,
       transparent,
       transparent 46px,
-      color-mix(in srgb, var(--border) 55%, transparent) 46px,
-      color-mix(in srgb, var(--border) 55%, transparent) 47px
+      color-mix(in srgb, var(--border) 35%, transparent) 46px,
+      color-mix(in srgb, var(--border) 35%, transparent) 47px
     );
   background-attachment: fixed;
   color: var(--text);

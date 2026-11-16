@@ -1,6 +1,6 @@
 # Design System Master File
 
-> Aligned with `/DESIGN.md` (Lot Signal). Page overrides live in `design-system/pages/` when needed.
+> Aligned with `/DESIGN.md` (Cursor Dark). Page overrides live in `design-system/pages/` when needed.
 
 **Project:** Dogan Control Center  
 **Category:** Field device operations  
@@ -10,17 +10,17 @@
 
 | Role | Hex | CSS Variable |
 |------|-----|--------------|
-| Primary | `#0B6E4F` | `--accent` |
-| On Primary | `#FFFFFF` | `--primary-fg` |
+| Primary | `#81A1C1` | `--accent` |
+| On Primary | `#191C22` | `--primary-fg` |
 | Signal | `#C9780E` | `--signal` |
-| Background | `#E8EDF1` | `--bg` |
-| Surface | `#F7FAFC` | `--surface` |
-| Raised | `#FFFFFF` | `--surface-raised` |
-| Foreground | `#15202B` | `--text` |
-| Muted | `#5A6B7A` | `--muted` |
-| Border | `#C5D0DA` | `--border` |
-| Destructive | `#B42318` | `--danger` |
-| Live | `#0B6E4F` | `--live` |
+| Background | `#181818` | `--bg` |
+| Surface | `#141414` | `--surface` |
+| Raised | `#1C1C1C` | `--surface-raised` |
+| Foreground | `#F0F0F0` | `--text` |
+| Muted | `#F0F0F0BD` | `--muted` |
+| Border | `#2E2E2E` | `--border` |
+| Destructive | `#E34671` | `--danger` |
+| Live | `#3FA266` | `--live` |
 
 ## Typography
 
