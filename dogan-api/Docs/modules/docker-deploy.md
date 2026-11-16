@@ -2,7 +2,7 @@
 
 ## Responsibility
 
-Build and deploy the dogan Compose stack (API + PostgreSQL + LiveKit) locally or over SSH via YAML-only scripts under `.armin/docker-scripts/`.
+Build and deploy the dogan Compose stack (API + SQLite + LiveKit) locally or over SSH via YAML-only scripts under `.armin/docker-scripts/`.
 
 ## Entry points
 
@@ -13,7 +13,7 @@ Build and deploy the dogan Compose stack (API + PostgreSQL + LiveKit) locally or
 | `create-image.ps1` | Legacy image build helper at repo root |
 | `run-on-docker*.ps1` (repo root) | Older CLI-flag wrappers; prefer `.armin/docker-scripts/` |
 
-Behavior is controlled only by YAML — no CLI `--` flags on the `.armin` scripts.
+Behavior is controlled only by YAML â€” no CLI `--` flags on the `.armin` scripts.
 
 ## YAML settings
 
@@ -26,9 +26,9 @@ Behavior is controlled only by YAML — no CLI `--` flags on the `.armin` script
 | `docker_network` | `t3-net` | same | External network; created if missing |
 | `internal_port` | empty | empty | Unused by this compose (container listens on 8080) |
 | `publish_port` | `30251` | empty | Maps to `DOGAN_PUBLISH_PORT`; local avoids clash with other stacks on 8080; empty on server clears host bind |
-| `ssh` / `volume_dir` | — | `ssh t3` / `/home/cloud-admin/docker/dogan` | Irancell-T3 (`t3-new`) |
-| `build_image_on` | — | `local` | Prefer local build+upload; remote GOPROXY returns 403 on this host |
-| `delete_image` | — | `yes` | Teardown runs before image load so the new image is not deleted |
+| `ssh` / `volume_dir` | â€” | `ssh t3` / `/home/cloud-admin/docker/dogan` | Irancell-T3 (`t3-new`) |
+| `build_image_on` | â€” | `local` | Prefer local build+upload; remote GOPROXY returns 403 on this host |
+| `delete_image` | â€” | `yes` | Teardown runs before image load so the new image is not deleted |
 
 ## Compose env overrides
 

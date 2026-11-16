@@ -26,13 +26,13 @@ func New(applicationConfig config.Config) *gin.Engine {
 		MaxAge:       12 * time.Hour,
 	}))
 
-	postgresStore, err := store.OpenPostgres(applicationConfig.DatabaseURL, applicationConfig.RetentionPeriod)
+	dataStore, err := store.Open(applicationConfig.DatabaseURL, applicationConfig.RetentionPeriod)
 	if err != nil {
 		log.Fatalf("failed to open database: %v", err)
 	}
 
 	retentionCleaner := store.NewRetentionCleaner(
-		postgresStore,
+		dataStore,
 		applicationConfig.FramesDir,
 		applicationConfig.RetentionPeriod,
 	)
@@ -42,27 +42,27 @@ func New(applicationConfig config.Config) *gin.Engine {
 
 	authHandler := handlers.NewAuthHandler(
 		tokenIssuer,
-		postgresStore,
+		dataStore,
 		applicationConfig.EmbeddedAPIToken,
 		applicationConfig.DeviceAPIKey,
 		applicationConfig.TokenTTL,
 	)
 	endpointsHandler := handlers.NewEndpointsHandler()
-	frameHandler := handlers.NewFrameHandler(postgresStore, applicationConfig.FramesDir)
-	deviceMetricsHandler := handlers.NewDeviceMetricsHandler(postgresStore)
+	frameHandler := handlers.NewFrameHandler(dataStore, applicationConfig.FramesDir)
+	deviceMetricsHandler := handlers.NewDeviceMetricsHandler(dataStore)
 	openCodeClient := opencode.NewClient(
 		applicationConfig.OpenCodeGoBaseURL,
 		applicationConfig.OpenCodeGoAPIKey,
 		applicationConfig.OpenCodeGoModel,
 		applicationConfig.OpenCodeGoPrompt,
 	)
-	visionHandler := handlers.NewVisionHandler(openCodeClient, postgresStore, postgresStore, applicationConfig.FramesDir)
-	telemetryHandler := handlers.NewTelemetryHandler(postgresStore, postgresStore, applicationConfig.FramesDir, visionHandler)
-	actionsHandler := handlers.NewActionsHandler(postgresStore)
-	settingsHandler := handlers.NewSettingsHandler(postgresStore)
+	visionHandler := handlers.NewVisionHandler(openCodeClient, dataStore, dataStore, applicationConfig.FramesDir)
+	telemetryHandler := handlers.NewTelemetryHandler(dataStore, dataStore, applicationConfig.FramesDir, visionHandler)
+	actionsHandler := handlers.NewActionsHandler(dataStore)
+	settingsHandler := handlers.NewSettingsHandler(dataStore)
 	soundsHandler := handlers.NewSoundsHandler(applicationConfig.SoundsDir)
-	diagnosticAudioHandler := handlers.NewDiagnosticAudioHandler(postgresStore, applicationConfig.AudioDir)
-	webrtcHandler := handlers.NewWebRTCHandler(postgresStore)
+	diagnosticAudioHandler := handlers.NewDiagnosticAudioHandler(dataStore, applicationConfig.AudioDir)
+	webrtcHandler := handlers.NewWebRTCHandler(dataStore)
 	liveKitTokenIssuer := livekitauth.NewTokenIssuer(livekitauth.Config{
 		URL:       applicationConfig.LiveKitURL,
 		PublicURL: applicationConfig.LiveKitPublicURL,
@@ -71,10 +71,10 @@ func New(applicationConfig config.Config) *gin.Engine {
 		TokenTTL:  applicationConfig.LiveKitTokenTTL,
 	})
 	healthHandler := handlers.NewHealthHandler(liveKitTokenIssuer)
-	liveKitHandler := handlers.NewLiveKitHandler(liveKitTokenIssuer, postgresStore)
-	webrtcSessionHandler := handlers.NewWebRTCSessionHandler(liveKitTokenIssuer, postgresStore)
-	devicesHandler := handlers.NewDevicesHandler(postgresStore, liveKitTokenIssuer, postgresStore)
-	devicesWebHandler := handlers.NewDevicesWebHandler(postgresStore, postgresStore, postgresStore, postgresStore)
+	liveKitHandler := handlers.NewLiveKitHandler(liveKitTokenIssuer, dataStore)
+	webrtcSessionHandler := handlers.NewWebRTCSessionHandler(liveKitTokenIssuer, dataStore)
+	devicesHandler := handlers.NewDevicesHandler(dataStore, liveKitTokenIssuer, dataStore)
+	devicesWebHandler := handlers.NewDevicesWebHandler(dataStore, dataStore, dataStore, dataStore)
 
 	api := engine.Group("/dogan/api/v1")
 	{

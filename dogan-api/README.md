@@ -1,10 +1,10 @@
 # dogan-server
 
-Go API server for Dogan Android/Web clients: REST image and telemetry transfer, PostgreSQL persistence, and LiveKit WebRTC streaming.
+Go API server for Dogan Android/Web clients: REST image and telemetry transfer, SQLite persistence, and LiveKit WebRTC streaming.
 
 ## Docker
 
-Build and run with Docker Compose (includes PostgreSQL and LiveKit):
+Build and run with Docker Compose (includes LiveKit; SQLite file on the API volume):
 
 ```powershell
 .\create-image.ps1

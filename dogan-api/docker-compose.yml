@@ -1,26 +1,6 @@
 name: dogan
 
 services:
-  dogan-pgsql:
-    image: postgres:16-alpine
-    container_name: dogan-pgsql
-    environment:
-      POSTGRES_DB: dogan
-      POSTGRES_USER: dogan
-      POSTGRES_PASSWORD: dogan
-    volumes:
-      - dogan-pgsql-vol:/var/lib/postgresql/data
-    networks:
-      - t3-net
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dogan -d dogan"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-    restart: "no"
-    expose:
-      - "5432"
-
   dogan-livekit:
     image: livekit/livekit-server:latest
     container_name: dogan-livekit
@@ -48,8 +28,6 @@ services:
     image: ${API_IMAGE_TAG:-dogan-api:latest}
     container_name: dogan-api
     depends_on:
-      dogan-pgsql:
-        condition: service_healthy
       dogan-livekit:
         condition: service_started
     expose:
@@ -64,7 +42,7 @@ services:
       DOGAN_DEVICE_API_KEY: ${DOGAN_DEVICE_API_KEY:-dogan-dev-key}
       DOGAN_JWT_SECRET: ${DOGAN_JWT_SECRET:-dogan-dev-jwt-secret}
       DOGAN_TOKEN_TTL: ${DOGAN_TOKEN_TTL:-86400}
-      DOGAN_DATABASE_URL: postgres://dogan:dogan@dogan-pgsql:5432/dogan?sslmode=disable
+      DOGAN_DATABASE_URL: file:/data/dogan.db
       DOGAN_FRAMES_DIR: /data/frames
       DOGAN_LIVEKIT_URL: ${DOGAN_LIVEKIT_URL:-ws://dogan-livekit:7880}
       DOGAN_LIVEKIT_PUBLIC_URL: ${DOGAN_LIVEKIT_PUBLIC_URL:-wss://dogan-livekit.xaigrok.ir}
@@ -88,8 +66,6 @@ networks:
     external: true
 
 volumes:
-  dogan-pgsql-vol:
-    name: dogan-pgsql-vol
   dogan-api-vol:
     name: dogan-api-vol
   dogan-livekit-vol:

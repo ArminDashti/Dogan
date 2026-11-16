@@ -4,7 +4,7 @@
 
 .DESCRIPTION
     Uses the repo-root Dockerfile, docker-compose.yml, and livekit.yaml.
-    Builds the API image, then starts PostgreSQL, LiveKit, and dogan-api.
+    Builds the API image, then starts LiveKit and dogan-api (SQLite on the API volume).
     When --ssh-string is omitted, the local Docker daemon is used. When --ssh-string
     is set, the API image is built locally, exported, transferred to the remote host,
     loaded there, and compose is started without a remote build. When --delete-volume=yes,

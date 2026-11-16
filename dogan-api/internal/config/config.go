@@ -14,7 +14,7 @@ const (
 	defaultEmbeddedAPIToken = "dg_dev_a8f3c2e1b9d74f6a0e5c3b9d2f7a1e4c8b6d0f3a7e2c9b5d1f8a4e6c0b3d7f9"
 	defaultJWTSecret        = "dogan-dev-jwt-secret"
 	defaultTokenTTL         = 24 * time.Hour
-	defaultDatabaseURL      = "postgres://dogan:dogan@localhost:5432/dogan?sslmode=disable"
+	defaultDatabaseURL      = "file:./data/dogan.db"
 	defaultFramesDir        = "frames"
 	defaultSoundsDir        = "sounds"
 	defaultAudioDir         = "diagnostic-audio"

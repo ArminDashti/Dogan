@@ -1,8 +1,3 @@
-//go:build sqlite
-
-// Excluded from the default build: this file redeclares helpers in postgres.go
-// and imports modernc.org/sqlite, which is not a go.mod requirement.
-// The API opens Postgres through store.OpenPostgres. Nothing calls store.Open.
 package store
 
 import (
@@ -10,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -23,6 +20,10 @@ type Store struct {
 }
 
 func Open(databaseURL string, retentionPeriod time.Duration) (*Store, error) {
+	if err := ensureSQLiteParentDir(databaseURL); err != nil {
+		return nil, err
+	}
+
 	database, err := sql.Open("sqlite", databaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("open sqlite database: %w", err)
@@ -52,12 +53,34 @@ func Open(databaseURL string, retentionPeriod time.Duration) (*Store, error) {
 		return nil, fmt.Errorf("apply sqlite schema: %w", err)
 	}
 
-	if _, err := database.Exec(schemaMigrationDDL); err != nil {
+	if err := migrateSchema(database); err != nil {
 		_ = database.Close()
 		return nil, fmt.Errorf("apply sqlite schema migrations: %w", err)
 	}
 
 	return &Store{db: database, retentionPeriod: retentionPeriod}, nil
+}
+
+func ensureSQLiteParentDir(databaseURL string) error {
+	path := databaseURL
+	if strings.HasPrefix(path, "file:") {
+		path = strings.TrimPrefix(path, "file:")
+		if query := strings.Index(path, "?"); query >= 0 {
+			path = path[:query]
+		}
+	}
+	path = strings.TrimPrefix(path, "//")
+	if path == "" || path == ":memory:" || strings.HasPrefix(path, ":memory:") {
+		return nil
+	}
+	dir := filepath.Dir(filepath.FromSlash(path))
+	if dir == "." || dir == "" {
+		return nil
+	}
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("create sqlite directory %s: %w", dir, err)
+	}
+	return nil
 }
 
 func (store *Store) Close() error {
@@ -780,6 +803,68 @@ func (store *Store) PurgeExpiredMetrics(cutoff time.Time) error {
 	return nil
 }
 
+
+func (store *Store) SaveVisionAnalysis(record models.VisionAnalysisRecord) (models.VisionAnalysisRecord, error) {
+	deviceRowID, err := store.resolveDeviceRowID(record.DeviceID)
+	if err != nil {
+		return models.VisionAnalysisRecord{}, err
+	}
+
+	analyzedAt := record.AnalyzedAt
+	if analyzedAt.IsZero() {
+		analyzedAt = time.Now().UTC()
+	}
+
+	err = store.db.QueryRow(
+		`INSERT INTO vision_analyses (device_id, image_id, model, prompt, analysis, analyzed_at)
+		 VALUES (?, ?, ?, ?, ?, ?)
+		 RETURNING id, analyzed_at`,
+		deviceRowID,
+		record.ImageID,
+		record.Model,
+		record.Prompt,
+		record.Analysis,
+		analyzedAt,
+	).Scan(&record.ID, &record.AnalyzedAt)
+	if err != nil {
+		return models.VisionAnalysisRecord{}, fmt.Errorf("insert vision analysis: %w", err)
+	}
+	return record, nil
+}
+
+func (store *Store) GetLatestVisionAnalysis(deviceID string) (models.VisionAnalysisRecord, error) {
+	deviceRowID, err := store.resolveDeviceRowID(deviceID)
+	if err != nil {
+		if errors.Is(err, ErrDeviceNotFound) {
+			return models.VisionAnalysisRecord{}, ErrVisionAnalysisNotFound
+		}
+		return models.VisionAnalysisRecord{}, err
+	}
+
+	var record models.VisionAnalysisRecord
+	var imageID sql.NullInt64
+	err = store.db.QueryRow(
+		`SELECT id, image_id, model, prompt, analysis, analyzed_at
+		 FROM vision_analyses
+		 WHERE device_id = ?
+		 ORDER BY analyzed_at DESC, id DESC
+		 LIMIT 1`,
+		deviceRowID,
+	).Scan(&record.ID, &imageID, &record.Model, &record.Prompt, &record.Analysis, &record.AnalyzedAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return models.VisionAnalysisRecord{}, ErrVisionAnalysisNotFound
+		}
+		return models.VisionAnalysisRecord{}, fmt.Errorf("query vision analysis: %w", err)
+	}
+	record.DeviceID = deviceID
+	if imageID.Valid {
+		value := imageID.Int64
+		record.ImageID = &value
+	}
+	return record, nil
+}
+
 func (store *Store) UpsertDevice(device models.Device) (models.Device, error) {
 	if device.MACAddress == "" {
 		return models.Device{}, fmt.Errorf("mac_address is required")
@@ -825,6 +910,8 @@ func (store *Store) resolveDeviceRowID(deviceIdentifier string) (int64, error) {
 		`SELECT id FROM devices
 		 WHERE mac_address = ? OR device_name = ? OR CAST(id AS TEXT) = ?
 		 LIMIT 1`,
+		deviceIdentifier,
+		deviceIdentifier,
 		deviceIdentifier,
 	).Scan(&deviceRowID)
 	if err != nil {

@@ -6,7 +6,7 @@ Gin engine setup, global middleware, and `/dogan/api/v1` route registration.
 
 - Create the Gin engine with logger, recovery, and CORS
 - Wire handlers and protect routes with bearer-token middleware
-- Open PostgreSQL and start retention cleanup
+- Open SQLite and start retention cleanup
 
 ## CORS
 
@@ -23,5 +23,5 @@ Deploy scripts merge the defaults above and, when `--domain` is set, add `https:
 
 ## Dependencies
 
-- `internal/config` — listen address, secrets, CORS origins
+- `internal/config` â€” listen address, secrets, CORS origins
 - `internal/handlers`, `internal/middleware`, `internal/store`, `internal/auth`, `internal/livekit`
