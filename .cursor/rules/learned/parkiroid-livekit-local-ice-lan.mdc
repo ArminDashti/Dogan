@@ -1,0 +1,27 @@
+---
+description: Fix local Docker LiveKit ICE so Android emulator can publish media. Use when Watchman LiveKit connects signaling but ICE fails or web live view stays dark on local Docker.
+---
+
+# Local LiveKit ICE for Android emulator
+
+**Goal:** Make Dogan Watchman media publish reach `dogan-livekit` on local Docker from AVD.
+
+## Steps
+1. In `dogan-api/livekit.yaml` set `rtc.use_external_ip: false` and `rtc.node_ip` to the host LAN IP the emulator can reach (e.g. Ethernet `10.20.9.59`).
+2. Recreate LiveKit only: `cd dogan-api` → `docker compose up -d --force-recreate dogan-livekit` (keep volumes).
+3. Confirm container config: logs show `using explicit node IP` / `nodeIP` = that LAN address.
+4. Emulator Connectivity: API `10.0.2.2:8080`, stream `10.0.2.2:7880`, `admin`/`admin`.
+5. Install current Dogan APK (≥2.2.0 Watchman-only LiveKit). Arm Watchman.
+6. Pass: LiveKit logs `participant active` with selected candidate on the LAN IP, `mediaTrack published` (audio/video), app log `LiveKit: Connected to room`.
+
+## Gotchas
+- `use_external_ip: true` makes STUN advertise the VPN/public IP (e.g. `146.70.132.32`); emulator ICE pairs fail (0 responses).
+- Connectivity “LiveKit Connected (N sessions)” is probe/session count, not publish proof.
+- Emulator disk full (`ENOSPC`) from cabin WAV archives crashes CaptureService — `adb shell pm clear com.dogan` or free `/data`.
+- APK 2.1.1 gated LiveKit away from Watchman (`WATCHER || !copilotLiveStreamEnabled` → stop); need ≥2.2.0 for Watchman publish.
+- For a public VPS, switch back to `use_external_ip: true` (or that host’s public `node_ip`).
+
+## What didn't work
+- Leaving production-style `use_external_ip: true` / VPS `node_ip` on the PC Docker stack.
+- Assuming probe Connected meant video was publishing.
+- Retesting on 2.1.1 after clearing app data — Watchman never called LiveKit start.

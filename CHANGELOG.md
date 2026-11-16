@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.2.1
+
+### Fixed
+- Local LiveKit ICE: disable `use_external_ip` and advertise host LAN `node_ip` so Android emulator Watchman can complete media publish (STUN/public IP was unreachable from the AVD).
+
 ## 2.2.0
 
 ### Changed
