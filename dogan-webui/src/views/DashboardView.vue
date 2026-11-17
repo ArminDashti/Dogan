@@ -266,8 +266,14 @@ async function loadOps(options: { silent?: boolean } = {}): Promise<void> {
     settings.value = settingsResult
     connections.value = connectionList
 
-    if (!selectedDeviceId.value && deviceList.length > 0) {
-      selectedDeviceId.value = deviceList[0].id
+    if (deviceList.length > 0) {
+      const preferOnlineId =
+        deviceList.find((device) => device.status === 'online')?.id ?? deviceList[0].id
+      const selected = deviceList.find((device) => device.id === selectedDeviceId.value)
+      const selectedOffline = selected != null && selected.status !== 'online'
+      if (!selectedDeviceId.value || selectedOffline) {
+        selectedDeviceId.value = preferOnlineId
+      }
     }
     if (deviceList.length === 0) {
       selectedDeviceId.value = ''
