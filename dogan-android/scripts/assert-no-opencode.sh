@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fail if Android app source references OpenCode / LLM provider hosts or API keys.
-# Vision belongs on parkiroid-api only (Android → Dogan API → OpenCode).
+# Vision belongs on dogan-api only (Android → Dogan API → OpenCode).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PATTERN='opencode\.ai|OPENCODE_GO_|oc_sk_|openrouter\.ai|api\.openai\.com'

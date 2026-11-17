@@ -7,7 +7,7 @@ description: Test Android→API car detection (telemetry + Pont vision) on cloud
 **Goal:** Prove cars are detected for an Android device: app connects → frames reach `POST /dogan/api/v1/telemetry` → Pont vision → `GET /vision/latest?device-id=`.
 
 ## Steps
-1. Recreate `parkiroid-api` with `OPENCODE_GO_API_KEY` set (Pont key in gitignored `parkiroid-api/.env` or exported env). Empty key → vision `503` / no async analysis. Defaults: `OPENCODE_GO_BASE_URL=https://pont.xaigrok.ir/api/v1`, model `opencodego-glm-5.3-flash`.
+1. Recreate `dogan-api` with `OPENCODE_GO_API_KEY` set (Pont key in gitignored `dogan-api/.env` or exported env). Empty key → vision `503` / no async analysis. Defaults: `OPENCODE_GO_BASE_URL=https://pont.xaigrok.ir/api/v1`, model `opencodego-glm-5.3-flash`.
 2. Emulator: AVD `Dogan_UI_API33`, `adb reverse tcp:8080 tcp:8080`, Connectivity API `10.0.2.2:8080`, login `admin`/`admin`, arm Watchman (green). Device id = `settings get secure android_id`.
 3. App has **no on-device OD**; set `watchman_image_upload_policy=auto` via `PUT /api/v1/settings` so stills can attach when capture works.
 4. Car-detection check: POST Android-shaped telemetry with `rear_camera_frame_base64` (real car JPEG) for that device id; poll `/vision/latest?device-id=` until analysis mentions cars/vehicles (PASS).

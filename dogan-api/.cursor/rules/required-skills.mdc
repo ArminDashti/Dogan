@@ -1,5 +1,5 @@
 ---
-description: Skills agents should load for Dogan (parkiroid) work
+description: Skills agents should load for Dogan work
 globs:
 alwaysApply: false
 metadata:

@@ -46,3 +46,7 @@ graphify-out/
 .cursor/hooks.json
 .cursor/agents/
 .cursor/tools/
+
+# local credentials (never commit)
+armin-credentials.txt
+*credentials*.txt
