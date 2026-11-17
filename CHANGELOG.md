@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.4.6
+
+### Changed
+- WebUI dashboard auto-selects an online unit (and switches away from a stale offline selection) so LiveKit Play targets a publishing handset.
+
 ## 2.4.5
 
 ### Added
