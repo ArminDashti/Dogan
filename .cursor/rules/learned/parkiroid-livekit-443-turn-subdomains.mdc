@@ -1,0 +1,25 @@
+---
+description: Expose Dogan LiveKit on Irancell T3 using only TCP 443 via HAProxy SNI + TURN. Use when UDP/7881 blocked or public Watchman stream stays dark behind firewall.
+---
+
+# Dogan LiveKit 443-only (TURN + subdomains)
+
+**Goal:** Public Watchman publish/subscribe with only TCP 443.
+
+## Steps
+1. Hosts: `dogan` (webui), `dogan-api`, `dogan-livekit` (WSS), `dogan-turn` (TURN TLS).
+2. Copy `livekit.t3.yaml` → `/cloud-admin/docker/dogan/livekit.yaml`; compose overlay `docker-compose.t3.yml` clears host UDP/7881 and exposes `:5349`.
+3. HAProxy: SNI `dogan-turn` → TCP TLS terminate (`127.0.0.1:13443`) → `dogan-livekit:5349`. Use `scripts/patch-haproxy-dogan-turn.py`.
+4. DNS: `dogan-turn` A → `2.144.27.124` **grey-cloud** (CF proxy breaks TURN). Soft-reload HAProxy with `USR2`.
+5. Pass: API/LiveKit HTTPS OK; LiveKit log `Starting TURN server` with `externalTLS`; Watchman `Connected to room` + `mediaTrack published` without public UDP.
+
+## Gotchas
+- Active T3 compose uses short service names (`livekit`, `api`) under `/cloud-admin/docker/dogan` (not `/home/cloud-admin/docker/dogan`).
+- Unmapping UDP `50000-50050` can hang docker-proxy — `docker rm -f` then recreate without ports.
+- Android defaults already `dogan-api` / `dogan-livekit` on port 443.
+- Local PC keeps `livekit.yaml` + UDP for emulator ICE.
+
+## What didn't work
+- Publishing UDP/7881 on T3 under a 443-only firewall.
+- Orange-cloud Cloudflare on `dogan-turn` (non-HTTP TURN).
+- Overlay service keys `dogan-livekit` against T3 compose that only defines `livekit`.

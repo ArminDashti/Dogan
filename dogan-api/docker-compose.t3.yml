@@ -1,0 +1,19 @@
+# Overlay for Irancell-T3 active stack (/cloud-admin/docker/dogan).
+# Service names there are short: livekit, api, webui, pgsql.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.t3.yml up -d --force-recreate livekit api
+#
+# Requires livekit.yaml to be the T3 TURN profile (copy from livekit.t3.yaml).
+# Local PC: keep plain docker-compose.yml + livekit.yaml (LAN ICE / UDP).
+services:
+  livekit:
+    expose:
+      - "7880"
+      - "7881"
+      - "5349"
+    ports: !reset []
+
+  api:
+    environment:
+      DOGAN_LIVEKIT_URL: ${DOGAN_LIVEKIT_URL:-ws://dogan-livekit:7880}
+      DOGAN_LIVEKIT_PUBLIC_URL: ${DOGAN_LIVEKIT_PUBLIC_URL:-wss://dogan-livekit.xaigrok.ir}

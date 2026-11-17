@@ -42,8 +42,23 @@ Scripts set env vars that match `docker-compose.yml`:
 
 Compose sets `DOGAN_CORS_ALLOWED_ORIGINS` (local web + `https://dogan.xaigrok.ir`).
 
+## Public T3 (443/TCP only)
+
+Use overlay + TURN profile (no public UDP / `7881`):
+
+| File | Role |
+|------|------|
+| `docker-compose.t3.yml` | Clears LiveKit host ports; sets `DOGAN_LIVEKIT_PUBLIC_URL=wss://dogan-livekit.xaigrok.ir` |
+| `livekit.t3.yaml` | `use_external_ip` + LiveKit-embedded TURN (`dogan-turn.xaigrok.ir`, `external_tls`) |
+
+Full subdomain / HAProxy / DNS rules: [public-443-subdomains.md](public-443-subdomains.md).
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.t3.yml up -d
+```
+
 ## Dependencies
 
-- `Dockerfile`, `docker-compose.yml`, `livekit.yaml`
+- `Dockerfile`, `docker-compose.yml`, `docker-compose.t3.yml`, `livekit.yaml`, `livekit.t3.yaml`
 - Docker CLI; remote also needs SSH alias (or `sshpass` for password mode) + `scp`
 - Local publish defaults to host port `30251` via YAML (`lexmora-api` already owns `8080` on shared hosts)

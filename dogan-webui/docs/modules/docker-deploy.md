@@ -52,13 +52,17 @@ Server flow: sync compose/yaml → optional down/image rm → build+upload (or r
 
 `docker-compose.yml` exposes port 80 only (no host bind). Local host publishing comes from `docker-compose.override.yml` (not synced to the server).
 
-### HAProxy (already configured on t3)
+### HAProxy (T3, TCP 443 only)
 
 | From | To |
 |------|----|
-| `https://dogan.xaigrok.ir:443` | `dogan-webui:80` on `t3-net` (SNI + Host routing in reverse-proxy `haproxy.cfg`) |
+| `https://dogan.xaigrok.ir:443` | `dogan-webui:80` |
+| `https://dogan-api.xaigrok.ir:443` | `dogan-api:8080` |
+| `https://dogan-livekit.xaigrok.ir:443` | `dogan-livekit:7880` (WSS) |
+| `turns://dogan-turn.xaigrok.ir:443` | HAProxy TLS → `dogan-livekit:5349` (TURN) |
 
-Cert PEM: `/cloud-admin/docker-volumes/reverse-proxy/haproxy/certs/dogan.xaigrok.ir.pem` (Let's Encrypt).
+Cert PEMs under `/cloud-admin/docker-volumes/reverse-proxy/haproxy/certs/`.  
+`dogan-turn` DNS must be **grey-cloud** to origin (TURN is not HTTP). Details: `dogan-api/Docs/modules/public-443-subdomains.md`.
 
 ## Dependencies
 

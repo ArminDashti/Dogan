@@ -7,8 +7,8 @@ rtc:
   port_range_end: 50050
   # Local Docker + Android emulator: advertise host LAN IP so ICE reaches
   # published UDP/TCP ports. use_external_ip:true made STUN pick the VPN/public
-  # IP (unreachable from the emulator). For a public VPS, set use_external_ip
-  # true (or node_ip to that host's public address) instead.
+  # IP (unreachable from the emulator). Public T3: use livekit.t3.yaml
+  # (use_external_ip + TURN external_tls) — see Docs/modules/public-443-subdomains.md.
   use_external_ip: false
   node_ip: 10.20.9.59
 
