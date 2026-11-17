@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"time"
 
@@ -14,12 +15,18 @@ import (
 type WebRTCSessionHandler struct {
 	tokenIssuer *livekitauth.TokenIssuer
 	webrtcStore store.WebRTCStore
+	iceOptions  livekitauth.IceServerOptions
 }
 
-func NewWebRTCSessionHandler(tokenIssuer *livekitauth.TokenIssuer, webrtcStore store.WebRTCStore) *WebRTCSessionHandler {
+func NewWebRTCSessionHandler(
+	tokenIssuer *livekitauth.TokenIssuer,
+	webrtcStore store.WebRTCStore,
+	iceOptions livekitauth.IceServerOptions,
+) *WebRTCSessionHandler {
 	return &WebRTCSessionHandler{
 		tokenIssuer: tokenIssuer,
 		webrtcStore: webrtcStore,
+		iceOptions:  iceOptions,
 	}
 }
 
@@ -60,7 +67,7 @@ func (handler *WebRTCSessionHandler) CreateSession(context *gin.Context) {
 		Room:       tokenResponse.Room,
 		Identity:   tokenResponse.Identity,
 		ExpiresAt:  tokenResponse.ExpiresAt,
-		IceServers: livekitauth.DefaultIceServers(),
+		IceServers: livekitauth.IceServers(handler.iceOptions),
 	})
 }
 
@@ -68,13 +75,20 @@ type DevicesHandler struct {
 	deviceStore store.DeviceStore
 	tokenIssuer *livekitauth.TokenIssuer
 	webrtcStore store.WebRTCStore
+	iceOptions  livekitauth.IceServerOptions
 }
 
-func NewDevicesHandler(deviceStore store.DeviceStore, tokenIssuer *livekitauth.TokenIssuer, webrtcStore store.WebRTCStore) *DevicesHandler {
+func NewDevicesHandler(
+	deviceStore store.DeviceStore,
+	tokenIssuer *livekitauth.TokenIssuer,
+	webrtcStore store.WebRTCStore,
+	iceOptions livekitauth.IceServerOptions,
+) *DevicesHandler {
 	return &DevicesHandler{
 		deviceStore: deviceStore,
 		tokenIssuer: tokenIssuer,
 		webrtcStore: webrtcStore,
+		iceOptions:  iceOptions,
 	}
 }
 
@@ -133,6 +147,11 @@ func (handler *DevicesHandler) GetDeviceStream(context *gin.Context) {
 		return
 	}
 
+	urlWarnings := livekitauth.ClientURLWarnings(tokenResponse.URL)
+	if len(urlWarnings) > 0 {
+		log.Printf("livekit stream credentials for device %s: %v", deviceID, urlWarnings)
+	}
+
 	_, _ = handler.webrtcStore.SaveConnection(models.WebRTCConnectionRecord{
 		DeviceID:    deviceID,
 		Room:        tokenResponse.Room,
@@ -143,11 +162,13 @@ func (handler *DevicesHandler) GetDeviceStream(context *gin.Context) {
 	})
 
 	context.JSON(http.StatusOK, models.DeviceStreamResponse{
-		DeviceID:  deviceID,
-		Token:     tokenResponse.Token,
-		URL:       tokenResponse.URL,
-		Room:      tokenResponse.Room,
-		Identity:  tokenResponse.Identity,
-		ExpiresAt: tokenResponse.ExpiresAt,
+		DeviceID:    deviceID,
+		Token:       tokenResponse.Token,
+		URL:         tokenResponse.URL,
+		Room:        tokenResponse.Room,
+		Identity:    tokenResponse.Identity,
+		ExpiresAt:   tokenResponse.ExpiresAt,
+		IceServers:  livekitauth.IceServers(handler.iceOptions),
+		URLWarnings: urlWarnings,
 	})
 }

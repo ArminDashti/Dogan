@@ -23,6 +23,7 @@ const (
 	defaultLiveKitAPIKey    = "devkey"
 	defaultLiveKitAPISecret = "secret"
 	defaultLiveKitTokenTTL  = time.Hour
+	defaultLiveKitTurnDomain = "dogan-turn.xaigrok.ir"
 	defaultDeviceAPIKey     = auth.DefaultDeviceAPIKey
 	defaultCORSOrigins      = "http://localhost:30808,http://127.0.0.1:30808,https://dogan.xaigrok.ir"
 	defaultOpenCodeGoBaseURL = "https://pont.xaigrok.ir/api/v1"
@@ -46,6 +47,9 @@ type Config struct {
 	LiveKitAPIKey       string
 	LiveKitAPISecret    string
 	LiveKitTokenTTL     time.Duration
+	LiveKitTurnDomain   string
+	LiveKitTurnExternalTLS bool
+	LiveKitIceServerURLs []string
 	CORSAllowedOrigins  []string
 	OpenCodeGoAPIKey    string
 	OpenCodeGoBaseURL   string
@@ -81,6 +85,9 @@ func Load() Config {
 		LiveKitAPIKey:      envOrDefault("DOGAN_LIVEKIT_API_KEY", defaultLiveKitAPIKey),
 		LiveKitAPISecret:   envOrDefault("DOGAN_LIVEKIT_API_SECRET", defaultLiveKitAPISecret),
 		LiveKitTokenTTL:    envDurationOrDefault("DOGAN_LIVEKIT_TOKEN_TTL", defaultLiveKitTokenTTL),
+		LiveKitTurnDomain:  envOrDefault("DOGAN_LIVEKIT_TURN_DOMAIN", defaultLiveKitTurnDomain),
+		LiveKitTurnExternalTLS: envBoolOrDefault("DOGAN_LIVEKIT_TURN_EXTERNAL_TLS", true),
+		LiveKitIceServerURLs:   envCSVOrDefault("DOGAN_LIVEKIT_ICE_SERVER_URLS", ""),
 		CORSAllowedOrigins: envCSVOrDefault("DOGAN_CORS_ALLOWED_ORIGINS", defaultCORSOrigins),
 		OpenCodeGoAPIKey:   envOrDefault("OPENCODE_GO_API_KEY", ""),
 		OpenCodeGoBaseURL:  envOrDefault("OPENCODE_GO_BASE_URL", defaultOpenCodeGoBaseURL),
@@ -121,6 +128,18 @@ func envDurationOrDefault(key string, fallback time.Duration) time.Duration {
 	}
 
 	return time.Duration(seconds) * time.Second
+}
+
+func envBoolOrDefault(key string, fallback bool) bool {
+	raw := os.Getenv(key)
+	if raw == "" {
+		return fallback
+	}
+	parsed, err := strconv.ParseBool(raw)
+	if err != nil {
+		return fallback
+	}
+	return parsed
 }
 
 func envDaysOrDefault(key string, fallbackDays int) time.Duration {

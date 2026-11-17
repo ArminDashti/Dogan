@@ -4,6 +4,12 @@ import { Room, RoomEvent, Track } from 'livekit-client'
 import { captureDeviceFrame } from '@/services/api/capture'
 import { fetchStreamCredentials } from '@/services/api/stream'
 import { getErrorMessage } from '@/services/api/errors'
+import {
+  attachLiveKitConnectionLogging,
+  formatLiveKitStreamError,
+  liveKitConnectOptions,
+  preflightLiveKitUrl,
+} from '@/services/livekit/connection'
 
 export type ConnectionState = 'idle' | 'connecting' | 'live' | 'error'
 
@@ -28,6 +34,7 @@ const errorMessage = ref<string | null>(null)
 const videoContainer = ref<HTMLDivElement | null>(null)
 
 let room: Room | null = null
+let detachLiveKitLogging: (() => void) | null = null
 
 const statusLabel = computed(() => {
   switch (connectionState.value) {
@@ -55,6 +62,10 @@ function clearMediaElements(): void {
 }
 
 async function disconnectStream(): Promise<void> {
+  if (detachLiveKitLogging) {
+    detachLiveKitLogging()
+    detachLiveKitLogging = null
+  }
   if (room) {
     room.removeAllListeners()
     await room.disconnect()
@@ -76,14 +87,22 @@ async function playStream(): Promise<void> {
   connectionState.value = 'connecting'
   emit('connectionStateChange', connectionState.value)
 
+  let liveKitUrl = ''
   try {
     await disconnectStream()
     connectionState.value = 'connecting'
     emit('connectionStateChange', connectionState.value)
 
     const credentials = await fetchStreamCredentials(props.deviceId)
+    liveKitUrl = credentials.url
+
+    const urlBlock = preflightLiveKitUrl(credentials.url)
+    if (urlBlock) {
+      throw new Error(urlBlock)
+    }
 
     const liveKitRoom = new Room({ adaptiveStream: true })
+    detachLiveKitLogging = attachLiveKitConnectionLogging(liveKitRoom, props.deviceId)
     liveKitRoom.on(RoomEvent.TrackSubscribed, (track) => {
       if (track.kind === Track.Kind.Video || track.kind === Track.Kind.Audio) {
         const element = track.attach()
@@ -103,12 +122,16 @@ async function playStream(): Promise<void> {
       emit('connectionStateChange', connectionState.value)
     })
 
-    await liveKitRoom.connect(credentials.url, credentials.token)
+    await liveKitRoom.connect(credentials.url, credentials.token, liveKitConnectOptions)
     room = liveKitRoom
   } catch (error) {
     connectionState.value = 'error'
     emit('connectionStateChange', connectionState.value)
-    const message = getErrorMessage(error, 'Unable to connect to the live stream.')
+    const message =
+      liveKitUrl !== ''
+        ? formatLiveKitStreamError(error, liveKitUrl)
+        : getErrorMessage(error, 'Unable to fetch stream credentials from the API.')
+    console.error('[dogan stream] connect failed', error)
     errorMessage.value = message
     emit('error', message)
     await disconnectStream()

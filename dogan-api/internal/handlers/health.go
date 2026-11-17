@@ -10,18 +10,30 @@ import (
 )
 
 type HealthHandler struct {
-	liveKit *livekitauth.TokenIssuer
+	liveKit       *livekitauth.TokenIssuer
+	clientURL     string
+	turnDomain    string
 }
 
-func NewHealthHandler(liveKit *livekitauth.TokenIssuer) *HealthHandler {
-	return &HealthHandler{liveKit: liveKit}
+func NewHealthHandler(liveKit *livekitauth.TokenIssuer, clientURL string, turnDomain string) *HealthHandler {
+	return &HealthHandler{
+		liveKit:    liveKit,
+		clientURL:  clientURL,
+		turnDomain: turnDomain,
+	}
 }
 
 func (handler *HealthHandler) GetHealth(context *gin.Context) {
 	liveKitConfigured := handler.liveKit != nil && handler.liveKit.Enabled()
-	context.JSON(http.StatusOK, models.HealthResponse{
+	response := models.HealthResponse{
 		Status:            "ok",
 		Timestamp:         time.Now().UTC(),
 		LiveKitConfigured: liveKitConfigured,
-	})
+		TurnDomain:        handler.turnDomain,
+	}
+	if liveKitConfigured {
+		response.LiveKitClientURL = handler.clientURL
+		response.LiveKitWarnings = livekitauth.ClientURLWarnings(handler.clientURL)
+	}
+	context.JSON(http.StatusOK, response)
 }

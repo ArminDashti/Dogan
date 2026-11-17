@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.4.7
+
+### Fixed
+- LiveKit stream connect failures: API health and stream endpoints expose LiveKit client URL warnings; TURN domain hints in `ice_servers`; WebUI maps `could not establish pc connection` to ICE/TURN diagnostics and logs signaling vs peer-connection stage.
+
 ## 2.4.6
 
 ### Changed
