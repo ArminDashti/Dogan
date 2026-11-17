@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.4.3
+
+### Changed
+- Dogan Android **2.4.3**: ships API 29–37 range (`minSdk` 29, `targetSdk` / `compileSdk` 37, AGP 9.1.1).
+
 ## 2.4.2
 
 ### Changed
@@ -10,12 +15,6 @@
 ### Added
 - WebUI **Logs** section (`/logs`): sign-in audit and WebRTC session history.
 - API `GET /auth/login-logs` for recent `login_logs` rows (authenticated).
-
-## 2.4.0
-
-### Changed
-- Dogan Android: single APK for API 29 (Android 10) through API 37 (Android 17); `compileSdk` / `targetSdk` raised to 37, `minSdk` remains 29.
-- Dogan Android: AGP 9.1.1 + Gradle 9.3.1 + Kotlin 2.2.10 (required to compile against API 37).
 
 ## 2.3.2
 
