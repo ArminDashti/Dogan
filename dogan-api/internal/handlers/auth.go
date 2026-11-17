@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/dogan/dogan-server/internal/auth"
@@ -168,4 +169,22 @@ func (handler *AuthHandler) CurrentUser(context *gin.Context) {
 
 func (handler *AuthHandler) Logout(context *gin.Context) {
 	context.Status(http.StatusNoContent)
+}
+
+func (handler *AuthHandler) ListLoginLogs(context *gin.Context) {
+	limit := 50
+	if limitRaw := context.Query("limit"); limitRaw != "" {
+		parsedLimit, err := strconv.Atoi(limitRaw)
+		if err == nil && parsedLimit > 0 {
+			limit = parsedLimit
+		}
+	}
+
+	records, err := handler.loginLogStore.ListLoginLogs(limit)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "failed to list login logs"})
+		return
+	}
+
+	context.JSON(http.StatusOK, gin.H{"login_logs": records})
 }

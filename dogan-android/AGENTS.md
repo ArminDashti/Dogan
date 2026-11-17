@@ -7,7 +7,7 @@
 ## Learned Workspace Facts
 
 - Dogan is a Kotlin Android app for multi-mode vehicle monitoring (Watchman, Copilot, OFF)
-- Targets Android 10+ (`minSdk` 29, `targetSdk` 33); rear camera required, front camera and microphone optional
+- Targets Android 10 through Android 17 (`minSdk` 29, `targetSdk` 37, `compileSdk` 37); rear camera required, front camera and microphone optional
 - Main screen is a dark button grid (no live preview): Copilot|gear, Watchman|gear, Connectivity|gear, Record|Settings, Logs|Exit; re-tap active mode → OFF
 - Preview opens from section settings only when a mode is already active (CameraActivity); Watchman preview shows jolt/sound HUD; Exit kills the process
 - Connect/Disconnect lives in Connectivity settings (manual only; default Disconnected; no auto-connect); API URL / Stream URL are combined host:port fields

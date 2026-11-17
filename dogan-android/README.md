@@ -1,4 +1,4 @@
-# Dogan (Android 10+)
+# Dogan (Android 10–17)
 
 Multi-mode Kotlin Android app for vehicle monitoring and driving assistance. Supports Watchman and Copilot modes with motion/sound alerts, Watchman-only LiveKit WebRTC streaming, and telemetry upload to a configurable **Dogan** HTTP server.
 
@@ -7,7 +7,7 @@ Multi-mode Kotlin Android app for vehicle monitoring and driving assistance. Sup
 | | |
 |---|---|
 | **Purpose** | Parked-vehicle security and driving copilot assistance |
-| **Platform** | Android 10+ (Kotlin), rear camera required |
+| **Platform** | Android 10–17 (Kotlin, API 29–37), rear camera required |
 | **Backend** | Dogan REST API on a server you configure |
 
 ## Modes

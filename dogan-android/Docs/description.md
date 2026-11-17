@@ -4,8 +4,8 @@ Dogan is a Kotlin Android app for multi-mode vehicle monitoring and driving assi
 
 ## Tech stack
 
-- Kotlin, Android 10+ (`minSdk` 29, `targetSdk` 33)
-- Android Gradle Plugin **8.5.2** (do not bump via Studio’s AGP upgrade prompt without clearing/re-downloading `aapt2` and aligning the Gradle wrapper)
+- Kotlin, Android 10–17 (`minSdk` 29, `targetSdk` 37, `compileSdk` 37)
+- Android Gradle Plugin **9.1.1** + Gradle **9.3.1** (required for `compileSdk` 37; built-in Kotlin — no `kotlin-android` plugin)
 - CameraX, DataStore, OkHttp, LiveKit Android SDK
 
 ## How to run

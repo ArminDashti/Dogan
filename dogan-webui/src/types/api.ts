@@ -115,3 +115,12 @@ export interface WebRtcConnection {
   disconnectedAt?: string
   status: string
 }
+
+export interface LoginLogEntry {
+  id: number
+  ip: string
+  username: string
+  browserInfo: string
+  attemptedAt: string
+  success: boolean
+}

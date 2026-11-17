@@ -9,6 +9,7 @@ JSON wire format is **snake_case** unless noted. Bearer token required except wh
 | POST | /auth | No | Login with Android `api_key` or admin username/password |
 | POST | /auth/login | No | Web login (email/password) → JWT + user |
 | GET | /auth/me | Yes | Current authenticated user |
+| GET | /auth/login-logs | Yes | Recent sign-in attempts (`?limit=`, default 50) |
 | POST | /auth/logout | Yes | Log out (204) |
 | GET | /endpoints | No | List available API endpoints |
 | GET | /health | No | Health check |
