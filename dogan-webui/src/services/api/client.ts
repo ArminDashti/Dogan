@@ -100,6 +100,23 @@ class ApiClient {
   ): Promise<T> {
     return this.request<T>(path, { ...options, method: 'PATCH', body })
   }
+
+  /** Fetches a protected binary asset (e.g. gallery JPEG) for use in img src via blob URL. */
+  async getBlobObjectUrl(path: string): Promise<string> {
+    const token = this.tokenProvider()
+    const headers = new Headers({ Accept: 'image/*' })
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`)
+    }
+
+    const response = await fetch(`${this.baseUrl}${path}`, { headers })
+    if (!response.ok) {
+      throw new ApiError(response.statusText || 'Failed to load image.', response.status)
+    }
+
+    const blob = await response.blob()
+    return URL.createObjectURL(blob)
+  }
 }
 
 export const apiClient = new ApiClient()

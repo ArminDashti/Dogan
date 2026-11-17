@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.3.2
+
+### Fixed
+- WebUI gallery: load capture thumbnails with authenticated `fetch` + blob URLs because `GET /images/:id` requires a Bearer token and `<img>` cannot send one.
+
 ## 2.3.1
 
 ### Added
