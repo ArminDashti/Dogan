@@ -11,7 +11,7 @@ description: Expose Dogan LiveKit on Irancell T3 using only TCP 443 via HAProxy 
 2. Copy `livekit.t3.yaml` → `/cloud-admin/docker/dogan/livekit.yaml`; compose overlay `docker-compose.t3.yml` clears host UDP/7881 and exposes `:5349`.
 3. HAProxy: SNI `dogan-turn` → TCP TLS terminate (`127.0.0.1:13443`) → `dogan-livekit:5349`. Use `scripts/patch-haproxy-dogan-turn.py`.
 4. DNS: `dogan-turn` A → `2.144.27.124` **grey-cloud** (CF proxy breaks TURN). Soft-reload HAProxy with `USR2`.
-5. Pass: API/LiveKit HTTPS OK; LiveKit log `Starting TURN server` with `externalTLS`; Watchman `Connected to room` + `mediaTrack published` without public UDP.
+5. Pass: (L1) API/LiveKit HTTPS OK; (L2) `python3 scripts/verify-dogan-turn.py` TLS + TURN allocate; (L3) LiveKit log `Starting TURN server` + Watchman `mediaTrack published` + WebUI Play. TLS-only does not prove allocate or ICE.
 
 ## Gotchas
 - Active T3 compose uses short service names (`livekit`, `api`) under `/cloud-admin/docker/dogan` (not `/home/cloud-admin/docker/dogan`).
