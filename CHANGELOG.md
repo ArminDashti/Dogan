@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.3.1
+
+### Added
+- `scripts/verify-dogan-turn.py`: TLS/SNI (level 1) + LiveKit TURN allocate via `turnutils_uclient` (level 2); wired into `test-endpoints-t3.sh`. Level 3 remains Watchman + WebUI Play.
+
 ## 2.3.0
 
 ### Added

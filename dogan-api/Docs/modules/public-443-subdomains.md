@@ -98,11 +98,14 @@ Local PC keeps `livekit.yaml` + UDP publish for emulator ICE.
 
 **DNS still required:** create `dogan-turn.xaigrok.ir` A → `2.144.27.124`, Cloudflare **DNS only** (grey cloud).
 
-## Pass checks
+## Pass checks (three levels)
 
-```bash
-curl -fsS https://dogan-api.xaigrok.ir/dogan/api/v1/health
-curl -fsSk https://dogan-livekit.xaigrok.ir/   # expect LiveKit OK
-# Watchman on device → LiveKit logs: participant active + mediaTrack published
-# without clients needing UDP to T3
-```
+| Level | What it proves | Command |
+|-------|----------------|---------|
+| 1 | API + LiveKit signaling on 443 | `curl -fsS https://dogan-api.xaigrok.ir/dogan/api/v1/health` and `curl -fsSk https://dogan-livekit.xaigrok.ir/` |
+| 2 | `dogan-turn` TLS/SNI **and** TURN **ALLOCATE** (not ICE) | From T3: `python3 scripts/verify-dogan-turn.py` (uses LiveKit API key/secret from `dogan-api` env; `turnutils_uclient` via host `coturn` or `docker run --entrypoint turnutils_uclient coturn/coturn:4.6.2 …`) |
+| 3 | End-to-end WebRTC media | Watchman on device → LiveKit logs: participant active + `mediaTrack published`; WebUI **Play** shows video (no public UDP to T3) |
+
+Level 2 failure modes: TLS to `dogan-turn` can succeed while allocate fails (wrong LiveKit keys, HAProxy not routing SNI to `:5349`, or grey-cloud DNS broken). Level 2 success still does **not** replace level 3.
+
+`scripts/test-endpoints-t3.sh` runs level 1 (API/LiveKit) and level 2 (`verify-dogan-turn.py`) when the script bundle is present on the host.

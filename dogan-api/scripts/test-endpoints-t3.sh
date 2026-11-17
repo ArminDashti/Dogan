@@ -717,6 +717,35 @@ call GET "http://127.0.0.1:7881/"
 record livekit GET "http://127.0.0.1:7881/" "$LAST_STATUS" "$LAST_MS" "any" INFO "host-published livekit 7881; ct=$LAST_CT body=$(preview "$LAST_BODY")"
 
 # =====================================================================
+log "===== dogan-turn TURN (443/TLS) ====="
+
+TURN_HOST="${DOGAN_TURN_HOST:-dogan-turn.xaigrok.ir}"
+VERIFY_PY="$SCRIPT_DIR/verify-dogan-turn.py"
+if [[ -f "$VERIFY_PY" ]]; then
+  LK_API_KEY="$(docker exec dogan-api printenv DOGAN_LIVEKIT_API_KEY 2>/dev/null || true)"
+  LK_API_SECRET="$(docker exec dogan-api printenv DOGAN_LIVEKIT_API_SECRET 2>/dev/null || true)"
+  LK_API_KEY="${LK_API_KEY:-devkey}"
+  LK_API_SECRET="${LK_API_SECRET:-secret}"
+  set +e
+  VERIFY_OUT="$(DOGAN_LIVEKIT_API_KEY="$LK_API_KEY" DOGAN_LIVEKIT_API_SECRET="$LK_API_SECRET" \
+    python3 "$VERIFY_PY" --host "$TURN_HOST" 2>&1)"
+  VERIFY_RC=$?
+  set -e
+  printf '%s\n' "$VERIFY_OUT" >&2
+  printf '%s\n' "$VERIFY_OUT" > "$OUT_DIR/verify-dogan-turn.txt"
+  VERIFY_MS="$(python3 -c 'print(0)')"
+  if [[ "$VERIFY_RC" -eq 0 ]]; then
+    record turn verify "$TURN_HOST" 200 "$VERIFY_MS" 200 OK "TLS + TURN allocate (scripts/verify-dogan-turn.py)"
+  elif [[ "$VERIFY_RC" -eq 2 ]]; then
+    record turn verify "$TURN_HOST" 000 "$VERIFY_MS" 200 FAIL "TLS/SNI only failed; does not prove ICE — see verify-dogan-turn.txt"
+  else
+    record turn verify "$TURN_HOST" 000 "$VERIFY_MS" 200 FAIL "TURN allocate failed (rc=$VERIFY_RC); TLS may still pass — see verify-dogan-turn.txt"
+  fi
+else
+  record turn verify "$TURN_HOST" 000 0 "any" INFO "verify-dogan-turn.py missing next to this script"
+fi
+
+# =====================================================================
 log "===== docker logs (last 100) ====="
 docker logs --tail 100 dogan-api > "$OUT_DIR/dogan-api.logs" 2>&1 || true
 # redact possible tokens in logs
@@ -827,7 +856,8 @@ a("- **Internal (from T3):** `http://127.0.0.1:6080/dogan/api/v1` (docker publis
 a("- **Public API host:** `https://dogan-api.xaigrok.ir/dogan/api/v1` — HAProxy SNI/`Host` `dogan-api.xaigrok.ir` → backend `dogan-api:8080`. Cloudflare sits in front (cf-ray / server: cloudflare). **This public route works.**")
 a("- **Public web UI host:** `https://dogan.xaigrok.ir` — HAProxy → `dogan-webui:80`. Nginx is a static SPA (`try_files ... /index.html`). There is **no** path-based proxy of `/dogan/api/v1` on this host, so `https://dogan.xaigrok.ir/dogan/api/v1/health` returns the SPA `index.html`, not the API. This is expected given current routing.")
 a("- **How the web UI reaches the API:** `app-config.json` in the webui container has `apiBaseUrl: https://dogan-api.xaigrok.ir/dogan/api/v1`. Nginx has no API reverse-proxy.")
-a("- **LiveKit:** HAProxy `dogan-livekit.xaigrok.ir` → `dogan-livekit:7880` (long timeouts). Public URL env `wss://dogan-livekit.xaigrok.ir`. Media UDP `50000-50050` published on the host.")
+a("- **LiveKit:** HAProxy `dogan-livekit.xaigrok.ir` → `dogan-livekit:7880` (long timeouts). Public URL env `wss://dogan-livekit.xaigrok.ir`. On T3, media is **TURN on 443** (`dogan-turn.xaigrok.ir`); UDP `50000-50050` / TCP `7881` must not be on the public NIC (see `livekit.t3.yaml`).")
+a("- **TURN verification:** `scripts/verify-dogan-turn.py` — level 1 TLS/SNI, level 2 TURN allocate (`turnutils_uclient`). That does **not** prove WebRTC ICE; level 3 is Watchman `mediaTrack published` + WebUI Play.")
 a("")
 a("## Credentials (values not printed)")
 a("")
