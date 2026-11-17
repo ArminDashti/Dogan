@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import AppLayout from '@/components/AppLayout.vue'
 import ErrorAlert from '@/components/ErrorAlert.vue'
-import { fetchImages } from '@/services/api/gallery'
+import { fetchImages, revokeGalleryObjectUrls } from '@/services/api/gallery'
 import { getErrorMessage } from '@/services/api/errors'
 import type { GalleryImage } from '@/types/api'
 
@@ -26,6 +26,10 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+})
+
+onBeforeUnmount(() => {
+  revokeGalleryObjectUrls(images.value)
 })
 </script>
 

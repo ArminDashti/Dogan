@@ -11,11 +11,28 @@ interface GalleryImageWire {
 
 export async function fetchImages(): Promise<GalleryImage[]> {
   const raw = await apiClient.get<GalleryImageWire[]>('/images')
-  return (raw ?? []).map((image) => ({
-    id: image.id,
-    url: image.url,
-    thumbnailUrl: image.thumbnail_url,
-    caption: image.caption,
-    capturedAt: image.captured_at,
-  }))
+  return Promise.all(
+    (raw ?? []).map(async (image) => {
+      const objectUrl = await apiClient.getBlobObjectUrl(`/images/${image.id}`)
+      return {
+        id: image.id,
+        url: objectUrl,
+        thumbnailUrl: objectUrl,
+        caption: image.caption,
+        capturedAt: image.captured_at,
+      }
+    }),
+  )
+}
+
+export function revokeGalleryObjectUrls(images: GalleryImage[]): void {
+  for (const image of images) {
+    if (image.url.startsWith('blob:')) {
+      URL.revokeObjectURL(image.url)
+    }
+    const thumb = image.thumbnailUrl
+    if (thumb && thumb.startsWith('blob:') && thumb !== image.url) {
+      URL.revokeObjectURL(thumb)
+    }
+  }
 }
