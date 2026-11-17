@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.4.4
+
+### Added
+- API `DELETE /devices/:id` removes a fleet unit and its telemetry, frames, WebRTC history, and queued actions.
+- WebUI dashboard **Remove** control on each unit card (ops can drop endpoint-test devices such as `dogan-test-device`).
+
 ## 2.4.3
 
 ### Changed

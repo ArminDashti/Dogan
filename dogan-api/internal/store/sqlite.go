@@ -1016,6 +1016,71 @@ func (store *Store) GetDeviceByMACAddress(macAddress string) (models.Device, err
 	return device, nil
 }
 
+func (store *Store) lookupDeviceRowID(deviceIdentifier string) (int64, string, error) {
+	var deviceRowID int64
+	var macAddress string
+	err := store.db.QueryRow(
+		`SELECT id, mac_address FROM devices
+		 WHERE mac_address = ? OR device_name = ? OR CAST(id AS TEXT) = ?
+		 LIMIT 1`,
+		deviceIdentifier,
+		deviceIdentifier,
+		deviceIdentifier,
+	).Scan(&deviceRowID, &macAddress)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, "", ErrDeviceNotFound
+		}
+		return 0, "", fmt.Errorf("lookup device: %w", err)
+	}
+	return deviceRowID, macAddress, nil
+}
+
+func (store *Store) DeleteDevice(deviceIdentifier string) error {
+	deviceRowID, macAddress, err := store.lookupDeviceRowID(deviceIdentifier)
+	if err != nil {
+		return err
+	}
+
+	tx, err := store.db.Begin()
+	if err != nil {
+		return fmt.Errorf("begin delete device tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	deleteSteps := []struct {
+		label string
+		query string
+	}{
+		{"vision_analyses", `DELETE FROM vision_analyses WHERE device_id = ?`},
+		{"stored_images", `DELETE FROM stored_images WHERE device_id = ?`},
+		{"phone_actions", `DELETE FROM phone_actions WHERE device_id = ?`},
+		{"webrtc_connections", `DELETE FROM webrtc_connections WHERE device_id = ?`},
+		{"android_telemetry", `DELETE FROM android_telemetry WHERE device_id = ?`},
+		{"diagnostic_audio", `DELETE FROM diagnostic_audio WHERE device_id = ?`},
+		{"devices", `DELETE FROM devices WHERE id = ?`},
+	}
+	for _, step := range deleteSteps {
+		if _, err := tx.Exec(step.query, deviceRowID); err != nil {
+			return fmt.Errorf("delete %s for device: %w", step.label, err)
+		}
+	}
+
+	for _, value := range []string{deviceIdentifier, macAddress, fmt.Sprintf("%d", deviceRowID)} {
+		if _, err := tx.Exec(
+			`DELETE FROM app_settings WHERE platform = 'web' AND key = 'default_device_id' AND value = ?`,
+			value,
+		); err != nil {
+			return fmt.Errorf("clear default_device_id: %w", err)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit delete device: %w", err)
+	}
+	return nil
+}
+
 func (store *Store) resolveDeviceRowID(deviceIdentifier string) (int64, error) {
 	var deviceRowID int64
 	err := store.db.QueryRow(

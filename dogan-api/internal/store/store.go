@@ -51,6 +51,7 @@ type WebRTCStore interface {
 type DeviceStore interface {
 	ListDevices() ([]models.DeviceListItem, error)
 	GetDeviceName(deviceID string) (string, error)
+	DeleteDevice(deviceID string) error
 }
 
 type DiagnosticAudioStore interface {

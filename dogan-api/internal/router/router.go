@@ -110,6 +110,7 @@ func New(applicationConfig config.Config) *gin.Engine {
 			protected.POST("/streaming/token", liveKitHandler.IssueToken)
 			protected.POST("/webrtc/session", webrtcSessionHandler.CreateSession)
 			protected.GET("/devices", devicesHandler.ListDevices)
+			protected.DELETE("/devices/:id", devicesHandler.DeleteDevice)
 			protected.GET("/devices/:id/stream", devicesHandler.GetDeviceStream)
 			protected.GET("/devices/:id/telemetry", devicesWebHandler.GetDeviceTelemetry)
 			protected.GET("/devices/:id/metrics", devicesWebHandler.GetDeviceMetrics)

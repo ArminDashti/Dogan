@@ -3,7 +3,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import AppLayout from '@/components/AppLayout.vue'
 import CameraPanel from '@/components/CameraPanel.vue'
 import ErrorAlert from '@/components/ErrorAlert.vue'
-import { fetchDevices } from '@/services/api/devices'
+import { deleteDevice, fetchDevices } from '@/services/api/devices'
 import { fetchImages } from '@/services/api/gallery'
 import { fetchHealth } from '@/services/api/health'
 import { fetchSettings } from '@/services/api/settings'
@@ -32,6 +32,7 @@ const galleryCount = ref(0)
 const connections = ref<WebRtcConnection[]>([])
 const loadingOps = ref(true)
 const loadingTelemetry = ref(false)
+const removingDeviceId = ref<string | null>(null)
 const errorMessage = ref<string | null>(null)
 
 let opsPollTimer: ReturnType<typeof setInterval> | null = null
@@ -240,6 +241,31 @@ async function loadOps(options: { silent?: boolean } = {}): Promise<void> {
   }
 }
 
+async function handleRemoveDevice(device: Device, event: MouseEvent): Promise<void> {
+  event.preventDefault()
+  event.stopPropagation()
+  if (removingDeviceId.value) {
+    return
+  }
+  const confirmed = window.confirm(
+    `Remove ${device.name} from the fleet? This deletes stored telemetry, gallery frames, and session history for that unit.`,
+  )
+  if (!confirmed) {
+    return
+  }
+
+  removingDeviceId.value = device.id
+  errorMessage.value = null
+  try {
+    await deleteDevice(device.id)
+    await loadOps()
+  } catch (error) {
+    errorMessage.value = getErrorMessage(error, 'Unable to remove device.')
+  } finally {
+    removingDeviceId.value = null
+  }
+}
+
 async function loadTelemetry(options: { silent?: boolean } = {}): Promise<void> {
   if (!selectedDeviceId.value) {
     telemetry.value = null
@@ -435,6 +461,15 @@ onUnmounted(() => {
                   />
                   <span class="unit-card__name">{{ device.name }}</span>
                   <span :class="statusClass(device.status)">{{ device.status }}</span>
+                  <button
+                    type="button"
+                    class="unit-card__remove"
+                    :disabled="removingDeviceId === device.id"
+                    :aria-label="`Remove ${device.name}`"
+                    @click="handleRemoveDevice(device, $event)"
+                  >
+                    {{ removingDeviceId === device.id ? 'Removing…' : 'Remove' }}
+                  </button>
                 </label>
               </div>
             </fieldset>
@@ -900,6 +935,23 @@ onUnmounted(() => {
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--text);
+}
+
+.unit-card__remove {
+  margin-left: 0.15rem;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--danger, #c53b3b) 40%, var(--border));
+  border-radius: 999px;
+  background: transparent;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--danger, #c53b3b) 85%, var(--text));
+  cursor: pointer;
+}
+
+.unit-card__remove:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .unit-meta {

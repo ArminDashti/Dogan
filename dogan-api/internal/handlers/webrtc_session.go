@@ -88,6 +88,25 @@ func (handler *DevicesHandler) ListDevices(context *gin.Context) {
 	context.JSON(http.StatusOK, devices)
 }
 
+func (handler *DevicesHandler) DeleteDevice(context *gin.Context) {
+	deviceID := context.Param("id")
+	if deviceID == "" {
+		context.JSON(http.StatusBadRequest, models.ErrorResponse{Error: "device id is required"})
+		return
+	}
+
+	if err := handler.deviceStore.DeleteDevice(deviceID); err != nil {
+		if errors.Is(err, store.ErrDeviceNotFound) {
+			context.JSON(http.StatusNotFound, models.ErrorResponse{Error: "device not found"})
+			return
+		}
+		context.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "failed to delete device"})
+		return
+	}
+
+	context.Status(http.StatusNoContent)
+}
+
 func (handler *DevicesHandler) GetDeviceStream(context *gin.Context) {
 	if !handler.tokenIssuer.Enabled() {
 		context.JSON(http.StatusServiceUnavailable, models.ErrorResponse{Error: "livekit is not configured"})
