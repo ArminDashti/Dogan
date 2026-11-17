@@ -121,6 +121,50 @@ function formatTimestamp(value: string | undefined): string {
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
 }
 
+function formatLastUpdate(value: string | undefined): string {
+  if (!value) {
+    return '--'
+  }
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return '--'
+  }
+  const pad = (part: number) => String(part).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+}
+
+function formatBattery(value: number | undefined): string {
+  if (value === undefined || Number.isNaN(value)) {
+    return '--'
+  }
+  return `${Math.round(value)}%`
+}
+
+function formatTemperature(value: number | undefined): string {
+  if (value === undefined || Number.isNaN(value)) {
+    return '--'
+  }
+  return `${value.toFixed(1)}°C`
+}
+
+function formatGridLatency(value: number | undefined): string {
+  if (value === undefined || Number.isNaN(value)) {
+    return '--'
+  }
+  return `${Math.round(value)} ms`
+}
+
+function formatMode(value: string | undefined): string {
+  if (!value) {
+    return '--'
+  }
+  return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+function selectDevice(deviceId: string): void {
+  selectedDeviceId.value = deviceId
+}
+
 function metricFill(value: number | undefined, max = 100): number {
   if (value === undefined || Number.isNaN(value)) {
     return 0
@@ -406,6 +450,55 @@ onUnmounted(() => {
             <p class="ops-strip__meta">{{ connections.length }} sessions logged</p>
           </article>
         </div>
+
+        <section class="devices-section yoda-card">
+          <header class="panel-head">
+            <h2 class="panel-head__title">Devices</h2>
+            <p class="panel-head__hint">Fleet overview — one row per registered handset</p>
+          </header>
+
+          <div
+            v-if="devices.length === 0"
+            class="devices-section__empty"
+          >
+            {{ EMPTY_FLEET_MESSAGE }}
+          </div>
+
+          <div v-else class="devices-grid-scroll">
+            <div class="devices-grid" role="table" aria-label="Devices">
+              <div class="devices-grid__row devices-grid__row--head" role="row">
+                <span role="columnheader">Device</span>
+                <span role="columnheader">OS</span>
+                <span role="columnheader">Battery</span>
+                <span role="columnheader">Temp</span>
+                <span role="columnheader">Location</span>
+                <span role="columnheader">Mode</span>
+                <span role="columnheader">Latency</span>
+                <span role="columnheader">Last update</span>
+                <span role="columnheader">ID</span>
+              </div>
+              <button
+                v-for="device in devices"
+                :key="device.id"
+                type="button"
+                class="devices-grid__row devices-grid__row--body"
+                :class="{ 'devices-grid__row--active': device.id === selectedDeviceId }"
+                role="row"
+                @click="selectDevice(device.id)"
+              >
+                <span class="devices-grid__device" role="cell">{{ device.name }}</span>
+                <span role="cell">{{ device.os ?? 'Android' }}</span>
+                <span class="devices-grid__mono" role="cell">{{ formatBattery(device.batteryPercent) }}</span>
+                <span class="devices-grid__mono" role="cell">{{ formatTemperature(device.temperatureCelsius) }}</span>
+                <span class="devices-grid__location" role="cell">{{ device.location || '--' }}</span>
+                <span role="cell">{{ formatMode(device.mode) }}</span>
+                <span class="devices-grid__mono" role="cell">{{ formatGridLatency(device.latencyMs) }}</span>
+                <span class="devices-grid__mono" role="cell">{{ formatLastUpdate(device.lastUpdate) }}</span>
+                <span class="devices-grid__mono devices-grid__id" role="cell">{{ device.id }}</span>
+              </button>
+            </div>
+          </div>
+        </section>
 
         <div class="beat-grid">
           <section class="comms-panel yoda-card">
@@ -739,6 +832,102 @@ onUnmounted(() => {
   margin: 0.2rem 0 0;
   font-size: 0.6875rem;
   color: var(--muted);
+}
+
+.devices-section {
+  padding: 0.85rem 0.95rem;
+}
+
+.devices-section__empty {
+  padding: 1.25rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  text-align: center;
+  color: var(--muted);
+}
+
+.devices-grid-scroll {
+  overflow-x: auto;
+}
+
+.devices-grid {
+  display: grid;
+  min-width: 56rem;
+  grid-template-columns:
+    minmax(7rem, 1.2fr)
+    minmax(4.5rem, 0.7fr)
+    minmax(4.5rem, 0.65fr)
+    minmax(4.5rem, 0.65fr)
+    minmax(8rem, 1.1fr)
+    minmax(5rem, 0.7fr)
+    minmax(5rem, 0.7fr)
+    minmax(9.5rem, 1.15fr)
+    minmax(7rem, 1fr);
+  gap: 0;
+}
+
+.devices-grid__row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+  text-align: left;
+}
+
+.devices-grid__row--head span {
+  padding: 0.45rem 0.5rem 0.55rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.devices-grid__row--body {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.devices-grid__row--body span {
+  padding: 0.55rem 0.5rem;
+  font-size: 0.8125rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+}
+
+.devices-grid__row--body:hover {
+  background: color-mix(in srgb, var(--accent-soft) 35%, transparent);
+}
+
+.devices-grid__row--body.devices-grid__row--active {
+  background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
+}
+
+.devices-grid__row--body:last-child span {
+  border-bottom: none;
+}
+
+.devices-grid__device {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.devices-grid__mono {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.devices-grid__location,
+.devices-grid__id {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .beat-grid {

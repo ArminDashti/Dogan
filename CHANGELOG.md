@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.4.5
+
+### Added
+- WebUI dashboard **Devices** grid: Device, OS, Battery, Temp, Location, Mode, Latency, Last update (`YYYY-MM-DD HH:MM:SS`), and ID.
+- API `GET /devices` includes latest telemetry snapshot fields and Android `operating_mode` for each listed unit.
+
 ## 2.4.4
 
 ### Added

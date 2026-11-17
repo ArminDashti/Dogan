@@ -280,10 +280,16 @@ type WebRTCSessionResponse struct {
 }
 
 type DeviceListItem struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Status   string `json:"status"`
-	Location string `json:"location,omitempty"`
+	ID                 string     `json:"id"`
+	Name               string     `json:"name"`
+	Status             string     `json:"status"`
+	OS                 string     `json:"os"`
+	Mode               string     `json:"mode,omitempty"`
+	BatteryPercent     *float64   `json:"battery_percent,omitempty"`
+	TemperatureCelsius *float64   `json:"temperature_celsius,omitempty"`
+	Location           string     `json:"location,omitempty"`
+	LatencyMs          *int       `json:"latency_ms,omitempty"`
+	LastUpdate         *time.Time `json:"last_update,omitempty"`
 }
 
 type DeviceStreamResponse struct {

@@ -14,6 +14,12 @@ export interface Device {
   name: string
   status: 'online' | 'offline' | 'unknown'
   location?: string
+  os?: string
+  mode?: string
+  batteryPercent?: number
+  temperatureCelsius?: number
+  latencyMs?: number
+  lastUpdate?: string
 }
 
 export type MetricsHistoryRange =
