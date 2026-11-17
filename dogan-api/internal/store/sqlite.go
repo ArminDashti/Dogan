@@ -1126,7 +1126,20 @@ func (store *Store) ListDevices() ([]models.DeviceListItem, error) {
 		            )
 		            THEN 'online'
 		            ELSE 'offline'
-		        END AS status
+		        END AS status,
+		        (SELECT value FROM app_settings WHERE platform = 'android' AND key = 'operating_mode' LIMIT 1),
+		        (SELECT battery_level FROM android_telemetry
+		         WHERE device_id = d.id ORDER BY recorded_at DESC, id DESC LIMIT 1),
+		        (SELECT temperature_c FROM android_telemetry
+		         WHERE device_id = d.id ORDER BY recorded_at DESC, id DESC LIMIT 1),
+		        (SELECT server_latency_ms FROM android_telemetry
+		         WHERE device_id = d.id ORDER BY recorded_at DESC, id DESC LIMIT 1),
+		        (SELECT latitude FROM android_telemetry
+		         WHERE device_id = d.id ORDER BY recorded_at DESC, id DESC LIMIT 1),
+		        (SELECT longitude FROM android_telemetry
+		         WHERE device_id = d.id ORDER BY recorded_at DESC, id DESC LIMIT 1),
+		        (SELECT recorded_at FROM android_telemetry
+		         WHERE device_id = d.id ORDER BY recorded_at DESC, id DESC LIMIT 1)
 		 FROM devices d
 		 ORDER BY d.device_name ASC, d.mac_address ASC`,
 		formatSQLiteTime(onlineCutoff),
@@ -1140,8 +1153,42 @@ func (store *Store) ListDevices() ([]models.DeviceListItem, error) {
 	devices := make([]models.DeviceListItem, 0)
 	for rows.Next() {
 		var device models.DeviceListItem
-		if err := rows.Scan(&device.ID, &device.Name, &device.Status); err != nil {
+		var mode sql.NullString
+		var batteryLevel sql.NullFloat64
+		var temperatureC sql.NullFloat64
+		var latencyMs sql.NullInt64
+		var latitude sql.NullFloat64
+		var longitude sql.NullFloat64
+		var recordedAtRaw sql.NullString
+		if err := rows.Scan(
+			&device.ID,
+			&device.Name,
+			&device.Status,
+			&mode,
+			&batteryLevel,
+			&temperatureC,
+			&latencyMs,
+			&latitude,
+			&longitude,
+			&recordedAtRaw,
+		); err != nil {
 			return nil, fmt.Errorf("scan device: %w", err)
+		}
+		device.OS = "Android"
+		if mode.Valid && mode.String != "" {
+			device.Mode = mode.String
+		}
+		device.BatteryPercent = floatPointer(batteryLevel)
+		device.TemperatureCelsius = floatPointer(temperatureC)
+		device.LatencyMs = intPointer(latencyMs)
+		if latitude.Valid && longitude.Valid {
+			device.Location = fmt.Sprintf("%.5f, %.5f", latitude.Float64, longitude.Float64)
+		}
+		if recordedAtRaw.Valid && recordedAtRaw.String != "" {
+			var recordedAt time.Time
+			if err := scanSQLiteTime(recordedAtRaw.String, &recordedAt); err == nil {
+				device.LastUpdate = &recordedAt
+			}
 		}
 		devices = append(devices, device)
 	}
