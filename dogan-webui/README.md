@@ -1,6 +1,6 @@
 # Dogan Web
 
-Vue 3 frontend for the Dogan device platform — login, dashboard, live stream, gallery, logs, settings, and device metrics.
+Vue 3 frontend for the Dogan device platform — login, device info, live stream, gallery, logs, settings, and device metrics.
 
 ## Stack
 
@@ -47,7 +47,7 @@ npm run preview
 | Path | Page |
 |------|------|
 | `/login` | Sign in |
-| `/dashboard` | Unified device dashboard (telemetry + camera) |
+| `/device` | Selected handset details (`/dashboard` redirects here) |
 | `/stream` | LiveKit camera stream with Play/Stop/Capture |
 | `/gallery` | Image gallery |
 | `/logs` | Sign-in audit and WebRTC session history |
@@ -57,24 +57,19 @@ npm run preview
 
 Protected routes redirect to `/login` when unauthenticated.
 
-## Dashboard
+## Device
 
-The `/dashboard` page shows live data for the selected device:
+The `/device` page shows registration fields from `GET /devices` for the selected (or default) handset.
 
 | Field | Source |
 |-------|--------|
 | Name | `GET /devices` → `name` |
 | Location | `GET /devices` → `location` |
-| Battery | `GET /devices/:id/telemetry` → `battery_percent` |
-| Battery Temperature | `GET /devices/:id/telemetry` → `battery_temperature_celsius` |
-| Noise | `GET /devices/:id/telemetry` → `noise_db` |
-| Jolt | `GET /devices/:id/telemetry` → `jolt` |
-| Signal | `GET /devices/:id/telemetry` → `signal_strength` |
-| Network Type | `GET /devices/:id/telemetry` → `network_type` |
-| Server-Phone Latency | `GET /devices/:id/telemetry` → `server_phone_latency_ms` |
-| Server-Web Latency | `GET /devices/:id/telemetry` → `server_web_latency_ms` |
+| Battery | `GET /devices` → `battery_percent` (list snapshot) |
+| Temperature | `GET /devices` → `temperature_celsius` |
+| Mode, OS, latency, last update | `GET /devices` list fields |
 
-Telemetry refreshes every 5 seconds. The embedded camera panel supports **Play**, **Stop**, and **Capture Frame** (via `POST /devices/:id/capture`).
+Device list refreshes every 5 seconds. Live telemetry and camera are on **Stream** and **Metrics**.
 
 ## API
 

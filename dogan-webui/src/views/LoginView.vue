@@ -15,7 +15,7 @@ const errorMessage = ref<string | null>(null)
 
 const redirectPath = computed(() => {
   const redirect = route.query.redirect
-  return typeof redirect === 'string' && redirect.startsWith('/') ? redirect : '/dashboard'
+  return typeof redirect === 'string' && redirect.startsWith('/') ? redirect : '/device'
 })
 
 async function handleSubmit(): Promise<void> {

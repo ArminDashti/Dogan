@@ -6,7 +6,7 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/dashboard',
+      redirect: '/device',
     },
     {
       path: '/login',
@@ -15,9 +15,13 @@ const router = createRouter({
       meta: { public: true },
     },
     {
+      path: '/device',
+      name: 'device',
+      component: () => import('@/views/DeviceView.vue'),
+    },
+    {
       path: '/dashboard',
-      name: 'dashboard',
-      component: () => import('@/views/DashboardView.vue'),
+      redirect: '/device',
     },
     {
       path: '/stream',
@@ -63,7 +67,7 @@ const router = createRouter({
     },
     {
       path: '/:pathMatch(.*)*',
-      redirect: '/dashboard',
+      redirect: '/device',
     },
   ],
 })
@@ -85,7 +89,7 @@ router.beforeEach(async (to) => {
   }
 
   if (authStore.isAuthenticated && to.name === 'login') {
-    return { name: 'dashboard' }
+    return { name: 'device' }
   }
 
   return true

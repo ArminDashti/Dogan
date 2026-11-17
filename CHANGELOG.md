@@ -2,6 +2,9 @@
 
 ## 2.4.7
 
+### Changed
+- WebUI **Device** page (`/device`) replaces Dashboard: nav label, default route, and handset detail view only; `/dashboard` redirects. WebUI `0.3.8`.
+
 ### Fixed
 - LiveKit stream connect failures: API health and stream endpoints expose LiveKit client URL warnings; TURN domain hints in `ice_servers`; WebUI maps `could not establish pc connection` to ICE/TURN diagnostics and logs signaling vs peer-connection stage.
 

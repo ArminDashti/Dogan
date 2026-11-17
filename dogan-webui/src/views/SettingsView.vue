@@ -127,7 +127,7 @@ onMounted(() => {
             <div class="settings-row settings-row--stacked">
               <div>
                 <p class="settings-row-label">Default device</p>
-                <p class="settings-row-help">Pre-select this device on dashboard and stream pages.</p>
+                <p class="settings-row-help">Pre-select this device on Device and Stream pages.</p>
               </div>
               <div class="settings-row-control">
                 <select v-model="form.defaultDeviceId" class="yoda-select">

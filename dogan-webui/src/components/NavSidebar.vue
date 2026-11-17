@@ -21,7 +21,7 @@ const metricChildren = [
 ]
 
 const navigation = [
-  { label: 'Dashboard', to: '/dashboard', icon: 'dashboard' as const },
+  { label: 'Device', to: '/device', icon: 'device' as const },
   { label: 'Stream', to: '/stream', icon: 'stream' as const },
   { label: 'Gallery', to: '/gallery', icon: 'gallery' as const },
   { label: 'Logs', to: '/logs', icon: 'logs' as const },
@@ -106,11 +106,10 @@ async function handleLogout(): Promise<void> {
           :title="collapsed ? item.label : undefined"
         >
           <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <template v-if="item.icon === 'dashboard'">
-              <path d="M3 3h8v8H3V3Z" stroke="currentColor" stroke-width="1.75" />
-              <path d="M13 3h8v5h-8V3Z" stroke="currentColor" stroke-width="1.75" />
-              <path d="M13 10h8v11h-8V10Z" stroke="currentColor" stroke-width="1.75" />
-              <path d="M3 13h8v8H3v-8Z" stroke="currentColor" stroke-width="1.75" />
+            <template v-if="item.icon === 'device'">
+              <rect x="7" y="2.5" width="10" height="19" rx="2" stroke="currentColor" stroke-width="1.75" />
+              <path d="M10 5.5h4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+              <circle cx="12" cy="18.5" r="1" fill="currentColor" />
             </template>
             <template v-else-if="item.icon === 'stream'">
               <path d="M5 5l12 7-12 7V5Z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" />
