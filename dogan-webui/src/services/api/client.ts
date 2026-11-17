@@ -101,6 +101,10 @@ class ApiClient {
     return this.request<T>(path, { ...options, method: 'PATCH', body })
   }
 
+  delete<T>(path: string, options?: Omit<RequestOptions, 'method' | 'body'>): Promise<T> {
+    return this.request<T>(path, { ...options, method: 'DELETE' })
+  }
+
   /** Fetches a protected binary asset (e.g. gallery JPEG) for use in img src via blob URL. */
   async getBlobObjectUrl(path: string): Promise<string> {
     const token = this.tokenProvider()

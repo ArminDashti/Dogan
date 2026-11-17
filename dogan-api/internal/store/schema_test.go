@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"errors"
 	"path/filepath"
 	"testing"
 
@@ -25,11 +26,19 @@ func TestOpenAppliesSQLiteSchemaAndMigrations(t *testing.T) {
 		t.Fatalf("vision_analyses missing: %v", err)
 	}
 
-	if _, err := store.UpsertDevice(models.Device{
+	device, err := store.UpsertDevice(models.Device{
 		MACAddress: "aa:bb:cc:dd:ee:ff",
 		DeviceName: "test-phone",
-	}); err != nil {
+	})
+	if err != nil {
 		t.Fatalf("UpsertDevice: %v", err)
+	}
+
+	if err := store.DeleteDevice(device.MACAddress); err != nil {
+		t.Fatalf("DeleteDevice: %v", err)
+	}
+	if err := store.DeleteDevice(device.MACAddress); !errors.Is(err, ErrDeviceNotFound) {
+		t.Fatalf("DeleteDevice again: got %v want ErrDeviceNotFound", err)
 	}
 }
 

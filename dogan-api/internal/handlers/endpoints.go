@@ -45,6 +45,7 @@ func (handler *EndpointsHandler) ListEndpoints(context *gin.Context) {
 		{Method: http.MethodPost, Path: apiBasePath + "/streaming/token", Description: "Issue LiveKit WebRTC token", Auth: true},
 		{Method: http.MethodPost, Path: apiBasePath + "/webrtc/session", Description: "Create LiveKit publisher session for Android", Auth: true},
 		{Method: http.MethodGet, Path: apiBasePath + "/devices", Description: "List registered devices", Auth: true},
+		{Method: http.MethodDelete, Path: apiBasePath + "/devices/:id", Description: "Remove a device and its stored telemetry, frames, and sessions", Auth: true},
 		{Method: http.MethodGet, Path: apiBasePath + "/devices/:id/stream", Description: "Get LiveKit subscriber credentials for device stream", Auth: true},
 		{Method: http.MethodGet, Path: apiBasePath + "/devices/:id/telemetry", Description: "Get live device telemetry snapshot for web", Auth: true},
 		{Method: http.MethodGet, Path: apiBasePath + "/devices/:id/metrics", Description: "Get device metrics history for web charts", Auth: true},
