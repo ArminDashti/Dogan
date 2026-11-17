@@ -1,0 +1,35 @@
+---
+description: After dogan-android changes, build and export a debug APK named Dogan-1-<yyMMdd>-<n> under dogan-android/exports/.
+alwaysApply: true
+---
+
+# Dogan APK export after change (required)
+
+After any task that changes `dogan-android/` (Kotlin, resources, Gradle, scripts), export a fresh **debug** APK before you finish. Skip when the task only touched API, WebUI, or docs outside `dogan-android/`.
+
+## Filename
+
+`Dogan-1-<yyMMdd>-<n>.apk`
+
+- `<yyMMdd>` — local calendar date, two-digit year (example: 17 Nov 2026 → `261117`).
+- `<n>` — integer for that date: **1** if no match exists; otherwise **max existing + 1** among `dogan-android/exports/Dogan-1-<yyMMdd>-*.apk`.
+
+Examples: `Dogan-1-261117-1.apk`, `Dogan-1-261117-2.apk`.
+
+## Steps (Windows)
+
+1. `JAVA_HOME` → JDK 17 (AGP needs 11+; do not use default Java 8):
+   - `C:\Program Files\Microsoft\jdk-17.0.21.21-hotspot`, or Android Studio JBR only if 17+.
+2. From `dogan-android/`:
+   - `.\scripts\export-apk.ps1` (builds `assembleDebug`, writes under `exports/`).
+3. Resolve the next `<n>` from existing `Dogan-1-<yyMMdd>-*.apk` in `dogan-android/exports/`.
+4. Copy the **just-built** Gradle APK (`app\build\outputs\apk\debug\app-debug.apk`) to:
+   - `dogan-android\exports\Dogan-1-<yyMMdd>-<n>.apk`
+   Use the Gradle output path, not an older file already in `exports/`.
+5. Report the full path in the completion summary.
+
+## Gotchas
+
+- `exports/` is gitignored; APK files are local artifacts only.
+- `export-apk.ps1` also writes `dogan-debug-v*` names; the **canonical handoff name** for agents is still `Dogan-1-<yyMMdd>-<n>.apk`.
+- On Linux/macOS: same naming; build via `./scripts/export-apk.sh`, then copy to `exports/Dogan-1-<yyMMdd>-<n>.apk`.
