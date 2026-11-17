@@ -83,6 +83,8 @@ export interface StreamResponse {
   room: string
   identity: string
   expiresAt: string
+  urlWarnings?: string[]
+  iceServers?: { urls: string[] }[]
 }
 
 export interface GalleryImage {
@@ -109,6 +111,9 @@ export interface HealthStatus {
   status: string
   timestamp: string
   livekitConfigured: boolean
+  livekitClientUrl?: string
+  livekitWarnings?: string[]
+  turnDomain?: string
 }
 
 export interface WebRtcConnection {

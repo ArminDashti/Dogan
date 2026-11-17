@@ -17,3 +17,5 @@ services:
     environment:
       DOGAN_LIVEKIT_URL: ${DOGAN_LIVEKIT_URL:-ws://dogan-livekit:7880}
       DOGAN_LIVEKIT_PUBLIC_URL: ${DOGAN_LIVEKIT_PUBLIC_URL:-wss://dogan-livekit.xaigrok.ir}
+      DOGAN_LIVEKIT_TURN_DOMAIN: ${DOGAN_LIVEKIT_TURN_DOMAIN:-dogan-turn.xaigrok.ir}
+      DOGAN_LIVEKIT_TURN_EXTERNAL_TLS: ${DOGAN_LIVEKIT_TURN_EXTERNAL_TLS:-true}

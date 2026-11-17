@@ -17,6 +17,9 @@ type HealthResponse struct {
 	Status            string    `json:"status"`
 	Timestamp         time.Time `json:"timestamp"`
 	LiveKitConfigured bool      `json:"livekit_configured"`
+	LiveKitClientURL  string    `json:"livekit_client_url,omitempty"`
+	LiveKitWarnings   []string  `json:"livekit_warnings,omitempty"`
+	TurnDomain        string    `json:"turn_domain,omitempty"`
 }
 
 type EndpointDescriptor struct {
@@ -293,12 +296,14 @@ type DeviceListItem struct {
 }
 
 type DeviceStreamResponse struct {
-	DeviceID  string    `json:"device_id"`
-	Token     string    `json:"token"`
-	URL       string    `json:"url"`
-	Room      string    `json:"room"`
-	Identity  string    `json:"identity"`
-	ExpiresAt time.Time `json:"expires_at"`
+	DeviceID   string            `json:"device_id"`
+	Token      string            `json:"token"`
+	URL        string            `json:"url"`
+	Room       string            `json:"room"`
+	Identity   string            `json:"identity"`
+	ExpiresAt  time.Time         `json:"expires_at"`
+	IceServers []IceServerConfig `json:"ice_servers,omitempty"`
+	URLWarnings []string         `json:"url_warnings,omitempty"`
 }
 
 type WebLoginRequest struct {

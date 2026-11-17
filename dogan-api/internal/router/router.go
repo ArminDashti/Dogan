@@ -70,10 +70,16 @@ func New(applicationConfig config.Config) *gin.Engine {
 		APISecret: applicationConfig.LiveKitAPISecret,
 		TokenTTL:  applicationConfig.LiveKitTokenTTL,
 	})
-	healthHandler := handlers.NewHealthHandler(liveKitTokenIssuer)
+	liveKitIceOptions := livekitauth.IceServerOptions{
+		TurnDomain:      applicationConfig.LiveKitTurnDomain,
+		TurnExternalTLS: applicationConfig.LiveKitTurnExternalTLS,
+		ExtraURLs:       applicationConfig.LiveKitIceServerURLs,
+	}
+	clientLiveKitURL := applicationConfig.ClientLiveKitURL()
+	healthHandler := handlers.NewHealthHandler(liveKitTokenIssuer, clientLiveKitURL, applicationConfig.LiveKitTurnDomain)
 	liveKitHandler := handlers.NewLiveKitHandler(liveKitTokenIssuer, dataStore)
-	webrtcSessionHandler := handlers.NewWebRTCSessionHandler(liveKitTokenIssuer, dataStore)
-	devicesHandler := handlers.NewDevicesHandler(dataStore, liveKitTokenIssuer, dataStore)
+	webrtcSessionHandler := handlers.NewWebRTCSessionHandler(liveKitTokenIssuer, dataStore, liveKitIceOptions)
+	devicesHandler := handlers.NewDevicesHandler(dataStore, liveKitTokenIssuer, dataStore, liveKitIceOptions)
 	devicesWebHandler := handlers.NewDevicesWebHandler(dataStore, dataStore, dataStore, dataStore)
 
 	api := engine.Group("/dogan/api/v1")
