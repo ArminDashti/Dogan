@@ -87,6 +87,7 @@ func New(applicationConfig config.Config) *gin.Engine {
 		protected.Use(middleware.RequireBearerToken(tokenIssuer, applicationConfig.EmbeddedAPIToken))
 		{
 			protected.GET("/auth/me", authHandler.CurrentUser)
+			protected.GET("/auth/login-logs", authHandler.ListLoginLogs)
 			protected.POST("/auth/logout", authHandler.Logout)
 			protected.GET("/last-frame", frameHandler.GetLastFrame)
 			protected.GET("/frame/image", frameHandler.GetFrameImage)

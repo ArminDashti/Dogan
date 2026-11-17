@@ -20,6 +20,7 @@ func (handler *EndpointsHandler) ListEndpoints(context *gin.Context) {
 		{Method: http.MethodPost, Path: apiBasePath + "/auth", Description: "Login and get JWT token (Android api_key or admin username/password)", Auth: false},
 		{Method: http.MethodPost, Path: apiBasePath + "/auth/login", Description: "Web login and get JWT token with user", Auth: false},
 		{Method: http.MethodGet, Path: apiBasePath + "/auth/me", Description: "Get current authenticated user", Auth: true},
+		{Method: http.MethodGet, Path: apiBasePath + "/auth/login-logs", Description: "List recent web sign-in attempts (audit)", Auth: true},
 		{Method: http.MethodPost, Path: apiBasePath + "/auth/logout", Description: "Log out current session", Auth: true},
 		{Method: http.MethodGet, Path: apiBasePath + "/endpoints", Description: "List available API endpoints", Auth: false},
 		{Method: http.MethodGet, Path: apiBasePath + "/health", Description: "Health check", Auth: false},

@@ -107,6 +107,56 @@ func (store *Store) SaveLoginLog(ip, username, browserInfo string, success bool)
 	return nil
 }
 
+func (store *Store) ListLoginLogs(limit int) ([]models.LoginLogRecord, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	if limit > 200 {
+		limit = 200
+	}
+
+	rows, err := store.db.Query(
+		`SELECT id, ip, username, browser_info, attempted_at, success
+		 FROM login_logs
+		 ORDER BY attempted_at DESC, id DESC
+		 LIMIT ?`,
+		limit,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("list login logs: %w", err)
+	}
+	defer rows.Close()
+
+	var records []models.LoginLogRecord
+	for rows.Next() {
+		var record models.LoginLogRecord
+		var attemptedAtRaw string
+		var successInt int
+		if err := rows.Scan(
+			&record.ID,
+			&record.IP,
+			&record.Username,
+			&record.BrowserInfo,
+			&attemptedAtRaw,
+			&successInt,
+		); err != nil {
+			return nil, fmt.Errorf("scan login log: %w", err)
+		}
+		if err := scanSQLiteTime(attemptedAtRaw, &record.AttemptedAt); err != nil {
+			return nil, fmt.Errorf("parse login log attempted_at: %w", err)
+		}
+		record.Success = successInt != 0
+		records = append(records, record)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate login logs: %w", err)
+	}
+	if records == nil {
+		records = []models.LoginLogRecord{}
+	}
+	return records, nil
+}
+
 func (store *Store) SaveFrame(frame models.FrameRecord) error {
 	deviceRowID, err := store.resolveDeviceRowID(frame.DeviceID)
 	if err != nil {

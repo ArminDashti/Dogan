@@ -225,6 +225,15 @@ type AppSettingRecord struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+type LoginLogRecord struct {
+	ID          int64     `json:"id"`
+	IP          string    `json:"ip"`
+	Username    string    `json:"username"`
+	BrowserInfo string    `json:"browser_info"`
+	AttemptedAt time.Time `json:"attempted_at"`
+	Success     bool      `json:"success"`
+}
+
 type WebRTCConnectionRecord struct {
 	ID             int64      `json:"id"`
 	DeviceID       string     `json:"device_id"`

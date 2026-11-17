@@ -1,6 +1,6 @@
 # Dogan Web
 
-Vue 3 frontend for the Dogan device platform — login, dashboard, live stream, gallery, settings, and device metrics.
+Vue 3 frontend for the Dogan device platform — login, dashboard, live stream, gallery, logs, settings, and device metrics.
 
 ## Stack
 
@@ -50,6 +50,7 @@ npm run preview
 | `/dashboard` | Unified device dashboard (telemetry + camera) |
 | `/stream` | LiveKit camera stream with Play/Stop/Capture |
 | `/gallery` | Image gallery |
+| `/logs` | Sign-in audit and WebRTC session history |
 | `/settings` | Preferences |
 | `/metrics` | Device metrics (temperature + noise history) |
 | `/devices/:id/metrics` | Metrics for a specific device |
@@ -84,6 +85,7 @@ The app expects a REST API at `VITE_API_BASE_URL` with bearer token auth.
 | `POST` | `/auth/login` | Sign in |
 | `POST` | `/auth/logout` | Sign out |
 | `GET` | `/auth/me` | Current user |
+| `GET` | `/auth/login-logs` | Sign-in audit (limit query) |
 | `GET` | `/devices` | List devices |
 | `GET` | `/devices/:id/metrics` | Temperature + noise history |
 | `GET` | `/devices/:id/telemetry` | Live telemetry snapshot |

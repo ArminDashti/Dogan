@@ -29,6 +29,7 @@ type MetricsStore interface {
 
 type LoginLogStore interface {
 	SaveLoginLog(ip, username, browserInfo string, success bool) error
+	ListLoginLogs(limit int) ([]models.LoginLogRecord, error)
 }
 
 type ActionStore interface {
