@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.3.0
+
+### Added
+- Public T3 443/TCP-only LiveKit path: `livekit.t3.yaml` + `docker-compose.t3.yml` (LiveKit-embedded TURN with `external_tls` for `dogan-turn.xaigrok.ir`), and HAProxy/DNS docs in `dogan-api/Docs/modules/public-443-subdomains.md`.
+
 ## 2.2.1
 
 ### Fixed

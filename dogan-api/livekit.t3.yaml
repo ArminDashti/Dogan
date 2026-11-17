@@ -1,0 +1,22 @@
+# Irancell-T3 public LiveKit (443/TCP only via HAProxy SNI).
+# Signaling: wss://dogan-livekit.xaigrok.ir (HAProxy → :7880)
+# Media:    turns://dogan-turn.xaigrok.ir:443 (HAProxy TLS → :5349 plain TURN)
+# Do not publish UDP 50000-50050 or TCP 7881 on the public NIC.
+port: 7880
+
+rtc:
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 50050
+  use_external_ip: true
+
+turn:
+  enabled: true
+  domain: dogan-turn.xaigrok.ir
+  tls_port: 5349
+  # Advertise turns:…:443; HAProxy terminates TLS and forwards plain to :5349.
+  external_tls: true
+
+keys:
+  # Override via compose / secrets in production if needed.
+  devkey: secret

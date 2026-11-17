@@ -15,9 +15,10 @@ services:
       - "7880"
       - "7881"
       - "7882"
-    # Media must hit the host directly; HAProxy only terminates signaling on 443.
+    # Local/emulator: publish signaling + ICE UDP/TCP on the host.
+    # Public T3 is 443/TCP only — use docker-compose.t3.yml (TURN on :5349,
+    # no host UDP/7881). See Docs/modules/public-443-subdomains.md.
     # Keep UDP publish range small - large ranges hang docker-proxy on this host.
-    # 7880 is LiveKit HTTP/WS signaling (needed for local WebUI + Android).
     ports:
       - "7880:7880"
       - "7881:7881"
@@ -47,6 +48,7 @@ services:
       DOGAN_DATABASE_URL: file:/data/dogan.db
       DOGAN_FRAMES_DIR: /data/frames
       DOGAN_LIVEKIT_URL: ${DOGAN_LIVEKIT_URL:-ws://dogan-livekit:7880}
+      # Local default; T3 overlay sets wss://dogan-livekit.xaigrok.ir
       DOGAN_LIVEKIT_PUBLIC_URL: ${DOGAN_LIVEKIT_PUBLIC_URL:-ws://localhost:7880}
       DOGAN_LIVEKIT_API_KEY: ${DOGAN_LIVEKIT_API_KEY:-devkey}
       DOGAN_LIVEKIT_API_SECRET: ${DOGAN_LIVEKIT_API_SECRET:-secret}
