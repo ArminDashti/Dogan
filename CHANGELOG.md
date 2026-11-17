@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.4.2
+
+### Changed
+- WebUI dashboard: beat-board layout with fleet ring, signal cards, stream log, and unit picker (`DashboardView`).
+
+## 2.4.1
+
+### Added
+- WebUI **Logs** section (`/logs`): sign-in audit and WebRTC session history.
+- API `GET /auth/login-logs` for recent `login_logs` rows (authenticated).
+
+## 2.4.0
+
+### Changed
+- Dogan Android: single APK for API 29 (Android 10) through API 37 (Android 17); `compileSdk` / `targetSdk` raised to 37, `minSdk` remains 29.
+- Dogan Android: AGP 9.1.1 + Gradle 9.3.1 + Kotlin 2.2.10 (required to compile against API 37).
+
 ## 2.3.2
 
 ### Fixed
