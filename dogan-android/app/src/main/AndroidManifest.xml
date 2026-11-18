@@ -41,11 +41,13 @@
         <activity
             android:name=".SettingsActivity"
             android:exported="false"
+            android:launchMode="singleTop"
             android:parentActivityName=".MainActivity" />
 
         <activity
             android:name=".LogsActivity"
             android:exported="false"
+            android:launchMode="singleTop"
             android:parentActivityName=".MainActivity" />
 
         <activity

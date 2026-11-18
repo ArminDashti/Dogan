@@ -38,6 +38,8 @@ class MainActivity : AppCompatActivity() {
 
     private var monitoringActive = false
     private var currentMode: OperatingMode = OperatingMode.OFF
+    private var lastCopilotButtonSelected: Boolean? = null
+    private var lastWatchmanButtonSelected: Boolean? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,7 +69,10 @@ class MainActivity : AppCompatActivity() {
             openSettings(SettingsActivity.SECTION_GENERAL)
         }
         findViewById<MaterialButton>(R.id.logsBtn).setOnClickListener {
-            startActivity(Intent(this, LogsActivity::class.java))
+            startActivity(
+                Intent(this, LogsActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+            )
         }
         findViewById<MaterialButton>(R.id.exitBtn).setOnClickListener { exitApp() }
 
@@ -94,12 +99,17 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 settingsStore.settingsFlow.collect { settings ->
-                    currentMode = settings.operatingMode
-                    updateModeButtons(settings.operatingMode)
-                    if (settings.operatingMode == OperatingMode.OFF) {
+                    val mode = settings.operatingMode
+                    updateModeButtons(mode)
+                    if (mode == currentMode) return@collect
+                    val wasOff = currentMode == OperatingMode.OFF
+                    currentMode = mode
+                    if (mode == OperatingMode.OFF) {
                         stopMonitoringIfNeeded()
-                    } else {
+                    } else if (wasOff) {
                         ensureMonitoringStarted()
+                    } else {
+                        ensureMonitoringStarted(forceModeRefresh = true)
                     }
                 }
             }
@@ -137,8 +147,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateModeButtons(mode: OperatingMode) {
-        styleModeButton(modeCopilotBtn, mode == OperatingMode.COPILOT)
-        styleModeButton(modeWatchmanBtn, mode == OperatingMode.WATCHER)
+        val copilotSelected = mode == OperatingMode.COPILOT
+        val watchmanSelected = mode == OperatingMode.WATCHER
+        if (lastCopilotButtonSelected != copilotSelected) {
+            lastCopilotButtonSelected = copilotSelected
+            styleModeButton(modeCopilotBtn, copilotSelected)
+        }
+        if (lastWatchmanButtonSelected != watchmanSelected) {
+            lastWatchmanButtonSelected = watchmanSelected
+            styleModeButton(modeWatchmanBtn, watchmanSelected)
+        }
     }
 
     private fun styleModeButton(button: MaterialButton, selected: Boolean) {
@@ -199,7 +217,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun openSettings(section: String) {
         startActivity(
-            Intent(this, SettingsActivity::class.java).putExtra(SettingsActivity.EXTRA_SECTION, section),
+            Intent(this, SettingsActivity::class.java)
+                .putExtra(SettingsActivity.EXTRA_SECTION, section)
+                .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP),
         )
     }
 
@@ -222,9 +242,6 @@ class MainActivity : AppCompatActivity() {
             currentMode = settings.operatingMode
             updateModeButtons(settings.operatingMode)
             updateConnectivityButton(ServerConnectionManager.status.value)
-            if (settings.operatingMode != OperatingMode.OFF) {
-                ensureMonitoringStarted()
-            }
         }
     }
 

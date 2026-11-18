@@ -1,3 +1,5 @@
+@file:OptIn(kotlinx.coroutines.FlowPreview::class)
+
 package com.dogan
 
 import android.os.Bundle
@@ -9,6 +11,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.appbar.MaterialToolbar
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /** Scrollable view of recent in-app log lines. */
@@ -30,19 +34,23 @@ class LogsActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                AppLogger.entries.collect { entries ->
-                    val lines = if (filterSection == null) {
-                        entries.map { it.displayLine }
-                    } else {
-                        entries.filter { it.section == filterSection }.map { it.displayLine }
+                AppLogger.entries
+                    .map { entries ->
+                        if (filterSection == null) {
+                            entries.map { it.displayLine }
+                        } else {
+                            entries.filter { it.section == filterSection }.map { it.displayLine }
+                        }
                     }
-                    logsTxt.text = if (lines.isEmpty()) {
-                        getString(R.string.logs_empty)
-                    } else {
-                        lines.joinToString("\n")
+                    .debounce(100)
+                    .collect { lines ->
+                        logsTxt.text = if (lines.isEmpty()) {
+                            getString(R.string.logs_empty)
+                        } else {
+                            lines.joinToString("\n")
+                        }
+                        logsScroll.post { logsScroll.fullScroll(ScrollView.FOCUS_DOWN) }
                     }
-                    logsScroll.post { logsScroll.fullScroll(ScrollView.FOCUS_DOWN) }
-                }
             }
         }
     }

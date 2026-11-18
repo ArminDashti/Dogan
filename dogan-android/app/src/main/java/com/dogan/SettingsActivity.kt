@@ -30,21 +30,34 @@ import kotlinx.coroutines.withContext
 class SettingsActivity : AppCompatActivity() {
     private val settingsStore by lazy { SettingsStore(this) }
 
-    private lateinit var section: String
+    private var section: String = ""
     private var suppressAutoSave = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
-        section = intent.getStringExtra(EXTRA_SECTION) ?: SECTION_GENERAL
-
         findViewById<MaterialToolbar>(R.id.settingsToolbar).apply {
-            title = sectionTitle(section)
             setNavigationOnClickListener { finish() }
             setNavigationIcon(androidx.appcompat.R.drawable.abc_ic_ab_back_material)
         }
+        applySection(intent)
+    }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        applySection(intent)
+    }
+
+    private fun applySection(intent: Intent) {
+        val newSection = intent.getStringExtra(EXTRA_SECTION) ?: SECTION_GENERAL
+        if (newSection == section && findViewById<FrameLayout>(R.id.settingsContent).childCount > 0) {
+            return
+        }
+        section = newSection
+        findViewById<MaterialToolbar>(R.id.settingsToolbar).title = sectionTitle(section)
         val content = findViewById<FrameLayout>(R.id.settingsContent)
+        content.removeAllViews()
         val layoutId = when (section) {
             SECTION_CONNECTIVITY -> R.layout.section_connectivity
             SECTION_COPILOT -> R.layout.section_copilot
@@ -52,7 +65,6 @@ class SettingsActivity : AppCompatActivity() {
             else -> R.layout.section_general
         }
         LayoutInflater.from(this).inflate(layoutId, content, true)
-
         lifecycleScope.launch {
             val settings = settingsStore.settingsFlow.first()
             suppressAutoSave = true
