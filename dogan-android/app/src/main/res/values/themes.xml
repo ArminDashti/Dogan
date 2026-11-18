@@ -13,8 +13,8 @@
         <item name="colorOnSurfaceVariant">@color/dogan_on_surface_secondary</item>
         <item name="colorOutline">@color/dogan_outline</item>
         <item name="colorError">@color/dogan_danger</item>
-        <item name="android:statusBarColor">@color/dogan_surface</item>
-        <item name="android:navigationBarColor">@color/dogan_surface</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowBackground">@color/dogan_surface</item>
         <item name="android:textColorPrimary">@color/dogan_on_surface</item>
         <item name="android:textColorSecondary">@color/dogan_on_surface_secondary</item>

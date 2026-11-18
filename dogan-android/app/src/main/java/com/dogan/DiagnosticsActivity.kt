@@ -20,6 +20,7 @@ class DiagnosticsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_diagnostics)
+        applyEdgeToEdgeInsets()
         findViewById<MaterialToolbar>(R.id.diagnosticsToolbar).setNavigationOnClickListener { finish() }
 
         resultsContainer = findViewById(R.id.testResultsContainer)
