@@ -3,31 +3,8 @@ package store
 import (
 	"encoding/base64"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
-	"time"
 )
-
-func PersistFrameImage(framesDir, deviceID string, capturedAt time.Time, imageData string) (string, error) {
-	decodedImage, err := decodeImagePayload(imageData)
-	if err != nil {
-		return "", err
-	}
-
-	if err := os.MkdirAll(framesDir, 0o755); err != nil {
-		return "", fmt.Errorf("create frames directory: %w", err)
-	}
-
-	fileName := fmt.Sprintf("%s-%s.jpg", sanitizePathSegment(deviceID), capturedAt.Format("060102-150405"))
-	framePath := filepath.Join(framesDir, fileName)
-
-	if err := os.WriteFile(framePath, decodedImage, 0o644); err != nil {
-		return "", fmt.Errorf("write frame image: %w", err)
-	}
-
-	return framePath, nil
-}
 
 // DecodeImagePayload decodes raw or data-URL base64 image payloads.
 func DecodeImagePayload(imageData string) ([]byte, error) {

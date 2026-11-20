@@ -55,10 +55,31 @@ data class AppSettings(
     val copilotAlertVolume: AlertVolume,
     val copilotAlertsEnabled: Boolean,
     val copilotDistanceControlEnabled: Boolean,
+    val gpsIntervalSec: Int,
+    val batteryIntervalSec: Int,
+    val temperatureIntervalSec: Int,
+    val noiseIntervalSec: Int,
+    val joltIntervalSec: Int,
+    val networkTypeIntervalSec: Int,
+    val sim1SignalIntervalSec: Int,
+    val sim2SignalIntervalSec: Int,
+    val latencyIntervalSec: Int,
 ) {
     val serverBaseUrl: String get() = EndpointUrlBuilder.buildApiBaseUrl(apiEndpoint, apiPort)
     val streamBaseUrl: String get() = EndpointUrlBuilder.buildStreamUrl(streamEndpoint, streamPort)
     val telemetryIntervalMs: Long get() = telemetryIntervalSec * 1000L
+    val fastestSensorIntervalMs: Long
+        get() = listOf(
+            gpsIntervalSec,
+            batteryIntervalSec,
+            temperatureIntervalSec,
+            noiseIntervalSec,
+            joltIntervalSec,
+            networkTypeIntervalSec,
+            sim1SignalIntervalSec,
+            sim2SignalIntervalSec,
+            latencyIntervalSec,
+        ).min() * 1000L
     val uploadIntervalMs: Long get() = uploadIntervalSec * 1000L
     val intervalSec: Float get() = captureIntervalMs / 1000f
     val periodSec: Int get() = (captureIntervalMs / 1000L).toInt().coerceAtLeast(1)
@@ -115,6 +136,15 @@ class SettingsStore(private val context: Context) {
     private val copilotAlertVolumeKey = stringPreferencesKey("copilot_alert_volume")
     private val copilotAlertsEnabledKey = booleanPreferencesKey("copilot_alerts_enabled")
     private val copilotDistanceControlKey = booleanPreferencesKey("copilot_distance_control_enabled")
+    private val gpsIntervalSecKey = intPreferencesKey("gps_interval_sec")
+    private val batteryIntervalSecKey = intPreferencesKey("battery_interval_sec")
+    private val temperatureIntervalSecKey = intPreferencesKey("temperature_interval_sec")
+    private val noiseIntervalSecKey = intPreferencesKey("noise_interval_sec")
+    private val joltIntervalSecKey = intPreferencesKey("jolt_interval_sec")
+    private val networkTypeIntervalSecKey = intPreferencesKey("network_type_interval_sec")
+    private val sim1SignalIntervalSecKey = intPreferencesKey("sim1_signal_interval_sec")
+    private val sim2SignalIntervalSecKey = intPreferencesKey("sim2_signal_interval_sec")
+    private val latencyIntervalSecKey = intPreferencesKey("latency_interval_sec")
     private fun modeImageUploadKey(mode: String) = stringPreferencesKey("${mode}_image_upload_policy")
 
     val settingsFlow: Flow<AppSettings> = context.dataStore.data.map { pref ->
@@ -133,8 +163,8 @@ class SettingsStore(private val context: Context) {
             apiPort = apiPort,
             streamEndpoint = pref[streamEndpointKey] ?: DEFAULT_STREAM_ENDPOINT,
             streamPort = pref[streamPortKey] ?: DEFAULT_STREAM_PORT,
-            username = pref[usernameKey] ?: DEFAULT_USERNAME,
-            password = pref[passwordKey] ?: DEFAULT_PASSWORD,
+            username = pref[usernameKey].takeUnless { it.isNullOrBlank() || it == "admin" } ?: DEFAULT_USERNAME,
+            password = pref[passwordKey].takeUnless { it.isNullOrBlank() || it == "admin" } ?: DEFAULT_PASSWORD,
             captureIntervalMs = normalizeIntervalMs(pref[intervalKey] ?: DEFAULT_INTERVAL_MS),
             telemetryIntervalSec = normalizeTelemetryIntervalSec(
                 pref[telemetryIntervalSecKey]
@@ -183,6 +213,15 @@ class SettingsStore(private val context: Context) {
             copilotAlertVolume = AlertVolume.fromStoredValue(pref[copilotAlertVolumeKey]),
             copilotAlertsEnabled = pref[copilotAlertsEnabledKey] ?: false,
             copilotDistanceControlEnabled = pref[copilotDistanceControlKey] ?: false,
+            gpsIntervalSec = normalizeSensorIntervalSec(pref[gpsIntervalSecKey] ?: DEFAULT_GPS_INTERVAL_SEC),
+            batteryIntervalSec = normalizeSensorIntervalSec(pref[batteryIntervalSecKey] ?: DEFAULT_BATTERY_INTERVAL_SEC),
+            temperatureIntervalSec = normalizeSensorIntervalSec(pref[temperatureIntervalSecKey] ?: DEFAULT_TEMPERATURE_INTERVAL_SEC),
+            noiseIntervalSec = normalizeSensorIntervalSec(pref[noiseIntervalSecKey] ?: DEFAULT_NOISE_INTERVAL_SEC),
+            joltIntervalSec = normalizeSensorIntervalSec(pref[joltIntervalSecKey] ?: DEFAULT_JOLT_INTERVAL_SEC),
+            networkTypeIntervalSec = normalizeSensorIntervalSec(pref[networkTypeIntervalSecKey] ?: DEFAULT_NETWORK_TYPE_INTERVAL_SEC),
+            sim1SignalIntervalSec = normalizeSensorIntervalSec(pref[sim1SignalIntervalSecKey] ?: DEFAULT_SIM1_SIGNAL_INTERVAL_SEC),
+            sim2SignalIntervalSec = normalizeSensorIntervalSec(pref[sim2SignalIntervalSecKey] ?: DEFAULT_SIM2_SIGNAL_INTERVAL_SEC),
+            latencyIntervalSec = normalizeSensorIntervalSec(pref[latencyIntervalSecKey] ?: DEFAULT_LATENCY_INTERVAL_SEC),
         )
     }
 
@@ -222,6 +261,15 @@ class SettingsStore(private val context: Context) {
             pref[copilotAlertVolumeKey] = settings.copilotAlertVolume.toStoredValue()
             pref[copilotAlertsEnabledKey] = settings.copilotAlertsEnabled
             pref[copilotDistanceControlKey] = settings.copilotDistanceControlEnabled
+            pref[gpsIntervalSecKey] = normalizeSensorIntervalSec(settings.gpsIntervalSec)
+            pref[batteryIntervalSecKey] = normalizeSensorIntervalSec(settings.batteryIntervalSec)
+            pref[temperatureIntervalSecKey] = normalizeSensorIntervalSec(settings.temperatureIntervalSec)
+            pref[noiseIntervalSecKey] = normalizeSensorIntervalSec(settings.noiseIntervalSec)
+            pref[joltIntervalSecKey] = normalizeSensorIntervalSec(settings.joltIntervalSec)
+            pref[networkTypeIntervalSecKey] = normalizeSensorIntervalSec(settings.networkTypeIntervalSec)
+            pref[sim1SignalIntervalSecKey] = normalizeSensorIntervalSec(settings.sim1SignalIntervalSec)
+            pref[sim2SignalIntervalSecKey] = normalizeSensorIntervalSec(settings.sim2SignalIntervalSec)
+            pref[latencyIntervalSecKey] = normalizeSensorIntervalSec(settings.latencyIntervalSec)
             writeModeSettings(pref, "watcher", settings.watcherSettings)
             writeModeSettings(pref, "copilot", settings.copilotSettings)
         }
@@ -263,8 +311,8 @@ class SettingsStore(private val context: Context) {
     }
 
     companion object {
-        const val DEFAULT_USERNAME = "admin"
-        const val DEFAULT_PASSWORD = "admin"
+        const val DEFAULT_USERNAME = "dogan"
+        const val DEFAULT_PASSWORD = "Kp7#mQv2\$nLx9wRd4!bT"
         const val DEFAULT_API_ENDPOINT = "dogan-api.xaigrok.ir"
         const val DEFAULT_API_PORT = 443
         const val DEFAULT_STREAM_ENDPOINT = "dogan-livekit.xaigrok.ir"
@@ -272,6 +320,17 @@ class SettingsStore(private val context: Context) {
         const val DEFAULT_CUSTOM_JOLT_SCALE = 1.0f
         const val DEFAULT_CUSTOM_SOUND_THRESHOLD = 2500.0
         const val DEFAULT_INTERVAL_MS = 5_000L
+        const val DEFAULT_GPS_INTERVAL_SEC = 60
+        const val DEFAULT_BATTERY_INTERVAL_SEC = 60
+        const val DEFAULT_TEMPERATURE_INTERVAL_SEC = 60
+        const val DEFAULT_NOISE_INTERVAL_SEC = 1
+        const val DEFAULT_JOLT_INTERVAL_SEC = 1
+        const val DEFAULT_NETWORK_TYPE_INTERVAL_SEC = 60
+        const val DEFAULT_SIM1_SIGNAL_INTERVAL_SEC = 30
+        const val DEFAULT_SIM2_SIGNAL_INTERVAL_SEC = 30
+        const val DEFAULT_LATENCY_INTERVAL_SEC = 1
+        const val MIN_SENSOR_INTERVAL_SEC = 1
+        const val MAX_SENSOR_INTERVAL_SEC = 3600
         const val DEFAULT_TELEMETRY_INTERVAL_SEC = 5
         const val DEFAULT_UPLOAD_INTERVAL_SEC = 2
         const val MIN_INTERVAL_MS = 100L
@@ -290,6 +349,9 @@ class SettingsStore(private val context: Context) {
 
         fun normalizeIntervalMs(intervalMs: Long): Long =
             intervalMs.coerceIn(MIN_INTERVAL_MS, MAX_INTERVAL_MS)
+
+        fun normalizeSensorIntervalSec(seconds: Int): Int =
+            seconds.coerceIn(MIN_SENSOR_INTERVAL_SEC, MAX_SENSOR_INTERVAL_SEC)
 
         fun normalizeTelemetryIntervalSec(seconds: Int): Int =
             seconds.coerceIn(MIN_TELEMETRY_INTERVAL_SEC, MAX_TELEMETRY_INTERVAL_SEC)

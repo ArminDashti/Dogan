@@ -101,6 +101,16 @@ export interface AppSettings {
   temperatureUnit: 'celsius' | 'fahrenheit'
   noiseAlertThresholdDb: number
   defaultDeviceId?: string
+  gpsIntervalSec: number
+  batteryIntervalSec: number
+  temperatureIntervalSec: number
+  noiseIntervalSec: number
+  joltIntervalSec: number
+  networkTypeIntervalSec: number
+  sim1SignalIntervalSec: number
+  sim2SignalIntervalSec: number
+  latencyIntervalSec: number
+  imageIntervalSec: number
 }
 
 export interface ApiErrorBody {

@@ -1,4 +1,4 @@
-package opencode
+package pont
 
 import (
 	"bytes"

@@ -4,6 +4,9 @@ import (
 	"net/http"
 	"time"
 
+	"context"
+
+	"github.com/dogan/dogan-server/internal/cvclient"
 	"github.com/dogan/dogan-server/internal/models"
 	"github.com/dogan/dogan-server/internal/store"
 	"github.com/gin-gonic/gin"
@@ -12,15 +15,15 @@ import (
 type TelemetryHandler struct {
 	metricsStore store.MetricsStore
 	frameStore   store.FrameStore
-	framesDir    string
+	cv           *cvclient.Client
 	vision       *VisionHandler
 }
 
-func NewTelemetryHandler(metricsStore store.MetricsStore, frameStore store.FrameStore, framesDir string, vision *VisionHandler) *TelemetryHandler {
+func NewTelemetryHandler(metricsStore store.MetricsStore, frameStore store.FrameStore, cv *cvclient.Client, vision *VisionHandler) *TelemetryHandler {
 	return &TelemetryHandler{
 		metricsStore: metricsStore,
 		frameStore:   frameStore,
-		framesDir:    framesDir,
+		cv:           cv,
 		vision:       vision,
 	}
 }
@@ -86,7 +89,7 @@ func (handler *TelemetryHandler) persistOptionalFrame(deviceID string, capturedA
 		return
 	}
 
-	framePath, err := store.PersistFrameImage(handler.framesDir, deviceID, capturedAt, imageData)
+	framePath, err := handler.cv.SaveFrame(context.Background(), deviceID, capturedAt, imageData)
 	if err != nil {
 		return
 	}

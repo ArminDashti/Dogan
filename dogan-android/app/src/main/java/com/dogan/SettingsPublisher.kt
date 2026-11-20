@@ -44,11 +44,11 @@ object SettingsPublisher {
         }
     }
 
-    suspend fun pushOperatingMode(context: Context, mode: OperatingMode) {
+    suspend fun saveOperatingMode(context: Context, mode: OperatingMode) {
         saveAndPush(
             context,
             mutate = { it.copy(operatingMode = mode) },
-            changedKeys = mapOf("operating_mode" to mode.toStoredValue()),
+            changedKeys = emptyMap(),
         )
     }
 
@@ -58,9 +58,17 @@ object SettingsPublisher {
             "api_port" to settings.apiPort,
             "stream_endpoint" to settings.streamEndpoint,
             "stream_port" to settings.streamPort,
-            "operating_mode" to settings.operatingMode.toStoredValue(),
             "active_camera" to settings.activeCamera.toStoredValue(),
             "telemetry_interval_sec" to settings.telemetryIntervalSec,
+            "gps_interval_sec" to settings.gpsIntervalSec,
+            "battery_interval_sec" to settings.batteryIntervalSec,
+            "temperature_interval_sec" to settings.temperatureIntervalSec,
+            "noise_interval_sec" to settings.noiseIntervalSec,
+            "jolt_interval_sec" to settings.joltIntervalSec,
+            "network_type_interval_sec" to settings.networkTypeIntervalSec,
+            "sim1_signal_interval_sec" to settings.sim1SignalIntervalSec,
+            "sim2_signal_interval_sec" to settings.sim2SignalIntervalSec,
+            "latency_interval_sec" to settings.latencyIntervalSec,
             "upload_interval_sec" to settings.uploadIntervalSec,
             "settings_sync_interval_sec" to settings.settingsSyncIntervalSec,
             "screen_on_interval_min" to settings.screenOnIntervalMin,
@@ -74,14 +82,8 @@ object SettingsPublisher {
             "motion_sampling_rate" to settings.motionSamplingRate.toStoredValue(),
             "ambient_light_enabled" to settings.ambientLightEnabled,
             "watcher_gps_accuracy" to settings.watcherGpsAccuracy.toStoredValue(),
-            "copilot_gps_accuracy" to settings.copilotGpsAccuracy.toStoredValue(),
-            "copilot_hold_wake_lock" to settings.copilotHoldWakeLock,
-            "alert_duration" to settings.alertDuration.toStoredValue(),
-            "copilot_alerts_enabled" to settings.copilotAlertsEnabled,
-            "copilot_distance_control_enabled" to settings.copilotDistanceControlEnabled,
         )
         putModeKeys(keys, "watcher", settings.watcherSettings)
-        putModeKeys(keys, "copilot", settings.copilotSettings)
         for ((key, value) in keys) {
             if (!apiClient.putSetting(settings.serverBaseUrl, key, value)) {
                 AppLogger.warn("Settings", "Failed to push setting $key")

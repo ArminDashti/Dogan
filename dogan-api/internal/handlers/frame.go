@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/dogan/dogan-server/internal/cvclient"
 	"github.com/dogan/dogan-server/internal/models"
 	"github.com/dogan/dogan-server/internal/store"
 	"github.com/gin-gonic/gin"
@@ -13,11 +14,11 @@ import (
 
 type FrameHandler struct {
 	frameStore store.FrameStore
-	framesDir  string
+	cv         *cvclient.Client
 }
 
-func NewFrameHandler(frameStore store.FrameStore, framesDir string) *FrameHandler {
-	return &FrameHandler{frameStore: frameStore, framesDir: framesDir}
+func NewFrameHandler(frameStore store.FrameStore, cv *cvclient.Client) *FrameHandler {
+	return &FrameHandler{frameStore: frameStore, cv: cv}
 }
 
 func (handler *FrameHandler) SubmitFrame(context *gin.Context) {
@@ -28,9 +29,9 @@ func (handler *FrameHandler) SubmitFrame(context *gin.Context) {
 	}
 
 	capturedAt := store.NormalizeCapturedAt(payload.CapturedAt)
-	framePath, err := store.PersistFrameImage(handler.framesDir, payload.DeviceID, capturedAt, payload.ImageData)
+	framePath, err := handler.cv.SaveFrame(context.Request.Context(), payload.DeviceID, capturedAt, payload.ImageData)
 	if err != nil {
-		context.JSON(http.StatusBadRequest, models.ErrorResponse{Error: "invalid image_data"})
+		context.JSON(http.StatusBadGateway, models.ErrorResponse{Error: "invalid image_data"})
 		return
 	}
 

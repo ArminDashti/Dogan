@@ -187,13 +187,33 @@ type WebSettingsPayload struct {
 	TemperatureUnit        *string  `json:"temperature_unit"`
 	NoiseAlertThresholdDb  *float64 `json:"noise_alert_threshold_db"`
 	DefaultDeviceID        *string  `json:"default_device_id"`
+	GpsIntervalSec         *int     `json:"gps_interval_sec"`
+	BatteryIntervalSec     *int     `json:"battery_interval_sec"`
+	TemperatureIntervalSec *int     `json:"temperature_interval_sec"`
+	NoiseIntervalSec       *int     `json:"noise_interval_sec"`
+	JoltIntervalSec        *int     `json:"jolt_interval_sec"`
+	NetworkTypeIntervalSec *int     `json:"network_type_interval_sec"`
+	Sim1SignalIntervalSec  *int     `json:"sim1_signal_interval_sec"`
+	Sim2SignalIntervalSec  *int     `json:"sim2_signal_interval_sec"`
+	LatencyIntervalSec     *int     `json:"latency_interval_sec"`
+	ImageIntervalSec       *int     `json:"image_interval_sec"`
 }
 
 type WebSettingsResponse struct {
-	NotificationsEnabled  bool    `json:"notifications_enabled"`
-	TemperatureUnit       string  `json:"temperature_unit"`
-	NoiseAlertThresholdDb float64 `json:"noise_alert_threshold_db"`
-	DefaultDeviceID       string  `json:"default_device_id,omitempty"`
+	NotificationsEnabled   bool    `json:"notifications_enabled"`
+	TemperatureUnit        string  `json:"temperature_unit"`
+	NoiseAlertThresholdDb  float64 `json:"noise_alert_threshold_db"`
+	DefaultDeviceID        string  `json:"default_device_id,omitempty"`
+	GpsIntervalSec         int     `json:"gps_interval_sec"`
+	BatteryIntervalSec     int     `json:"battery_interval_sec"`
+	TemperatureIntervalSec int     `json:"temperature_interval_sec"`
+	NoiseIntervalSec       int     `json:"noise_interval_sec"`
+	JoltIntervalSec        int     `json:"jolt_interval_sec"`
+	NetworkTypeIntervalSec int     `json:"network_type_interval_sec"`
+	Sim1SignalIntervalSec  int     `json:"sim1_signal_interval_sec"`
+	Sim2SignalIntervalSec  int     `json:"sim2_signal_interval_sec"`
+	LatencyIntervalSec     int     `json:"latency_interval_sec"`
+	ImageIntervalSec       int     `json:"image_interval_sec"`
 }
 
 type PhoneActionPayload struct {

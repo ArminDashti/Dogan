@@ -25,10 +25,7 @@ const (
 	defaultLiveKitTokenTTL  = time.Hour
 	defaultLiveKitTurnDomain = "dogan-turn.xaigrok.ir"
 	defaultDeviceAPIKey     = auth.DefaultDeviceAPIKey
-	defaultCORSOrigins      = "http://localhost:30808,http://127.0.0.1:30808,https://dogan.xaigrok.ir"
-	defaultOpenCodeGoBaseURL = "https://pont.xaigrok.ir/api/v1"
-	defaultOpenCodeGoModel   = "opencodego-glm-5.3-flash"
-	defaultOpenCodeGoPrompt  = "Describe this camera image briefly. Note people, vehicles, hazards, or anything unusual."
+	defaultCORSOrigins = "http://localhost:30808,http://127.0.0.1:30808,https://dogan.xaigrok.ir"
 )
 
 type Config struct {
@@ -50,15 +47,8 @@ type Config struct {
 	LiveKitTurnDomain   string
 	LiveKitTurnExternalTLS bool
 	LiveKitIceServerURLs []string
-	CORSAllowedOrigins  []string
-	OpenCodeGoAPIKey    string
-	OpenCodeGoBaseURL   string
-	OpenCodeGoModel     string
-	OpenCodeGoPrompt    string
-}
-
-func (config Config) OpenCodeGoEnabled() bool {
-	return strings.TrimSpace(config.OpenCodeGoAPIKey) != ""
+	CORSAllowedOrigins []string
+	CVURL              string
 }
 
 func (config Config) ClientLiveKitURL() string {
@@ -89,10 +79,7 @@ func Load() Config {
 		LiveKitTurnExternalTLS: envBoolOrDefault("DOGAN_LIVEKIT_TURN_EXTERNAL_TLS", true),
 		LiveKitIceServerURLs:   envCSVOrDefault("DOGAN_LIVEKIT_ICE_SERVER_URLS", ""),
 		CORSAllowedOrigins: envCSVOrDefault("DOGAN_CORS_ALLOWED_ORIGINS", defaultCORSOrigins),
-		OpenCodeGoAPIKey:   envOrDefault("OPENCODE_GO_API_KEY", ""),
-		OpenCodeGoBaseURL:  envOrDefault("OPENCODE_GO_BASE_URL", defaultOpenCodeGoBaseURL),
-		OpenCodeGoModel:    envOrDefault("OPENCODE_GO_MODEL", defaultOpenCodeGoModel),
-		OpenCodeGoPrompt:   envOrDefault("OPENCODE_GO_PROMPT", defaultOpenCodeGoPrompt),
+		CVURL:              envOrDefault("DOGAN_CV_URL", ""),
 	}
 }
 

@@ -5,12 +5,10 @@ rtc:
   # Small range: mapping thousands of UDP ports hangs docker-proxy on this host.
   port_range_start: 50000
   port_range_end: 50050
-  # Local Docker + Android emulator: advertise host LAN IP so ICE reaches
-  # published UDP/TCP ports. use_external_ip:true made STUN pick the VPN/public
-  # IP (unreachable from the emulator). Public T3: use livekit.t3.yaml
+  # Local Docker: leave STUN external IP off (VPN/public IP is unreachable
+  # from the Android emulator). Public T3: use livekit.t3.yaml
   # (use_external_ip + TURN external_tls) — see Docs/modules/public-443-subdomains.md.
   use_external_ip: false
-  node_ip: 10.20.9.59
 
 keys:
   devkey: secret

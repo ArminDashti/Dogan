@@ -13,6 +13,7 @@
     <string name="settings_section_storage">Storage</string>
     <string name="logs_title">Logs</string>
     <string name="diagnostics_title">Diagnostics</string>
+    <string name="test_title">Test</string>
     <string name="clear_logs">Clear logs</string>
     <string name="logs_empty">No log entries yet.</string>
     <string name="exit_app">Exit</string>

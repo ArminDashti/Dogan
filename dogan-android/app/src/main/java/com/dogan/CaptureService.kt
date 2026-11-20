@@ -66,6 +66,7 @@ class CaptureService : Service(), LifecycleOwner {
     @Volatile private var lastMotionTriggeredCaptureAt = 0L
     @Volatile private var lastScreenWakeAt = 0L
     @Volatile private var lastWatcherFrameAt = 0L
+    @Volatile private var lastLatencySampleAt = 0L
     @Volatile private var holdWakeLockIndefinitely = false
 
     private lateinit var sensorManager: SensorManager
@@ -163,7 +164,7 @@ class CaptureService : Service(), LifecycleOwner {
 
     private fun startLocationTracking(settings: AppSettings) {
         locationTracker.start(
-            settings.telemetryIntervalMs,
+            settings.gpsIntervalSec * 1000L,
             settings.gpsAccuracyForMode(settings.operatingMode).toPriority(),
         )
     }
@@ -258,7 +259,7 @@ class CaptureService : Service(), LifecycleOwner {
                         AppLogger.purgeOlderThan(this@CaptureService, settings.logRetentionDays)
                     }
 
-                    Thread.sleep(settings.telemetryIntervalMs)
+                    Thread.sleep(settings.fastestSensorIntervalMs)
                 } catch (_: InterruptedException) {
                     Thread.currentThread().interrupt()
                     break
@@ -340,10 +341,17 @@ class CaptureService : Service(), LifecycleOwner {
                 }
             }
 
-            val health = apiClient.pingHealthWithLatency(settings.serverBaseUrl)
-            val latency = health?.latencyMs ?: -1L
+            val now = System.currentTimeMillis()
+            val latency = if (lastLatencySampleAt == 0L ||
+                now - lastLatencySampleAt >= settings.latencyIntervalSec * 1000L
+            ) {
+                lastLatencySampleAt = now
+                apiClient.pingHealthWithLatency(settings.serverBaseUrl)?.latencyMs ?: -1L
+            } else {
+                -1L
+            }
 
-            val payload = telemetryCollector.collectSnapshot(rearFile, frontFile, latency, takeStill)
+            val payload = telemetryCollector.collectSnapshot(rearFile, frontFile, latency, takeStill, settings)
             telemetryDatabase.enqueue(payload)
             if (forceCapture && telemetryHasAttachedFrames(payload)) {
                 acknowledgePendingActions(settings.serverBaseUrl, pendingActionIds)
@@ -354,6 +362,7 @@ class CaptureService : Service(), LifecycleOwner {
     }
 
     private fun shouldIncludeFrames(settings: AppSettings): Boolean {
+        if (settings.operatingMode == OperatingMode.WATCHER) return true
         return settings.imageUploadPolicyForMode(settings.operatingMode) == ImageUploadPolicy.AUTO
     }
 

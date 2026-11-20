@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
-import android.os.Process
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -17,7 +16,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlin.system.exitProcess
 
 /** Main hub: mode selection and navigation to settings / logs. */
 class MainActivity : AppCompatActivity() {
@@ -59,14 +57,11 @@ class MainActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.copilotSettingsBtn).setOnClickListener {
             openSettings(SettingsActivity.SECTION_COPILOT)
         }
-        findViewById<MaterialButton>(R.id.watchmanSettingsBtn).setOnClickListener {
-            openSettings(SettingsActivity.SECTION_WATCHMAN)
-        }
         connectivityChip.setOnClickListener {
             openSettings(SettingsActivity.SECTION_CONNECTIVITY)
         }
         findViewById<MaterialButton>(R.id.settingsBtn).setOnClickListener {
-            openSettings(SettingsActivity.SECTION_GENERAL)
+            openSettings(SettingsActivity.SECTION_CONNECTIVITY)
         }
         findViewById<MaterialButton>(R.id.logsBtn).setOnClickListener {
             startActivity(
@@ -74,7 +69,12 @@ class MainActivity : AppCompatActivity() {
                     .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP),
             )
         }
-        findViewById<MaterialButton>(R.id.exitBtn).setOnClickListener { exitApp() }
+        findViewById<MaterialButton>(R.id.testBtn).setOnClickListener {
+            startActivity(
+                Intent(this, DiagnosticsActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+            )
+        }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -127,7 +127,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun selectMode(mode: OperatingMode) {
         lifecycleScope.launch {
-            SettingsPublisher.pushOperatingMode(this@MainActivity, mode)
+            SettingsPublisher.saveOperatingMode(this@MainActivity, mode)
             currentMode = mode
             updateModeButtons(mode)
             if (mode == OperatingMode.OFF) {
@@ -221,18 +221,6 @@ class MainActivity : AppCompatActivity() {
                 .putExtra(SettingsActivity.EXTRA_SECTION, section)
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP),
         )
-    }
-
-    private fun exitApp() {
-        lifecycleScope.launch {
-            if (ServerConnectionManager.isConnected()) {
-                ServerConnectionManager.disconnect()
-            }
-            stopMonitoringIfNeeded()
-            finishAffinity()
-            Process.killProcess(Process.myPid())
-            exitProcess(0)
-        }
     }
 
     override fun onResume() {

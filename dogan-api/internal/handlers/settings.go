@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dogan/dogan-server/internal/models"
@@ -36,7 +37,7 @@ func (handler *SettingsHandler) GetSettings(context *gin.Context) {
 	}
 
 	if platform == "web" && deviceID == "" && context.Query("platform") == "" {
-		context.JSON(http.StatusOK, toWebSettingsResponse(settings))
+		context.JSON(http.StatusOK, handler.webSettingsResponse(settings))
 		return
 	}
 
@@ -48,7 +49,7 @@ func (handler *SettingsHandler) GetSettings(context *gin.Context) {
 	}
 
 	if platform == "web" {
-		context.JSON(http.StatusOK, toWebSettingsResponse(settings))
+		context.JSON(http.StatusOK, handler.webSettingsResponse(settings))
 		return
 	}
 
@@ -119,6 +120,7 @@ func (handler *SettingsHandler) PatchWebSettings(context *gin.Context) {
 			UpdatedAt: now,
 		})
 	}
+	upserts = append(upserts, sensorIntervalRecords(payload, now)...)
 
 	for _, setting := range upserts {
 		if err := handler.settingsStore.UpsertSetting(setting); err != nil {
@@ -133,17 +135,35 @@ func (handler *SettingsHandler) PatchWebSettings(context *gin.Context) {
 		return
 	}
 
-	context.JSON(http.StatusOK, toWebSettingsResponse(settings))
+	context.JSON(http.StatusOK, handler.webSettingsResponse(settings))
 }
 
-func toWebSettingsResponse(settings []models.AppSettingRecord) models.WebSettingsResponse {
+func (handler *SettingsHandler) webSettingsResponse(webSettings []models.AppSettingRecord) models.WebSettingsResponse {
+	androidSettings, err := handler.settingsStore.GetSettings("android")
+	if err != nil {
+		androidSettings = nil
+	}
+	return toWebSettingsResponse(webSettings, androidSettings)
+}
+
+func toWebSettingsResponse(webSettings []models.AppSettingRecord, androidSettings []models.AppSettingRecord) models.WebSettingsResponse {
 	response := models.WebSettingsResponse{
-		NotificationsEnabled:  true,
-		TemperatureUnit:       "celsius",
-		NoiseAlertThresholdDb: 70,
+		NotificationsEnabled:   true,
+		TemperatureUnit:        "celsius",
+		NoiseAlertThresholdDb:  70,
+		GpsIntervalSec:         60,
+		BatteryIntervalSec:     60,
+		TemperatureIntervalSec: 60,
+		NoiseIntervalSec:       1,
+		JoltIntervalSec:        1,
+		NetworkTypeIntervalSec: 60,
+		Sim1SignalIntervalSec:  30,
+		Sim2SignalIntervalSec:  30,
+		LatencyIntervalSec:     1,
+		ImageIntervalSec:       5,
 	}
 
-	for _, setting := range settings {
+	for _, setting := range webSettings {
 		switch setting.Key {
 		case "notifications_enabled", "notificationsEnabled":
 			parsed, err := strconv.ParseBool(setting.Value)
@@ -164,5 +184,96 @@ func toWebSettingsResponse(settings []models.AppSettingRecord) models.WebSetting
 		}
 	}
 
+	applySensorIntervals(&response, androidSettings)
 	return response
+}
+
+func clampIntervalSec(seconds int) int {
+	if seconds < 1 {
+		return 1
+	}
+	if seconds > 3600 {
+		return 3600
+	}
+	return seconds
+}
+
+func sensorIntervalRecords(payload models.WebSettingsPayload, now time.Time) []models.AppSettingRecord {
+	pairs := []struct {
+		key   string
+		value *int
+	}{
+		{"gps_interval_sec", payload.GpsIntervalSec},
+		{"battery_interval_sec", payload.BatteryIntervalSec},
+		{"temperature_interval_sec", payload.TemperatureIntervalSec},
+		{"noise_interval_sec", payload.NoiseIntervalSec},
+		{"jolt_interval_sec", payload.JoltIntervalSec},
+		{"network_type_interval_sec", payload.NetworkTypeIntervalSec},
+		{"sim1_signal_interval_sec", payload.Sim1SignalIntervalSec},
+		{"sim2_signal_interval_sec", payload.Sim2SignalIntervalSec},
+		{"latency_interval_sec", payload.LatencyIntervalSec},
+		{"image_interval_sec", payload.ImageIntervalSec},
+	}
+	records := make([]models.AppSettingRecord, 0, len(pairs))
+	for _, pair := range pairs {
+		if pair.value == nil {
+			continue
+		}
+		records = append(records, models.AppSettingRecord{
+			Platform:  "android",
+			Key:       pair.key,
+			Value:     strconv.Itoa(clampIntervalSec(*pair.value)),
+			UpdatedAt: now,
+		})
+		if pair.key == "image_interval_sec" {
+			seconds := clampIntervalSec(*pair.value)
+			records = append(records,
+				models.AppSettingRecord{
+					Platform:  "android",
+					Key:       "capture_interval_ms",
+					Value:     strconv.Itoa(seconds * 1000),
+					UpdatedAt: now,
+				},
+				models.AppSettingRecord{
+					Platform:  "android",
+					Key:       "watcher_image_upload_policy",
+					Value:     "auto",
+					UpdatedAt: now,
+				},
+			)
+		}
+	}
+	return records
+}
+
+func applySensorIntervals(response *models.WebSettingsResponse, settings []models.AppSettingRecord) {
+	for _, setting := range settings {
+		parsed, err := strconv.Atoi(strings.TrimSpace(setting.Value))
+		if err != nil {
+			continue
+		}
+		parsed = clampIntervalSec(parsed)
+		switch setting.Key {
+		case "gps_interval_sec":
+			response.GpsIntervalSec = parsed
+		case "battery_interval_sec":
+			response.BatteryIntervalSec = parsed
+		case "temperature_interval_sec":
+			response.TemperatureIntervalSec = parsed
+		case "noise_interval_sec":
+			response.NoiseIntervalSec = parsed
+		case "jolt_interval_sec":
+			response.JoltIntervalSec = parsed
+		case "network_type_interval_sec":
+			response.NetworkTypeIntervalSec = parsed
+		case "sim1_signal_interval_sec":
+			response.Sim1SignalIntervalSec = parsed
+		case "sim2_signal_interval_sec":
+			response.Sim2SignalIntervalSec = parsed
+		case "latency_interval_sec":
+			response.LatencyIntervalSec = parsed
+		case "image_interval_sec":
+			response.ImageIntervalSec = parsed
+		}
+	}
 }

@@ -52,7 +52,8 @@ func coerceSettingValue(key, value string) any {
 
 func coerceModePrefixedSetting(key, value string) (any, bool) {
 	switch {
-	case strings.HasSuffix(key, "_fps"),
+	case strings.HasSuffix(key, "_interval_sec"),
+		strings.HasSuffix(key, "_fps"),
 		strings.HasSuffix(key, "_image_retention_hours"),
 		strings.HasSuffix(key, "_video_retention_hours"):
 		parsed, err := strconv.ParseInt(strings.TrimSpace(value), 10, 32)
