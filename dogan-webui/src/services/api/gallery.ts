@@ -7,6 +7,7 @@ interface GalleryImageWire {
   thumbnail_url?: string
   caption?: string
   captured_at: string
+  device_id?: string
 }
 
 export async function fetchImages(): Promise<GalleryImage[]> {
@@ -20,6 +21,7 @@ export async function fetchImages(): Promise<GalleryImage[]> {
         thumbnailUrl: objectUrl,
         caption: image.caption,
         capturedAt: image.captured_at,
+        deviceId: image.device_id,
       }
     }),
   )

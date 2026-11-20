@@ -93,6 +93,7 @@ export interface GalleryImage {
   thumbnailUrl?: string
   caption?: string
   capturedAt: string
+  deviceId?: string
 }
 
 export interface AppSettings {

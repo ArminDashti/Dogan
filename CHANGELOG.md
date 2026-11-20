@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.5.1
+
+### Changed
+- WebUI Device page is a handset table (ID, name, OS, mode, location, battery with temperature, latency, last update, Unpair) with Stream, Last image, and Logs squares. Page does not scroll. WebUI `0.3.9`.
+
+## 2.5.0
+
+### Added
+- `dogan-cv` container stores camera JPEGs and runs Pont vision. `dogan-api` calls it at `DOGAN_CV_URL`. Stack containers: `dogan-api`, `dogan-cv`, `dogan-webui`, `dogan-livekit`.
+
 ## 2.4.7
 
 ### Changed
