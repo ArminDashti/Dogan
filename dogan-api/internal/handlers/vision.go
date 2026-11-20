@@ -9,25 +9,23 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dogan/dogan-server/internal/cvclient"
 	"github.com/dogan/dogan-server/internal/models"
-	"github.com/dogan/dogan-server/internal/opencode"
 	"github.com/dogan/dogan-server/internal/store"
 	"github.com/gin-gonic/gin"
 )
 
 type VisionHandler struct {
-	client     *opencode.Client
-	frameStore store.FrameStore
+	client      *cvclient.Client
+	frameStore  store.FrameStore
 	visionStore store.VisionStore
-	framesDir  string
 }
 
-func NewVisionHandler(client *opencode.Client, frameStore store.FrameStore, visionStore store.VisionStore, framesDir string) *VisionHandler {
+func NewVisionHandler(client *cvclient.Client, frameStore store.FrameStore, visionStore store.VisionStore) *VisionHandler {
 	return &VisionHandler{
 		client:      client,
 		frameStore:  frameStore,
 		visionStore: visionStore,
-		framesDir:   framesDir,
 	}
 }
 
@@ -147,15 +145,15 @@ func (handler *VisionHandler) analyzeAndStore(ctx context.Context, deviceID stri
 		sessionID = "dogan-" + store.SanitizeDeviceSegment(deviceID)
 	}
 
-	analysis, err := handler.client.AnalyzeImage(ctx, imageBytes, "image/jpeg", prompt, sessionID)
+	result, err := handler.client.Analyze(ctx, imageBytes, prompt, sessionID)
 	if err != nil {
 		return models.VisionAnalyzeResponse{}, err
 	}
 
 	response := models.VisionAnalyzeResponse{
 		DeviceID:   deviceID,
-		Model:      handler.client.Model(),
-		Analysis:   analysis,
+		Model:      result.Model,
+		Analysis:   result.Analysis,
 		AnalyzedAt: time.Now().UTC(),
 	}
 	if imageID != nil {
@@ -170,12 +168,9 @@ func (handler *VisionHandler) analyzeAndStore(ctx context.Context, deviceID stri
 		DeviceID:   deviceID,
 		ImageID:    imageID,
 		Model:      response.Model,
-		Prompt:     prompt,
-		Analysis:   analysis,
+		Prompt:     result.Prompt,
+		Analysis:   result.Analysis,
 		AnalyzedAt: response.AnalyzedAt,
-	}
-	if strings.TrimSpace(record.Prompt) == "" {
-		record.Prompt = handler.client.DefaultPrompt()
 	}
 	saved, err := handler.visionStore.SaveVisionAnalysis(record)
 	if err != nil {

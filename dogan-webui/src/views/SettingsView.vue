@@ -3,7 +3,7 @@ import { onMounted, reactive, ref } from 'vue'
 import AppLayout from '@/components/AppLayout.vue'
 import ErrorAlert from '@/components/ErrorAlert.vue'
 import { fetchDevices } from '@/services/api/devices'
-import { fetchSettings, updateSettings } from '@/services/api/settings'
+import { fetchSettings, SENSOR_INTERVAL_DEFAULTS, updateSettings } from '@/services/api/settings'
 import { getErrorMessage } from '@/services/api/errors'
 import type { AppSettings, Device } from '@/types/api'
 
@@ -13,11 +13,25 @@ const saving = ref(false)
 const errorMessage = ref<string | null>(null)
 const successMessage = ref<string | null>(null)
 
+const sensorIntervals = [
+  { key: 'imageIntervalSec', label: 'Camera image', help: 'How often the phone POSTs a camera image.' },
+  { key: 'gpsIntervalSec', label: 'GPS', help: 'How often the phone updates GPS.' },
+  { key: 'batteryIntervalSec', label: 'Battery', help: 'How often the phone updates battery level.' },
+  { key: 'temperatureIntervalSec', label: 'Temperature', help: 'How often the phone updates temperature.' },
+  { key: 'noiseIntervalSec', label: 'Noise', help: 'How often the phone updates cabin noise.' },
+  { key: 'joltIntervalSec', label: 'Jolt', help: 'How often the phone updates jolt. Sampling is not on the phone yet.' },
+  { key: 'networkTypeIntervalSec', label: 'Network type', help: 'How often the phone updates network type.' },
+  { key: 'sim1SignalIntervalSec', label: 'SIM 1 signal', help: 'How often the phone updates SIM 1 signal.' },
+  { key: 'sim2SignalIntervalSec', label: 'SIM 2 signal', help: 'How often the phone updates SIM 2 signal. Sampling is not on the phone yet.' },
+  { key: 'latencyIntervalSec', label: 'Latency', help: 'How often the phone updates server latency.' },
+] as const
+
 const form = reactive<AppSettings>({
   notificationsEnabled: true,
   temperatureUnit: 'celsius',
   noiseAlertThresholdDb: 70,
   defaultDeviceId: undefined,
+  ...SENSOR_INTERVAL_DEFAULTS,
 })
 
 async function loadPageData(): Promise<void> {
@@ -136,6 +150,28 @@ onMounted(() => {
                     {{ device.name }}
                   </option>
                 </select>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="mb-8">
+          <h2 class="settings-section-title">Sensor update intervals</h2>
+          <div class="settings-card">
+            <div v-for="item in sensorIntervals" :key="item.key" class="settings-row settings-row--stacked">
+              <div>
+                <p class="settings-row-label">{{ item.label }} (seconds)</p>
+                <p class="settings-row-help">{{ item.help }}</p>
+              </div>
+              <div class="settings-row-control">
+                <input
+                  v-model.number="form[item.key]"
+                  type="number"
+                  min="1"
+                  max="3600"
+                  step="1"
+                  class="yoda-input"
+                />
               </div>
             </div>
 

@@ -72,7 +72,13 @@ func (handler *AuthHandler) authenticateDevice(context *gin.Context, apiKey stri
 func (handler *AuthHandler) authenticateAdmin(context *gin.Context, username, password string) {
 	clientIP := context.ClientIP()
 	browserInfo := context.GetHeader("User-Agent")
-	success := auth.VerifyAdminCredentials(username, password)
+	subject := ""
+	if auth.VerifyAdminCredentials(username, password) {
+		subject = auth.AdminUsername
+	} else if auth.VerifyDeviceCredentials(username, password) {
+		subject = auth.DeviceUsername
+	}
+	success := subject != ""
 
 	if err := handler.loginLogStore.SaveLoginLog(clientIP, username, browserInfo, success); err != nil {
 		context.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "failed to save login log"})
@@ -84,7 +90,7 @@ func (handler *AuthHandler) authenticateAdmin(context *gin.Context, username, pa
 		return
 	}
 
-	token, expiresAt, err := handler.tokenIssuer.IssueToken(auth.AdminUsername)
+	token, expiresAt, err := handler.tokenIssuer.IssueToken(subject)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "failed to issue token"})
 		return

@@ -50,7 +50,7 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun applySection(intent: Intent) {
-        val newSection = intent.getStringExtra(EXTRA_SECTION) ?: SECTION_GENERAL
+        val newSection = intent.getStringExtra(EXTRA_SECTION) ?: SECTION_CONNECTIVITY
         if (newSection == section && findViewById<FrameLayout>(R.id.settingsContent).childCount > 0) {
             return
         }
@@ -74,7 +74,7 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun sectionTitle(section: String): String = when (section) {
-        SECTION_CONNECTIVITY -> getString(R.string.settings_section_connectivity)
+        SECTION_CONNECTIVITY -> getString(R.string.settings_title)
         SECTION_COPILOT -> getString(R.string.settings_section_copilot)
         SECTION_WATCHMAN -> getString(R.string.settings_section_watchman)
         else -> getString(R.string.settings_title)
@@ -97,13 +97,9 @@ class SettingsActivity : AppCompatActivity() {
         val connectionErrorTxt = findViewById<TextView>(R.id.connectionErrorTxt)
         val username = findViewById<TextInputEditText>(R.id.usernameInput)
         val password = findViewById<TextInputEditText>(R.id.passwordInput)
-        val apiUrl = findViewById<TextInputEditText>(R.id.apiUrlInput)
-        val streamUrl = findViewById<TextInputEditText>(R.id.streamUrlInput)
 
         username.setText(settings.username)
         password.setText(settings.password)
-        apiUrl.setText(formatHostPort(settings.apiEndpoint, settings.apiPort))
-        streamUrl.setText(formatHostPort(settings.streamEndpoint, settings.streamPort))
 
         fun refreshStatusUi() {
             updateConnectionButton(connectionBtn, ServerConnectionManager.status.value)
@@ -146,22 +142,10 @@ class SettingsActivity : AppCompatActivity() {
         refreshStatusUi()
 
         bindText(username) { text ->
-            persist(mapOf("username" to text)) { it.copy(username = text) }
+            persist(emptyMap()) { it.copy(username = text) }
         }
         bindText(password) { text ->
-            persist(mapOf("password" to text)) { it.copy(password = text) }
-        }
-        bindText(apiUrl) { text ->
-            val parsed = parseHostPort(text, SettingsStore.DEFAULT_API_ENDPOINT, SettingsStore.DEFAULT_API_PORT)
-            persist(
-                mapOf("api_endpoint" to parsed.host, "api_port" to parsed.port),
-            ) { it.copy(apiEndpoint = parsed.host, apiPort = parsed.port) }
-        }
-        bindText(streamUrl) { text ->
-            val parsed = parseHostPort(text, SettingsStore.DEFAULT_STREAM_ENDPOINT, SettingsStore.DEFAULT_STREAM_PORT)
-            persist(
-                mapOf("stream_endpoint" to parsed.host, "stream_port" to parsed.port),
-            ) { it.copy(streamEndpoint = parsed.host, streamPort = parsed.port) }
+            persist(emptyMap()) { it.copy(password = text) }
         }
     }
 
@@ -223,27 +207,23 @@ class SettingsActivity : AppCompatActivity() {
 
         alert.setOnCheckedChangeListener { _, checked ->
             if (suppressAutoSave) return@setOnCheckedChangeListener
-            persist(mapOf("copilot_alerts_enabled" to checked)) { it.copy(copilotAlertsEnabled = checked) }
+            persist(emptyMap()) { it.copy(copilotAlertsEnabled = checked) }
         }
         distance.setOnCheckedChangeListener { _, checked ->
             if (suppressAutoSave) return@setOnCheckedChangeListener
-            persist(mapOf("copilot_distance_control_enabled" to checked)) {
-                it.copy(copilotDistanceControlEnabled = checked)
-            }
+            persist(emptyMap()) { it.copy(copilotDistanceControlEnabled = checked) }
         }
         holdWake.setOnCheckedChangeListener { _, checked ->
             if (suppressAutoSave) return@setOnCheckedChangeListener
-            persist(mapOf("copilot_hold_wake_lock" to checked)) { it.copy(copilotHoldWakeLock = checked) }
+            persist(emptyMap()) { it.copy(copilotHoldWakeLock = checked) }
         }
         gps.setOnItemClickListener { _, _, position, _ ->
             val accuracy = GpsAccuracy.all.getOrElse(position) { GpsAccuracy.HIGH }
-            persist(mapOf("copilot_gps_accuracy" to accuracy.toStoredValue())) {
-                it.copy(copilotGpsAccuracy = accuracy)
-            }
+            persist(emptyMap()) { it.copy(copilotGpsAccuracy = accuracy) }
         }
         alertDuration.setOnItemClickListener { _, _, position, _ ->
             val duration = AlertDuration.all.getOrElse(position) { AlertDuration.THREE }
-            persist(mapOf("alert_duration" to duration.toStoredValue())) { it.copy(alertDuration = duration) }
+            persist(emptyMap()) { it.copy(alertDuration = duration) }
         }
     }
 
@@ -438,24 +418,6 @@ class SettingsActivity : AppCompatActivity() {
             androidx.core.content.ContextCompat.getColor(this, R.color.dogan_on_primary),
         )
     }
-
-    private fun formatHostPort(host: String, port: Int): String = "$host:$port"
-
-    private fun parseHostPort(raw: String, defaultHost: String, defaultPort: Int): HostPort {
-        val trimmed = raw.trim().removePrefix("http://").removePrefix("https://")
-        if (trimmed.isEmpty()) return HostPort(defaultHost, defaultPort)
-        val slash = trimmed.indexOf('/')
-        val hostPortPart = if (slash >= 0) trimmed.substring(0, slash) else trimmed
-        val colon = hostPortPart.lastIndexOf(':')
-        if (colon <= 0) {
-            return HostPort(hostPortPart.ifBlank { defaultHost }, defaultPort)
-        }
-        val host = hostPortPart.substring(0, colon).ifBlank { defaultHost }
-        val port = hostPortPart.substring(colon + 1).toIntOrNull() ?: defaultPort
-        return HostPort(host, port)
-    }
-
-    private data class HostPort(val host: String, val port: Int)
 
     companion object {
         const val EXTRA_SECTION = "section"

@@ -7,7 +7,7 @@ description: Fix local Docker LiveKit ICE so Android emulator can publish media.
 **Goal:** Make Dogan Watchman media publish reach `dogan-livekit` on local Docker from AVD.
 
 ## Steps
-1. In `dogan-api/livekit.yaml` set `rtc.use_external_ip: false` and `rtc.node_ip` to the host LAN IP the emulator can reach (e.g. Ethernet `10.20.9.59`).
+1. In `dogan-api/livekit.yaml` set `rtc.use_external_ip: false`. Set `rtc.node_ip` only in a local uncommitted override to the LAN address the emulator can reach. Do not commit a machine address.
 2. Recreate LiveKit only: `cd dogan-api` → `docker compose up -d --force-recreate dogan-livekit` (keep volumes).
 3. Confirm container config: logs show `using explicit node IP` / `nodeIP` = that LAN address.
 4. Emulator Connectivity: API `10.0.2.2:8080`, stream `10.0.2.2:7880`, `admin`/`admin`.

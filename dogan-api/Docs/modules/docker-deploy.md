@@ -2,7 +2,7 @@
 
 ## Responsibility
 
-Build and deploy the dogan Compose stack (API + SQLite + LiveKit) locally or over SSH via YAML-only scripts under `.armin/docker-scripts/`.
+Build and deploy the dogan Compose stack (`dogan-api`, `dogan-cv`, `dogan-livekit`, plus `dogan-webui` from its own compose file) locally or over SSH via YAML-only scripts under `.armin/docker-scripts/`. `dogan-cv` stores camera JPEGs and calls Pont vision. The API reaches it at `DOGAN_CV_URL` (default `http://dogan-cv:8090`) on the shared `/data` volume.
 
 ## Entry points
 

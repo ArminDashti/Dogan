@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.5.3
+
+### Added
+- Commit the `dogan-cv` service, API CV client, and device settings intervals that were still only in the working tree. API `2.5.3`, Android `2.5.3`, WebUI `0.3.10`.
+
 ## 2.5.2
 
 ### Fixed

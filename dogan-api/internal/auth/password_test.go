@@ -12,4 +12,13 @@ func TestAdminCredentialsAdminAdmin(t *testing.T) {
 	if VerifyAdminCredentials("armin", "dogan123") {
 		t.Fatal("old credentials should not verify")
 	}
+	if VerifyAdminCredentials(DeviceUsername, "Kp7#mQv2$nLx9wRd4!bT") {
+		t.Fatal("device account must not pass the web admin check")
+	}
+	if !VerifyDeviceCredentials(DeviceUsername, "Kp7#mQv2$nLx9wRd4!bT") {
+		t.Fatal("expected dogan device password to verify")
+	}
+	if VerifyDeviceCredentials(AdminUsername, "admin") {
+		t.Fatal("admin must not pass the device check")
+	}
 }

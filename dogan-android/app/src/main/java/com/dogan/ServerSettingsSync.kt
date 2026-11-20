@@ -60,9 +60,6 @@ object ServerSettingsSync {
     private fun mergeSettings(local: AppSettings, remote: JSONObject): AppSettings {
         var updated = local
 
-        if (remote.has("operating_mode")) {
-            updated = updated.copy(operatingMode = OperatingMode.fromStoredValue(remote.getString("operating_mode")))
-        }
         if (remote.has("capture_interval_ms")) {
             updated = updated.copy(
                 captureIntervalMs = SettingsStore.normalizeIntervalMs(remote.getLong("capture_interval_ms")),
@@ -146,12 +143,6 @@ object ServerSettingsSync {
                 ),
             )
         }
-        if (remote.has("copilot_distance_control_enabled")) {
-            updated = updated.copy(copilotDistanceControlEnabled = remote.getBoolean("copilot_distance_control_enabled"))
-        }
-        if (remote.has("copilot_alerts_enabled")) {
-            updated = updated.copy(copilotAlertsEnabled = remote.getBoolean("copilot_alerts_enabled"))
-        }
         if (remote.has("sound_monitoring_enabled")) {
             updated = updated.copy(soundMonitoringEnabled = remote.getBoolean("sound_monitoring_enabled"))
         }
@@ -171,24 +162,25 @@ object ServerSettingsSync {
                 ),
             )
         }
-        if (remote.has("copilot_gps_accuracy")) {
-            updated = updated.copy(
-                copilotGpsAccuracy = GpsAccuracy.fromStoredValue(
-                    remote.getString("copilot_gps_accuracy"),
-                    GpsAccuracy.HIGH,
-                ),
-            )
-        }
-        if (remote.has("copilot_hold_wake_lock")) {
-            updated = updated.copy(copilotHoldWakeLock = remote.getBoolean("copilot_hold_wake_lock"))
-        }
-
         updated = updated.copy(
             watcherSettings = mergeMode(remote, "watcher", updated.watcherSettings),
-            copilotSettings = mergeMode(remote, "copilot", updated.copilotSettings),
+            gpsIntervalSec = readSensorInterval(remote, "gps_interval_sec", updated.gpsIntervalSec),
+            batteryIntervalSec = readSensorInterval(remote, "battery_interval_sec", updated.batteryIntervalSec),
+            temperatureIntervalSec = readSensorInterval(remote, "temperature_interval_sec", updated.temperatureIntervalSec),
+            noiseIntervalSec = readSensorInterval(remote, "noise_interval_sec", updated.noiseIntervalSec),
+            joltIntervalSec = readSensorInterval(remote, "jolt_interval_sec", updated.joltIntervalSec),
+            networkTypeIntervalSec = readSensorInterval(remote, "network_type_interval_sec", updated.networkTypeIntervalSec),
+            sim1SignalIntervalSec = readSensorInterval(remote, "sim1_signal_interval_sec", updated.sim1SignalIntervalSec),
+            sim2SignalIntervalSec = readSensorInterval(remote, "sim2_signal_interval_sec", updated.sim2SignalIntervalSec),
+            latencyIntervalSec = readSensorInterval(remote, "latency_interval_sec", updated.latencyIntervalSec),
         )
 
         return updated
+    }
+
+    private fun readSensorInterval(remote: JSONObject, key: String, current: Int): Int {
+        if (!remote.has(key)) return current
+        return SettingsStore.normalizeSensorIntervalSec(remote.optInt(key, current))
     }
 
     private fun mergeMode(remote: JSONObject, prefix: String, current: ModeSettings): ModeSettings {

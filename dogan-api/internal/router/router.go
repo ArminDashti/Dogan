@@ -6,10 +6,10 @@ import (
 
 	"github.com/dogan/dogan-server/internal/auth"
 	"github.com/dogan/dogan-server/internal/config"
+	"github.com/dogan/dogan-server/internal/cvclient"
 	"github.com/dogan/dogan-server/internal/handlers"
 	livekitauth "github.com/dogan/dogan-server/internal/livekit"
 	"github.com/dogan/dogan-server/internal/middleware"
-	"github.com/dogan/dogan-server/internal/opencode"
 	"github.com/dogan/dogan-server/internal/store"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -48,16 +48,11 @@ func New(applicationConfig config.Config) *gin.Engine {
 		applicationConfig.TokenTTL,
 	)
 	endpointsHandler := handlers.NewEndpointsHandler()
-	frameHandler := handlers.NewFrameHandler(dataStore, applicationConfig.FramesDir)
+	cvClient := cvclient.New(applicationConfig.CVURL)
+	frameHandler := handlers.NewFrameHandler(dataStore, cvClient)
 	deviceMetricsHandler := handlers.NewDeviceMetricsHandler(dataStore)
-	openCodeClient := opencode.NewClient(
-		applicationConfig.OpenCodeGoBaseURL,
-		applicationConfig.OpenCodeGoAPIKey,
-		applicationConfig.OpenCodeGoModel,
-		applicationConfig.OpenCodeGoPrompt,
-	)
-	visionHandler := handlers.NewVisionHandler(openCodeClient, dataStore, dataStore, applicationConfig.FramesDir)
-	telemetryHandler := handlers.NewTelemetryHandler(dataStore, dataStore, applicationConfig.FramesDir, visionHandler)
+	visionHandler := handlers.NewVisionHandler(cvClient, dataStore, dataStore)
+	telemetryHandler := handlers.NewTelemetryHandler(dataStore, dataStore, cvClient, visionHandler)
 	actionsHandler := handlers.NewActionsHandler(dataStore)
 	settingsHandler := handlers.NewSettingsHandler(dataStore)
 	soundsHandler := handlers.NewSoundsHandler(applicationConfig.SoundsDir)
