@@ -15,19 +15,40 @@ import (
 type WebRTCSessionHandler struct {
 	tokenIssuer *livekitauth.TokenIssuer
 	webrtcStore store.WebRTCStore
+	deviceStore store.DeviceStore
 	iceOptions  livekitauth.IceServerOptions
 }
 
 func NewWebRTCSessionHandler(
 	tokenIssuer *livekitauth.TokenIssuer,
 	webrtcStore store.WebRTCStore,
+	deviceStore store.DeviceStore,
 	iceOptions livekitauth.IceServerOptions,
 ) *WebRTCSessionHandler {
 	return &WebRTCSessionHandler{
 		tokenIssuer: tokenIssuer,
 		webrtcStore: webrtcStore,
+		deviceStore: deviceStore,
 		iceOptions:  iceOptions,
 	}
+}
+
+func (handler *WebRTCSessionHandler) ensureConnectionAndDevice(
+	deviceID string,
+	tokenResponse livekitauth.TokenResponse,
+) error {
+	if err := handler.deviceStore.EnsureDevice(deviceID); err != nil {
+		return err
+	}
+	_, err := handler.webrtcStore.SaveConnection(models.WebRTCConnectionRecord{
+		DeviceID:    deviceID,
+		Room:        tokenResponse.Room,
+		Identity:    tokenResponse.Identity,
+		Role:        livekitauth.RolePublisher,
+		ConnectedAt: time.Now().UTC(),
+		Status:      "active",
+	})
+	return err
 }
 
 func (handler *WebRTCSessionHandler) CreateSession(context *gin.Context) {
@@ -51,14 +72,11 @@ func (handler *WebRTCSessionHandler) CreateSession(context *gin.Context) {
 		return
 	}
 
-	_, _ = handler.webrtcStore.SaveConnection(models.WebRTCConnectionRecord{
-		DeviceID:    request.DeviceID,
-		Room:        tokenResponse.Room,
-		Identity:    tokenResponse.Identity,
-		Role:        livekitauth.RolePublisher,
-		ConnectedAt: time.Now().UTC(),
-		Status:      "active",
-	})
+	if err := handler.ensureConnectionAndDevice(request.DeviceID, tokenResponse); err != nil {
+		log.Printf("webrtc session: save connection for device %s: %v", request.DeviceID, err)
+		context.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "failed to record session"})
+		return
+	}
 
 	context.JSON(http.StatusOK, models.WebRTCSessionResponse{
 		SessionID:  tokenResponse.Room,

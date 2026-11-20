@@ -48,7 +48,7 @@ object SettingsPublisher {
         saveAndPush(
             context,
             mutate = { it.copy(operatingMode = mode) },
-            changedKeys = emptyMap(),
+            changedKeys = mapOf("operating_mode" to mode.toStoredValue()),
         )
     }
 

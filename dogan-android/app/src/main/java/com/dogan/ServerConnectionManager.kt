@@ -72,6 +72,7 @@ object ServerConnectionManager {
         ServerSettingsSync.stop()
         _status.value = ConnectionStatus.DISCONNECTED
         lastError = null
+        SessionCredentials.clearToken()
         PingLatencyCache.clear()
         LiveKitStatusCache.clear()
         AppLogger.info("Server", "Disconnected")

@@ -16,6 +16,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /** LiveKit publisher for video-only, audio-only, and video+audio modes. */
@@ -24,70 +26,113 @@ class LiveKitStreamer(
     private val apiClient: DoganApiClient,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val connectMutex = Mutex()
     private val _streaming = MutableStateFlow(false)
     val streaming: StateFlow<Boolean> = _streaming
 
     private var room: Room? = null
     private var eventsJob: Job? = null
+    private var connectJob: Job? = null
     private var restartJob: Job? = null
 
     @Volatile
     private var userStopRequested = false
 
+    @Volatile
+    private var sdkReconnecting = false
+
     private var lastBaseUrl: String = ""
     private var lastStreamMode: StreamMode = StreamMode.VIDEO_ONLY
     private var lastStreamUrl: String = ""
 
-    fun start(baseUrl: String, streamMode: StreamMode, streamUrl: String = "") {
+    private var activeConnectKey: String = ""
+
+    fun isPublishingSame(
+        baseUrl: String,
+        streamMode: StreamMode,
+        streamUrl: String,
+    ): Boolean {
+        if (!_streaming.value && room?.state != Room.State.CONNECTED) return false
+        return connectKey(baseUrl, streamMode, streamUrl) == activeConnectKey
+    }
+
+    fun start(
+        baseUrl: String,
+        streamMode: StreamMode,
+        streamUrl: String = "",
+        streamPort: Int = SettingsStore.DEFAULT_STREAM_PORT,
+    ) {
+        if (isPublishingSame(baseUrl, streamMode, streamUrl) && !userStopRequested) {
+            return
+        }
         userStopRequested = false
         restartJob?.cancel()
         restartJob = null
         lastBaseUrl = baseUrl
         lastStreamMode = streamMode
         lastStreamUrl = streamUrl
-        scope.launch { connectInternal(baseUrl, streamMode, streamUrl) }
+        lastStreamPort = streamPort
+        connectJob?.cancel()
+        connectJob = scope.launch { connectInternal(baseUrl, streamMode, streamUrl, streamPort) }
     }
 
-    private suspend fun connectInternal(baseUrl: String, streamMode: StreamMode, streamUrl: String) {
-        stopInternal(reconnecting = false)
-        val session = withContext(Dispatchers.IO) {
-            apiClient.createWebRtcSession(baseUrl)
-        } ?: run {
-            AppLogger.error("LiveKit", "Failed to create session")
-            LiveKitStatusCache.setStreaming(false)
-            LiveKitStatusCache.setError("LiveKit session could not be created")
-            scheduleRestartIfNeeded()
-            return
-        }
-        if (session.token.isBlank() || session.url.isBlank() || session.room.isBlank()) {
-            AppLogger.error("LiveKit", "Session missing token, url, or room")
-            scheduleRestartIfNeeded()
-            return
-        }
-        // Prefer Connectivity stream host:port (e.g. 10.0.2.2:7880) over API public URL
-        // so emulator can reach host LiveKit when tokens advertise localhost.
-        val connectUrl = streamUrl.trim().ifBlank { session.url }
+    @Volatile
+    private var lastStreamPort: Int = SettingsStore.DEFAULT_STREAM_PORT
 
-        try {
-            LiveKitRelayConnect.enableDiagnosticsLogging()
-            val liveKitRoom = LiveKit.create(context.applicationContext)
-            wireRoomEvents(liveKitRoom, session.room)
+    private suspend fun connectInternal(
+        baseUrl: String,
+        streamMode: StreamMode,
+        streamUrl: String,
+        streamPort: Int,
+    ) {
+        connectMutex.withLock {
+            stopInternalAwait()
+            val session = withContext(Dispatchers.IO) {
+                apiClient.createWebRtcSession(baseUrl)
+            } ?: run {
+                AppLogger.error("LiveKit", "Failed to create session")
+                LiveKitStatusCache.setStreaming(false)
+                LiveKitStatusCache.setError("LiveKit session could not be created")
+                scheduleRestartIfNeeded()
+                return
+            }
+            if (session.token.isBlank() || session.url.isBlank() || session.room.isBlank()) {
+                AppLogger.error("LiveKit", "Session missing token, url, or room")
+                scheduleRestartIfNeeded()
+                return
+            }
 
-            AppLogger.info(
-                "LiveKit",
-                "Connecting (relay-only ICE) room=${session.room} url=$connectUrl",
-            )
-            liveKitRoom.connect(connectUrl, session.token, LiveKitRelayConnect.connectOptions())
-            applyStreamMode(liveKitRoom.localParticipant, streamMode)
-            room = liveKitRoom
-            AppLogger.info("LiveKit", "Streaming started (${streamMode.displayName})")
-        } catch (e: Exception) {
-            AppLogger.error("LiveKit", "Connect failed: ${e.message}")
-            _streaming.value = false
-            LiveKitStatusCache.setStreaming(false)
-            LiveKitStatusCache.setError(e.message ?: "LiveKit connect failed")
-            scheduleRestartIfNeeded()
+            val connectUrl = streamUrl.trim().ifBlank { session.url }
+            activeConnectKey = connectKey(baseUrl, streamMode, connectUrl)
+            try {
+                LiveKitRelayConnect.enableDiagnosticsLogging()
+                val liveKitRoom = LiveKit.create(context.applicationContext)
+                wireRoomEvents(liveKitRoom, session.room)
+
+                AppLogger.info(
+                    "LiveKit",
+                    "Connecting room=${session.room} url=$connectUrl ice=relay-or-all",
+                )
+                liveKitRoom.connect(
+                    connectUrl,
+                    session.token,
+                    LiveKitRelayConnect.connectOptions(connectUrl, streamPort),
+                )
+                applyStreamMode(liveKitRoom.localParticipant, streamMode)
+                room = liveKitRoom
+                AppLogger.info("LiveKit", "Streaming started (${streamMode.displayName})")
+            } catch (e: Exception) {
+                AppLogger.error("LiveKit", "Connect failed: ${e.message}")
+                _streaming.value = false
+                LiveKitStatusCache.setStreaming(false)
+                LiveKitStatusCache.setError(e.message ?: "LiveKit connect failed")
+                scheduleRestartIfNeeded()
+            }
         }
+    }
+
+    private fun connectKey(baseUrl: String, streamMode: StreamMode, streamUrl: String): String {
+        return "$baseUrl|$streamMode|$streamUrl"
     }
 
     private fun wireRoomEvents(liveKitRoom: Room, roomName: String) {
@@ -96,6 +141,7 @@ class LiveKitStreamer(
             liveKitRoom.events.collect { event ->
                 when (event) {
                     is RoomEvent.Connected -> {
+                        sdkReconnecting = false
                         _streaming.value = true
                         LiveKitStatusCache.setStreaming(true)
                         LiveKitStatusCache.setError(null)
@@ -106,6 +152,8 @@ class LiveKitStreamer(
                     }
 
                     is RoomEvent.Reconnecting -> {
+                        sdkReconnecting = true
+                        restartJob?.cancel()
                         AppLogger.warn(
                             "LiveKit",
                             "Reconnecting room=$roomName state=${liveKitRoom.state}",
@@ -113,6 +161,7 @@ class LiveKitStreamer(
                     }
 
                     is RoomEvent.Reconnected -> {
+                        sdkReconnecting = false
                         _streaming.value = true
                         LiveKitStatusCache.setStreaming(true)
                         LiveKitStatusCache.setError(null)
@@ -123,6 +172,7 @@ class LiveKitStreamer(
                     }
 
                     is RoomEvent.FailedToConnect -> {
+                        sdkReconnecting = false
                         _streaming.value = false
                         LiveKitStatusCache.setStreaming(false)
                         LiveKitStatusCache.setError(event.error.message ?: "LiveKit connect failed")
@@ -139,15 +189,17 @@ class LiveKitStreamer(
                             "LiveKit",
                             "Disconnected room=$roomName reason=$reason error=${event.error?.message}",
                         )
-                        if (liveKitRoom.state != Room.State.RECONNECTING) {
-                            _streaming.value = false
-                            LiveKitStatusCache.setStreaming(false)
-                            if (reason != DisconnectReason.CLIENT_INITIATED) {
-                                LiveKitStatusCache.setError(
-                                    event.error?.message ?: "LiveKit disconnected ($reason)",
-                                )
-                                scheduleRestartIfNeeded()
-                            }
+                        if (sdkReconnecting || liveKitRoom.state == Room.State.RECONNECTING) {
+                            return@collect
+                        }
+                        sdkReconnecting = false
+                        _streaming.value = false
+                        LiveKitStatusCache.setStreaming(false)
+                        if (reason != DisconnectReason.CLIENT_INITIATED) {
+                            LiveKitStatusCache.setError(
+                                event.error?.message ?: "LiveKit disconnected ($reason)",
+                            )
+                            scheduleRestartIfNeeded()
                         }
                     }
 
@@ -158,17 +210,17 @@ class LiveKitStreamer(
     }
 
     private fun scheduleRestartIfNeeded() {
-        if (userStopRequested || lastBaseUrl.isBlank()) {
+        if (userStopRequested || sdkReconnecting || lastBaseUrl.isBlank()) {
             return
         }
         restartJob?.cancel()
         restartJob = scope.launch {
             delay(RECONNECT_DELAY_MS)
-            if (userStopRequested || lastBaseUrl.isBlank()) {
+            if (userStopRequested || sdkReconnecting || lastBaseUrl.isBlank()) {
                 return@launch
             }
             AppLogger.info("LiveKit", "Restarting publisher after disconnect")
-            connectInternal(lastBaseUrl, lastStreamMode, lastStreamUrl)
+            connectInternal(lastBaseUrl, lastStreamMode, lastStreamUrl, lastStreamPort)
         }
     }
 
@@ -191,9 +243,12 @@ class LiveKitStreamer(
 
     fun stop() {
         userStopRequested = true
+        sdkReconnecting = false
         restartJob?.cancel()
         restartJob = null
-        scope.launch { stopInternal(reconnecting = false) }
+        connectJob?.cancel()
+        connectJob = null
+        scope.launch { stopInternalAwait() }
     }
 
     fun release() {
@@ -201,20 +256,18 @@ class LiveKitStreamer(
         scope.cancel()
     }
 
-    private suspend fun stopInternal(reconnecting: Boolean) {
+    private suspend fun stopInternalAwait() {
         eventsJob?.cancel()
         eventsJob = null
-        if (!reconnecting) {
-            room?.disconnect()
-        }
+        val activeRoom = room
         room = null
-        if (!reconnecting) {
-            _streaming.value = false
-            LiveKitStatusCache.setStreaming(false)
-        }
+        activeConnectKey = ""
+        activeRoom?.disconnect()
+        _streaming.value = false
+        LiveKitStatusCache.setStreaming(false)
     }
 
     private companion object {
-        const val RECONNECT_DELAY_MS = 5_000L
+        const val RECONNECT_DELAY_MS = 30_000L
     }
 }

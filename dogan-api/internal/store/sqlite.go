@@ -1081,6 +1081,15 @@ func (store *Store) DeleteDevice(deviceIdentifier string) error {
 	return nil
 }
 
+// EnsureDevice inserts or resolves the fleet row for an Android device id (mac_address).
+func (store *Store) EnsureDevice(deviceIdentifier string) error {
+	if strings.TrimSpace(deviceIdentifier) == "" {
+		return fmt.Errorf("device id is required")
+	}
+	_, err := store.resolveDeviceRowID(strings.TrimSpace(deviceIdentifier))
+	return err
+}
+
 func (store *Store) resolveDeviceRowID(deviceIdentifier string) (int64, error) {
 	var deviceRowID int64
 	err := store.db.QueryRow(

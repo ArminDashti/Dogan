@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dogan/dogan-server/internal/auth"
@@ -15,6 +16,7 @@ import (
 type AuthHandler struct {
 	tokenIssuer      *auth.TokenIssuer
 	loginLogStore    store.LoginLogStore
+	deviceStore      store.DeviceStore
 	embeddedAPIToken string
 	deviceAPIKey     string
 	tokenTTL         time.Duration
@@ -23,6 +25,7 @@ type AuthHandler struct {
 func NewAuthHandler(
 	tokenIssuer *auth.TokenIssuer,
 	loginLogStore store.LoginLogStore,
+	deviceStore store.DeviceStore,
 	embeddedAPIToken string,
 	deviceAPIKey string,
 	tokenTTL time.Duration,
@@ -30,6 +33,7 @@ func NewAuthHandler(
 	return &AuthHandler{
 		tokenIssuer:      tokenIssuer,
 		loginLogStore:    loginLogStore,
+		deviceStore:      deviceStore,
 		embeddedAPIToken: embeddedAPIToken,
 		deviceAPIKey:     deviceAPIKey,
 		tokenTTL:         tokenTTL,
@@ -53,7 +57,7 @@ func (handler *AuthHandler) Authenticate(context *gin.Context) {
 		return
 	}
 
-	handler.authenticateAdmin(context, request.Username, request.Password)
+	handler.authenticateAdmin(context, request.Username, request.Password, request.DeviceID)
 }
 
 func (handler *AuthHandler) authenticateDevice(context *gin.Context, apiKey string) {
@@ -69,7 +73,7 @@ func (handler *AuthHandler) authenticateDevice(context *gin.Context, apiKey stri
 	})
 }
 
-func (handler *AuthHandler) authenticateAdmin(context *gin.Context, username, password string) {
+func (handler *AuthHandler) authenticateAdmin(context *gin.Context, username, password, deviceID string) {
 	clientIP := context.ClientIP()
 	browserInfo := context.GetHeader("User-Agent")
 	subject := ""
@@ -94,6 +98,13 @@ func (handler *AuthHandler) authenticateAdmin(context *gin.Context, username, pa
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "failed to issue token"})
 		return
+	}
+
+	if subject == auth.DeviceUsername && strings.TrimSpace(deviceID) != "" {
+		if err := handler.deviceStore.EnsureDevice(deviceID); err != nil {
+			context.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "failed to register device"})
+			return
+		}
 	}
 
 	context.JSON(http.StatusOK, models.AuthResponse{

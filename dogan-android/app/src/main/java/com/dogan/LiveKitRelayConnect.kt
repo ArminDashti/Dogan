@@ -7,9 +7,9 @@ import io.livekit.android.util.LoggingLevel
 import livekit.org.webrtc.PeerConnection
 
 /**
- * LiveKit Android SDK 2.27.x merges server ICE/TURN from the join response with [ConnectOptions.rtcConfig].
- * When [PeerConnection.RTCConfiguration.iceServers] is empty, [io.livekit.android.room.RTCEngine.makeRTCConfig]
- * fills in the server-provided list (it does not wipe TURN creds from the token).
+ * LiveKit Android SDK 2.27.x merges signaling ICE (with TURN creds) when [ConnectOptions.rtcConfig]
+ * has an **empty** [PeerConnection.RTCConfiguration.iceServers] list. Do not set [ConnectOptions.iceServers]
+ * to URL-only entries from the REST API — that blocks join-time TURN credentials from merging.
  */
 object LiveKitRelayConnect {
     private val relayOnlyRtc: PeerConnection.RTCConfiguration =
@@ -17,7 +17,23 @@ object LiveKitRelayConnect {
             iceTransportsType = PeerConnection.IceTransportsType.RELAY
         }
 
-    fun connectOptions(): ConnectOptions = ConnectOptions(rtcConfig = relayOnlyRtc)
+    private val allTransportsRtc: PeerConnection.RTCConfiguration =
+        PeerConnection.RTCConfiguration(emptyList()).apply {
+            iceTransportsType = PeerConnection.IceTransportsType.ALL
+        }
+
+    /**
+     * Use relay-only on production-style signaling (wss / port 443) where UDP host candidates fail.
+     * Use all transports for LAN/emulator hosts (e.g. 10.0.2.2:7880).
+     */
+    fun connectOptions(signalingUrl: String, streamPort: Int): ConnectOptions {
+        val normalized = signalingUrl.trim().lowercase()
+        val productionPath = streamPort == 443 ||
+            normalized.startsWith("wss://") ||
+            normalized.contains(":443")
+        val rtc = if (productionPath) relayOnlyRtc else allTransportsRtc
+        return ConnectOptions(rtcConfig = rtc)
+    }
 
     private const val LIVEKIT_LOG_TAG = "LiveKit"
 

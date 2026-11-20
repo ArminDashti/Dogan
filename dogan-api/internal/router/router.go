@@ -43,10 +43,12 @@ func New(applicationConfig config.Config) *gin.Engine {
 	authHandler := handlers.NewAuthHandler(
 		tokenIssuer,
 		dataStore,
+		dataStore,
 		applicationConfig.EmbeddedAPIToken,
 		applicationConfig.DeviceAPIKey,
 		applicationConfig.TokenTTL,
 	)
+	deviceRegisterHandler := handlers.NewDeviceRegisterHandler(dataStore)
 	endpointsHandler := handlers.NewEndpointsHandler()
 	cvClient := cvclient.New(applicationConfig.CVURL)
 	frameHandler := handlers.NewFrameHandler(dataStore, cvClient)
@@ -73,7 +75,7 @@ func New(applicationConfig config.Config) *gin.Engine {
 	clientLiveKitURL := applicationConfig.ClientLiveKitURL()
 	healthHandler := handlers.NewHealthHandler(liveKitTokenIssuer, clientLiveKitURL, applicationConfig.LiveKitTurnDomain)
 	liveKitHandler := handlers.NewLiveKitHandler(liveKitTokenIssuer, dataStore)
-	webrtcSessionHandler := handlers.NewWebRTCSessionHandler(liveKitTokenIssuer, dataStore, liveKitIceOptions)
+	webrtcSessionHandler := handlers.NewWebRTCSessionHandler(liveKitTokenIssuer, dataStore, dataStore, liveKitIceOptions)
 	devicesHandler := handlers.NewDevicesHandler(dataStore, liveKitTokenIssuer, dataStore, liveKitIceOptions)
 	devicesWebHandler := handlers.NewDevicesWebHandler(dataStore, dataStore, dataStore, dataStore)
 
@@ -93,6 +95,7 @@ func New(applicationConfig config.Config) *gin.Engine {
 			protected.GET("/last-frame", frameHandler.GetLastFrame)
 			protected.GET("/frame/image", frameHandler.GetFrameImage)
 			protected.POST("/frame", frameHandler.SubmitFrame)
+			protected.POST("/devices/register", deviceRegisterHandler.Register)
 			protected.POST("/telemetry", telemetryHandler.SubmitTelemetry)
 			protected.POST("/vision/analyze", visionHandler.Analyze)
 			protected.GET("/vision/latest", visionHandler.GetLatest)

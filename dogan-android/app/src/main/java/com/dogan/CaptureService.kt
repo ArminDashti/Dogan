@@ -176,7 +176,20 @@ class CaptureService : Service(), LifecycleOwner {
             return
         }
         if (ServerConnectionManager.isConnected() && isValidBaseUrl(settings.serverBaseUrl)) {
-            liveKitStreamer.start(settings.serverBaseUrl, settings.streamMode, settings.streamBaseUrl)
+            if (liveKitStreamer.isPublishingSame(
+                    settings.serverBaseUrl,
+                    settings.streamMode,
+                    settings.streamBaseUrl,
+                )
+            ) {
+                return
+            }
+            liveKitStreamer.start(
+                settings.serverBaseUrl,
+                settings.streamMode,
+                settings.streamBaseUrl,
+                settings.streamPort,
+            )
         }
     }
 
