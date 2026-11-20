@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.5.4
+
+### Fixed
+- **Android:** Fleet registration on connect (`device_id` in auth + `POST /devices/register`), shared bearer token across clients (fewer auth bursts), telemetry upload failure logging, single-flight LiveKit publish (no duplicate `DUPLICATE_IDENTITY`), health-only LiveKit probe on connect (no extra `webrtc/session`), relay-only ICE only on `wss`/443 paths. Android `2.5.4`, API `2.5.4`.
+- **API:** `EnsureDevice` on device login and `POST /devices/register`; WebRTC session fails loudly if device/session row cannot be saved.
+
 ## 2.5.3
 
 ### Added

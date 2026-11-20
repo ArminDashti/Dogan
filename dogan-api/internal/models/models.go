@@ -6,6 +6,11 @@ type AuthRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	APIKey   string `json:"api_key"`
+	DeviceID string `json:"device_id"`
+}
+
+type DeviceRegisterRequest struct {
+	DeviceID string `json:"device_id" binding:"required"`
 }
 
 type AuthResponse struct {

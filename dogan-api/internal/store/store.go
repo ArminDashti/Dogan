@@ -52,6 +52,7 @@ type DeviceStore interface {
 	ListDevices() ([]models.DeviceListItem, error)
 	GetDeviceName(deviceID string) (string, error)
 	DeleteDevice(deviceID string) error
+	EnsureDevice(deviceID string) error
 }
 
 type DiagnosticAudioStore interface {
