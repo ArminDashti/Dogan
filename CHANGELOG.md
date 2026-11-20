@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.5.2
+
+### Fixed
+- Dogan Android LiveKit publisher forces **relay-only ICE** (`IceTransportsType.RELAY`) on every room connect while still using TURN/STUN from the API join response (LiveKit SDK merges an empty `rtcConfig.iceServers` with server ICE). Adds reconnect/retry logging for ICE and disconnect diagnostics. Android `2.5.2`.
+
 ## 2.5.1
 
 ### Changed
