@@ -54,7 +54,7 @@ func New(applicationConfig config.Config) *gin.Engine {
 	frameHandler := handlers.NewFrameHandler(dataStore, cvClient)
 	deviceMetricsHandler := handlers.NewDeviceMetricsHandler(dataStore)
 	visionHandler := handlers.NewVisionHandler(cvClient, dataStore, dataStore)
-	telemetryHandler := handlers.NewTelemetryHandler(dataStore, dataStore, cvClient, visionHandler)
+	telemetryHandler := handlers.NewTelemetryHandler(dataStore, dataStore, cvClient, visionHandler, applicationConfig.FramesDir)
 	actionsHandler := handlers.NewActionsHandler(dataStore)
 	settingsHandler := handlers.NewSettingsHandler(dataStore)
 	soundsHandler := handlers.NewSoundsHandler(applicationConfig.SoundsDir)

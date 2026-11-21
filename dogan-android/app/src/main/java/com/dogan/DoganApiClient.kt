@@ -127,9 +127,11 @@ class DoganApiClient(
         val response = postAuthenticatedWithBody(baseUrl, "/api/v1/telemetry", payload.toString())
         if (response.result == PostResult.Success) return true
         val detail = response.body?.take(200)?.ifBlank { null } ?: "HTTP failure"
+        val rearB = payload.optString("rear_camera_frame_base64").length
+        val frontB = payload.optString("front_camera_frame_base64").length
         AppLogger.warn(
             "Telemetry",
-            "Upload failed for device $deviceId: ${response.result} — $detail",
+            "Upload failed for device $deviceId: ${response.result} — $detail (body≈${payload.length()}b frames rear=${rearB} front=${frontB})",
         )
         return false
     }

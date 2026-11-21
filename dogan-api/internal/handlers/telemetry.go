@@ -1,10 +1,10 @@
 package handlers
 
 import (
+	"context"
+	"log"
 	"net/http"
 	"time"
-
-	"context"
 
 	"github.com/dogan/dogan-server/internal/cvclient"
 	"github.com/dogan/dogan-server/internal/models"
@@ -17,14 +17,22 @@ type TelemetryHandler struct {
 	frameStore   store.FrameStore
 	cv           *cvclient.Client
 	vision       *VisionHandler
+	framesDir    string
 }
 
-func NewTelemetryHandler(metricsStore store.MetricsStore, frameStore store.FrameStore, cv *cvclient.Client, vision *VisionHandler) *TelemetryHandler {
+func NewTelemetryHandler(
+	metricsStore store.MetricsStore,
+	frameStore store.FrameStore,
+	cv *cvclient.Client,
+	vision *VisionHandler,
+	framesDir string,
+) *TelemetryHandler {
 	return &TelemetryHandler{
 		metricsStore: metricsStore,
 		frameStore:   frameStore,
 		cv:           cv,
 		vision:       vision,
+		framesDir:    framesDir,
 	}
 }
 
@@ -89,8 +97,23 @@ func (handler *TelemetryHandler) persistOptionalFrame(deviceID string, capturedA
 		return
 	}
 
-	framePath, err := handler.cv.SaveFrame(context.Background(), deviceID, capturedAt, imageData)
-	if err != nil {
+	var framePath string
+	var err error
+	if handler.cv != nil && handler.cv.Enabled() {
+		framePath, err = handler.cv.SaveFrame(context.Background(), deviceID, capturedAt, imageData)
+		if err != nil {
+			log.Printf("telemetry: dogan-cv save failed for device %s: %v", deviceID, err)
+		}
+	}
+	if framePath == "" && handler.framesDir != "" {
+		framePath, err = store.PersistFrameImage(handler.framesDir, deviceID, capturedAt, imageData)
+		if err != nil {
+			log.Printf("telemetry: local frame save failed for device %s: %v", deviceID, err)
+			return
+		}
+	}
+	if framePath == "" {
+		log.Printf("telemetry: frame not stored for device %s (dogan-cv disabled and no frames dir)", deviceID)
 		return
 	}
 

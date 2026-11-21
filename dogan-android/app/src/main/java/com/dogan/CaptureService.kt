@@ -67,6 +67,7 @@ class CaptureService : Service(), LifecycleOwner {
     @Volatile private var lastScreenWakeAt = 0L
     @Volatile private var lastWatcherFrameAt = 0L
     @Volatile private var lastLatencySampleAt = 0L
+    @Volatile private var lastDisconnectedLogAt = 0L
     @Volatile private var holdWakeLockIndefinitely = false
 
     private lateinit var sensorManager: SensorManager
@@ -123,6 +124,7 @@ class CaptureService : Service(), LifecycleOwner {
         SessionCredentials.updateFrom(settings)
         AppLogger.activeModeSection = LogSection.forOperatingMode(settings.operatingMode)
         configureWakeLockForMode(settings)
+        ensureServerConnected(settings)
 
         downloadSounds(settings)
         vehicleMotionDetector.register(sensorManager, settings.motionSamplingRate)
@@ -149,6 +151,7 @@ class CaptureService : Service(), LifecycleOwner {
         SessionCredentials.updateFrom(settings)
         AppLogger.activeModeSection = LogSection.forOperatingMode(settings.operatingMode)
         configureWakeLockForMode(settings)
+        ensureServerConnected(settings)
         vehicleMotionDetector.register(sensorManager, settings.motionSamplingRate)
         startLocationTracking(settings)
         applyAmbientLight(settings)
@@ -270,6 +273,17 @@ class CaptureService : Service(), LifecycleOwner {
                         collectAndEnqueueTelemetry(settings)
                         telemetryDatabase.purgeOlderThan(settings.telemetryRetentionHours)
                         AppLogger.purgeOlderThan(this@CaptureService, settings.logRetentionDays)
+                    } else if (settings.operatingMode != OperatingMode.OFF) {
+                        val now = System.currentTimeMillis()
+                        if (now - lastDisconnectedLogAt >= 60_000L) {
+                            lastDisconnectedLogAt = now
+                            val reason = if (!isValidBaseUrl(settings.serverBaseUrl)) {
+                                "invalid API URL ${settings.serverBaseUrl}"
+                            } else {
+                                "not connected — open Connectivity and Connect"
+                            }
+                            AppLogger.warn("Telemetry", "Skipping capture/upload: $reason")
+                        }
                     }
 
                     Thread.sleep(settings.fastestSensorIntervalMs)
@@ -352,6 +366,12 @@ class CaptureService : Service(), LifecycleOwner {
                 ) {
                     lastWatcherFrameAt = System.currentTimeMillis()
                 }
+                if (takeStill && rearFile == null && frontFile == null) {
+                    AppLogger.warn(
+                        "Capture",
+                        "Still capture requested but no JPEG (${settings.activeCamera}, policy=${settings.imageUploadPolicyForMode(settings.operatingMode)})",
+                    )
+                }
             }
 
             val now = System.currentTimeMillis()
@@ -364,7 +384,16 @@ class CaptureService : Service(), LifecycleOwner {
                 -1L
             }
 
-            val payload = telemetryCollector.collectSnapshot(rearFile, frontFile, latency, takeStill, settings)
+            val embedFrames = takeStill && (rearFile != null || frontFile != null)
+            val payload = telemetryCollector.collectSnapshot(rearFile, frontFile, latency, embedFrames, settings)
+            val rearLen = payload.optString("rear_camera_frame_base64").length
+            val frontLen = payload.optString("front_camera_frame_base64").length
+            if (embedFrames) {
+                AppLogger.info(
+                    "Capture",
+                    "Enqueue telemetry with frames rear=${rearLen}b front=${frontLen}b",
+                )
+            }
             telemetryDatabase.enqueue(payload)
             if (forceCapture && telemetryHasAttachedFrames(payload)) {
                 acknowledgePendingActions(settings.serverBaseUrl, pendingActionIds)
@@ -413,10 +442,10 @@ class CaptureService : Service(), LifecycleOwner {
                     if (ServerConnectionManager.isConnected() && isValidBaseUrl(settings.serverBaseUrl)) {
                         withTimedWakeLock {
                             val stats = telemetryUploader.uploadPending(settings.serverBaseUrl)
-                            if (stats.uploaded > 0) {
+                            if (stats.uploaded > 0 || stats.failed > 0) {
                                 AppLogger.info(
                                     "Telemetry",
-                                    "Uploaded ${stats.uploaded}, remaining ${stats.remaining}",
+                                    "Upload batch ok=${stats.uploaded} failed=${stats.failed} remaining=${stats.remaining}",
                                 )
                             }
                         }
@@ -504,6 +533,27 @@ class CaptureService : Service(), LifecycleOwner {
     private fun isValidBaseUrl(baseUrl: String): Boolean {
         val trimmed = baseUrl.trim()
         return trimmed.startsWith("http://") || trimmed.startsWith("https://")
+    }
+
+    private fun ensureServerConnected(settings: AppSettings) {
+        if (ServerConnectionManager.isConnected()) return
+        if (settings.operatingMode == OperatingMode.OFF) return
+        if (!isValidBaseUrl(settings.serverBaseUrl)) {
+            AppLogger.warn("Server", "Cannot auto-connect: bad API URL ${settings.serverBaseUrl}")
+            return
+        }
+        if (settings.username.isBlank() || settings.password.isBlank()) {
+            AppLogger.warn("Server", "Cannot auto-connect: missing credentials")
+            return
+        }
+        val connected = ServerConnectionManager.connect(applicationContext, settings)
+        if (connected) {
+            AppLogger.info("Server", "Auto-connected for ${settings.operatingMode.displayName}")
+            ServerSettingsSync.start(this)
+            maybeStartLiveKit(settings)
+        } else {
+            AppLogger.error("Server", "Auto-connect failed: ${ServerConnectionManager.lastError}")
+        }
     }
 
     private fun onVehicleBumpDetected(peakAccelerationMps2: Float) {

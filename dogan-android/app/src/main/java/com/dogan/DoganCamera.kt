@@ -261,6 +261,7 @@ object DoganCamera {
                         }
                     }
                     override fun onError(exception: ImageCaptureException) {
+                        AppLogger.warn("Capture", "takePicture failed (${facing.name}): ${exception.message}")
                         file.delete()
                         finishStillCaptureOnMain(context, lifecycleOwner, provider) {
                             onComplete(null)
@@ -268,6 +269,7 @@ object DoganCamera {
                     }
                 })
             } catch (e: Exception) {
+                AppLogger.warn("Capture", "captureFromFacing setup failed (${facing.name}): ${e.message}")
                 onComplete(null)
             }
         }, ContextCompat.getMainExecutor(context))

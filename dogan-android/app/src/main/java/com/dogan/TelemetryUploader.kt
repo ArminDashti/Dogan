@@ -17,10 +17,18 @@ class TelemetryUploader(
         val flushedIds = mutableListOf<Long>()
 
         for (row in rows) {
+            val rearLen = row.payload.optString("rear_camera_frame_base64").length
+            val frontLen = row.payload.optString("front_camera_frame_base64").length
             val ok = apiClient.submitTelemetry(baseUrl, row.payload)
             if (ok) {
                 uploaded++
                 flushedIds.add(row.id)
+                if (rearLen > 0 || frontLen > 0) {
+                    AppLogger.info(
+                        "Telemetry",
+                        "POST /telemetry ok (rear=${rearLen}b front=${frontLen}b)",
+                    )
+                }
             } else {
                 failed++
             }
