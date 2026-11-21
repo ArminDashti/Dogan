@@ -7,9 +7,9 @@ import io.livekit.android.util.LoggingLevel
 import livekit.org.webrtc.PeerConnection
 
 /**
- * LiveKit Android SDK 2.27.x merges signaling ICE (with TURN creds) when [ConnectOptions.rtcConfig]
- * has an **empty** [PeerConnection.RTCConfiguration.iceServers] list. Do not set [ConnectOptions.iceServers]
- * to URL-only entries from the REST API — that blocks join-time TURN credentials from merging.
+ * Relay-only RTC config for production wss. When [joinIceServers] is supplied (from signal join),
+ * pass them via [ConnectOptions.iceServers] so TURN creds and TLS overrides apply; never use REST
+ * URL-only ICE without join credentials.
  */
 object LiveKitRelayConnect {
     private val relayOnlyRtc: PeerConnection.RTCConfiguration =
@@ -26,13 +26,23 @@ object LiveKitRelayConnect {
      * Use relay-only on production-style signaling (wss / port 443) where UDP host candidates fail.
      * Use all transports for LAN/emulator hosts (e.g. 10.0.2.2:7880).
      */
-    fun connectOptions(signalingUrl: String, streamPort: Int): ConnectOptions {
+    fun connectOptions(
+        signalingUrl: String,
+        streamPort: Int,
+        joinIceServers: List<PeerConnection.IceServer>? = null,
+    ): ConnectOptions {
         val normalized = signalingUrl.trim().lowercase()
         val productionPath = streamPort == 443 ||
             normalized.startsWith("wss://") ||
             normalized.contains(":443")
         val rtc = if (productionPath) relayOnlyRtc else allTransportsRtc
-        return ConnectOptions(rtcConfig = rtc)
+        val useJoinIce = productionPath && !joinIceServers.isNullOrEmpty()
+        return if (useJoinIce) {
+            // Non-empty iceServers: RTCEngine.makeRTCConfig uses these instead of default toWebrtc() (no TLS override).
+            ConnectOptions(rtcConfig = rtc, iceServers = joinIceServers)
+        } else {
+            ConnectOptions(rtcConfig = rtc)
+        }
     }
 
     private const val LIVEKIT_LOG_TAG = "LiveKit"

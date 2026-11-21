@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.5.6
+
+- **Android:** Prefetch TURN ICE from LiveKit signal join and pass into `ConnectOptions.iceServers` with `TLS_CERT_POLICY_INSECURE_NO_CHECK` only for `dogan-turn.xaigrok.ir`, keeping relay-only ICE on wss/443.
+
 ## 2.5.5
 
 ### Fixed

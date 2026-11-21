@@ -106,6 +106,28 @@ class LiveKitStreamer(
             activeConnectKey = connectKey(baseUrl, streamMode, connectUrl)
             try {
                 LiveKitRelayConnect.enableDiagnosticsLogging()
+                val joinIceServers = runCatching {
+                    if (streamPort == 443 || connectUrl.trim().lowercase().startsWith("wss://")) {
+                        LiveKitJoinIce.fetchIceServersFromJoin(connectUrl, session.token)
+                    } else {
+                        emptyList()
+                    }
+                }.onFailure { error ->
+                    AppLogger.warn(
+                        "LiveKit",
+                        "Join ICE prefetch failed (will use SDK defaults): ${error.message}",
+                    )
+                }.getOrDefault(emptyList())
+
+                if (joinIceServers.isNotEmpty()) {
+                    val turnHosts = joinIceServers.flatMap { it.urls }
+                        .filter { LiveKitTurnIceServers.isDoganTurnUrl(it) }
+                    AppLogger.info(
+                        "LiveKit",
+                        "Using ${joinIceServers.size} join ICE server(s); dogan-turn entries=${turnHosts.size}",
+                    )
+                }
+
                 val liveKitRoom = LiveKit.create(context.applicationContext)
                 wireRoomEvents(liveKitRoom, session.room)
 
@@ -116,7 +138,7 @@ class LiveKitStreamer(
                 liveKitRoom.connect(
                     connectUrl,
                     session.token,
-                    LiveKitRelayConnect.connectOptions(connectUrl, streamPort),
+                    LiveKitRelayConnect.connectOptions(connectUrl, streamPort, joinIceServers),
                 )
                 applyStreamMode(liveKitRoom.localParticipant, streamMode)
                 room = liveKitRoom
