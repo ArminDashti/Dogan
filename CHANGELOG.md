@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.5.5
+
+### Fixed
+- **API:** Store telemetry JPEGs on disk when `dogan-cv` is down or misconfigured (previously frames were dropped silently after metrics save). Android `2.5.5`, API `2.5.5`.
+- **Android:** Auto-connect when Watchman/Copilot starts (production T3), migrate legacy `armin`/`admin` credentials to fleet `dogan` login, clearer capture→enqueue→`POST /telemetry` logging, and embed base64 only when a JPEG exists.
+
 ## 2.5.4
 
 ### Fixed

@@ -163,8 +163,8 @@ class SettingsStore(private val context: Context) {
             apiPort = apiPort,
             streamEndpoint = pref[streamEndpointKey] ?: DEFAULT_STREAM_ENDPOINT,
             streamPort = pref[streamPortKey] ?: DEFAULT_STREAM_PORT,
-            username = pref[usernameKey].takeUnless { it.isNullOrBlank() || it == "admin" } ?: DEFAULT_USERNAME,
-            password = pref[passwordKey].takeUnless { it.isNullOrBlank() || it == "admin" } ?: DEFAULT_PASSWORD,
+            username = normalizeFleetUsername(pref[usernameKey]),
+            password = normalizeFleetPassword(pref[usernameKey], pref[passwordKey]),
             captureIntervalMs = normalizeIntervalMs(pref[intervalKey] ?: DEFAULT_INTERVAL_MS),
             telemetryIntervalSec = normalizeTelemetryIntervalSec(
                 pref[telemetryIntervalSecKey]
@@ -308,6 +308,25 @@ class SettingsStore(private val context: Context) {
             return normalizeScreenOnIntervalMin((legacySec + 59) / 60)
         }
         return DEFAULT_SCREEN_ON_INTERVAL_MIN
+    }
+
+    private fun normalizeFleetUsername(stored: String?): String {
+        val raw = stored?.trim().orEmpty()
+        return when (raw) {
+            "", "admin", "armin" -> DEFAULT_USERNAME
+            else -> raw
+        }
+    }
+
+    private fun normalizeFleetPassword(storedUsername: String?, storedPassword: String?): String {
+        val user = storedUsername?.trim().orEmpty()
+        val pass = storedPassword.orEmpty()
+        return when {
+            user == "admin" && (pass.isBlank() || pass == "admin") -> DEFAULT_PASSWORD
+            user == "armin" && (pass.isBlank() || pass == "dogan123") -> DEFAULT_PASSWORD
+            pass.isBlank() -> DEFAULT_PASSWORD
+            else -> pass
+        }
     }
 
     companion object {
