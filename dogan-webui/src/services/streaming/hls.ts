@@ -79,18 +79,8 @@ export async function connectHls(
   }
 
   try {
-    if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-      const nativeUrl = new URL(options.hlsUrl)
-      nativeUrl.searchParams.set('token', options.token)
-      videoElement.src = nativeUrl.toString()
-      void videoElement.play().catch(() => undefined)
-      await waitForNativePlayback(videoElement, HLS_LOAD_TIMEOUT_MS)
-    } else {
-      const { default: HlsPlayer } = await import('hls.js')
-      if (!HlsPlayer.isSupported()) {
-        throw new Error('HLS playback requires Media Source Extensions in this browser.')
-      }
-
+    const { default: HlsPlayer } = await import('hls.js')
+    if (HlsPlayer.isSupported()) {
       hls = new HlsPlayer({
         lowLatencyMode: true,
         liveDurationInfinity: true,
@@ -145,6 +135,14 @@ export async function connectHls(
         player.on(HlsPlayer.Events.ERROR, handleError)
         player.attachMedia(videoElement)
       })
+    } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+      const nativeUrl = new URL(options.hlsUrl)
+      nativeUrl.searchParams.set('token', options.token)
+      videoElement.src = nativeUrl.toString()
+      void videoElement.play().catch(() => undefined)
+      await waitForNativePlayback(videoElement, HLS_LOAD_TIMEOUT_MS)
+    } else {
+      throw new Error('HLS playback requires Media Source Extensions or native HLS support.')
     }
 
     if (!disposed) {
