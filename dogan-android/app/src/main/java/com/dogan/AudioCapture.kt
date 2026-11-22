@@ -33,7 +33,7 @@ class AudioCapture(
             AudioFormat.ENCODING_PCM_16BIT,
         )
         if (bufferSize == AudioRecord.ERROR_BAD_VALUE || bufferSize == AudioRecord.ERROR) {
-            AppLogger.warn("Audio", "Microphone buffer size unavailable")
+            AppLogger.error("Audio", "Microphone buffer size unavailable (telemetry noise will stay 0)")
             return
         }
 
@@ -45,7 +45,10 @@ class AudioCapture(
             bufferSize * 2,
         )
         if (recorder.state != AudioRecord.STATE_INITIALIZED) {
-            AppLogger.warn("Audio", "Microphone not initialized")
+            AppLogger.error(
+                "Audio",
+                "AudioRecord not initialized (missing RECORD_AUDIO or mic in use); cabin_noise_rms will stay 0",
+            )
             recorder.release()
             return
         }

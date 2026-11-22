@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.5.7
+
+- **Android:** Single-join LiveKit ICE via SDK `toWebrtc` shadow for dogan-turn TLS; remove prefetch join. Jolt in telemetry; Watchman noise sampling + RECORD_AUDIO.
+- **API:** Persist `jolt` on POST /telemetry.
+
 ## 2.5.6
 
 - **Android:** Prefetch TURN ICE from LiveKit signal join and pass into `ConnectOptions.iceServers` with `TLS_CERT_POLICY_INSECURE_NO_CHECK` only for `dogan-turn.xaigrok.ir`, keeping relay-only ICE on wss/443.

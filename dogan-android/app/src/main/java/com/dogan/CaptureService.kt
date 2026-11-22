@@ -86,7 +86,13 @@ class CaptureService : Service(), LifecycleOwner {
             cabinNoiseArchive = cabinNoiseArchive,
         )
         telemetryCollector = TelemetryCollector(
-            this, locationTracker, ambientLightSensor, audioCapture, deviceId, resourceMonitor,
+            this,
+            locationTracker,
+            ambientLightSensor,
+            audioCapture,
+            vehicleMotionDetector,
+            deviceId,
+            resourceMonitor,
         )
         AppLogger.init(this)
     }
@@ -205,11 +211,16 @@ class CaptureService : Service(), LifecycleOwner {
     }
 
     private fun applySoundMonitoring(settings: AppSettings) {
-        if (settings.soundMonitoringEnabled) {
+        if (shouldSampleNoiseTelemetry(settings)) {
             audioCapture.start()
         } else {
             audioCapture.stop()
         }
+    }
+
+    private fun shouldSampleNoiseTelemetry(settings: AppSettings): Boolean {
+        if (settings.soundMonitoringEnabled) return true
+        return settings.operatingMode == OperatingMode.WATCHER && settings.noiseIntervalSec > 0
     }
 
     private fun applySensitivity(settings: AppSettings) {

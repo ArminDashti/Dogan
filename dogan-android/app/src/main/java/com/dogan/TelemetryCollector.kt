@@ -15,6 +15,7 @@ class TelemetryCollector(
     private val locationTracker: LocationTracker,
     private val ambientLightSensor: AmbientLightSensor,
     private val audioCapture: AudioCapture,
+    private val vehicleMotionDetector: VehicleMotionDetector,
     private val deviceId: String,
     private val resourceMonitor: DeviceResourceMonitor,
 ) {
@@ -31,6 +32,8 @@ class TelemetryCollector(
     private var batteryAt = 0L
     private var temperatureAt = 0L
     private var noiseAt = 0L
+    private var joltAt = 0L
+    private var cachedJolt = 0.0
     private var networkTypeAt = 0L
     private var sim1At = 0L
     private var latencyAt = 0L
@@ -71,6 +74,10 @@ class TelemetryCollector(
             cachedNoise = audioCapture.currentRms
             noiseAt = nowMs
         }
+        if (due(joltAt, nowMs, settings.joltIntervalSec)) {
+            cachedJolt = vehicleMotionDetector.lastMagnitudeMps2.toDouble()
+            joltAt = nowMs
+        }
         if (due(networkTypeAt, nowMs, settings.networkTypeIntervalSec)) {
             cachedNetworkType = NetworkInfoCollector.getNetworkType(context)
             networkTypeAt = nowMs
@@ -93,6 +100,7 @@ class TelemetryCollector(
             .put("network_signal_strength_dbm", cachedSignalDbm)
             .put("network_type", cachedNetworkType)
             .put("cabin_noise_rms", cachedNoise)
+            .put("jolt", cachedJolt)
             .put("battery_temperature_celsius", cachedBatteryTemp)
             .put("battery_percentage", cachedBatteryPct)
             .put("rear_camera_frame_base64", if (includeFrames) encodeFile(rearFrameFile) else "")

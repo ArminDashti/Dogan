@@ -4,59 +4,37 @@ import io.livekit.android.ConnectOptions
 import io.livekit.android.LiveKit
 import io.livekit.android.util.LKLog
 import io.livekit.android.util.LoggingLevel
-import livekit.org.webrtc.PeerConnection
 
 /**
- * Relay-only RTC config for production wss. When [joinIceServers] is supplied (from signal join),
- * pass them via [ConnectOptions.iceServers] so TURN creds and TLS overrides apply; never use REST
- * URL-only ICE without join credentials.
+ * Single signal join: leave [ConnectOptions.rtcConfig] null so SDK merges join ICE (with dogan-turn TLS
+ * via [io.livekit.android.room.toWebrtc]). Production wss should use relay candidates from TURN.
  */
 object LiveKitRelayConnect {
-    private val relayOnlyRtc: PeerConnection.RTCConfiguration =
-        PeerConnection.RTCConfiguration(emptyList()).apply {
-            iceTransportsType = PeerConnection.IceTransportsType.RELAY
-        }
-
-    private val allTransportsRtc: PeerConnection.RTCConfiguration =
-        PeerConnection.RTCConfiguration(emptyList()).apply {
-            iceTransportsType = PeerConnection.IceTransportsType.ALL
-        }
-
-    /**
-     * Use relay-only on production-style signaling (wss / port 443) where UDP host candidates fail.
-     * Use all transports for LAN/emulator hosts (e.g. 10.0.2.2:7880).
-     */
-    fun connectOptions(
-        signalingUrl: String,
-        streamPort: Int,
-        joinIceServers: List<PeerConnection.IceServer>? = null,
-    ): ConnectOptions {
+    fun isProductionPath(signalingUrl: String, streamPort: Int): Boolean {
         val normalized = signalingUrl.trim().lowercase()
-        val productionPath = streamPort == 443 ||
+        return streamPort == 443 ||
             normalized.startsWith("wss://") ||
             normalized.contains(":443")
-        val rtc = if (productionPath) relayOnlyRtc else allTransportsRtc
-        val useJoinIce = productionPath && !joinIceServers.isNullOrEmpty()
-        return if (useJoinIce) {
-            // Non-empty iceServers: RTCEngine.makeRTCConfig uses these instead of default toWebrtc() (no TLS override).
-            ConnectOptions(rtcConfig = rtc, iceServers = joinIceServers)
-        } else {
-            ConnectOptions(rtcConfig = rtc)
-        }
+    }
+
+    fun connectOptions(signalingUrl: String, streamPort: Int): ConnectOptions {
+        return ConnectOptions()
     }
 
     private const val LIVEKIT_LOG_TAG = "LiveKit"
 
     private val iceDiagnosticsPattern =
-        Regex("""(?i)ice|candidate|relay|turn|stun|pc connection|peer connection|transport""")
+        Regex("""(?i)ice|candidate|relay|turn|stun|pc connection|peer connection|transport|ssl""")
 
     fun enableDiagnosticsLogging() {
+        LiveKitIceDiagnostics.reset()
         LiveKit.loggingLevel = LoggingLevel.INFO
         LKLog.logger = object : LKLog.Logger {
             override fun log(priority: LoggingLevel, t: Throwable?, message: String) {
                 if (!iceDiagnosticsPattern.containsMatchIn(message)) {
                     return
                 }
+                LiveKitIceDiagnostics.logIceLogLine(message)
                 val line = if (t != null) {
                     "$message (${t.javaClass.simpleName}: ${t.message})"
                 } else {

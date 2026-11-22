@@ -106,39 +106,18 @@ class LiveKitStreamer(
             activeConnectKey = connectKey(baseUrl, streamMode, connectUrl)
             try {
                 LiveKitRelayConnect.enableDiagnosticsLogging()
-                val joinIceServers = runCatching {
-                    if (streamPort == 443 || connectUrl.trim().lowercase().startsWith("wss://")) {
-                        LiveKitJoinIce.fetchIceServersFromJoin(connectUrl, session.token)
-                    } else {
-                        emptyList()
-                    }
-                }.onFailure { error ->
-                    AppLogger.warn(
-                        "LiveKit",
-                        "Join ICE prefetch failed (will use SDK defaults): ${error.message}",
-                    )
-                }.getOrDefault(emptyList())
-
-                if (joinIceServers.isNotEmpty()) {
-                    val turnHosts = joinIceServers.flatMap { it.urls }
-                        .filter { LiveKitTurnIceServers.isDoganTurnUrl(it) }
-                    AppLogger.info(
-                        "LiveKit",
-                        "Using ${joinIceServers.size} join ICE server(s); dogan-turn entries=${turnHosts.size}",
-                    )
-                }
-
                 val liveKitRoom = LiveKit.create(context.applicationContext)
                 wireRoomEvents(liveKitRoom, session.room)
+                val productionIce = LiveKitRelayConnect.isProductionPath(connectUrl, streamPort)
 
                 AppLogger.info(
                     "LiveKit",
-                    "Connecting room=${session.room} url=$connectUrl ice=relay-or-all",
+                    "Connecting room=${session.room} url=$connectUrl ice=${if (productionIce) "join+relay" else "join+all"}",
                 )
                 liveKitRoom.connect(
                     connectUrl,
                     session.token,
-                    LiveKitRelayConnect.connectOptions(connectUrl, streamPort, joinIceServers),
+                    LiveKitRelayConnect.connectOptions(connectUrl, streamPort),
                 )
                 applyStreamMode(liveKitRoom.localParticipant, streamMode)
                 room = liveKitRoom
@@ -167,6 +146,7 @@ class LiveKitStreamer(
                         _streaming.value = true
                         LiveKitStatusCache.setStreaming(true)
                         LiveKitStatusCache.setError(null)
+                        LiveKitIceDiagnostics.logJoinIceSummary()
                         AppLogger.info(
                             "LiveKit",
                             "Connected room=$roomName state=${liveKitRoom.state}",

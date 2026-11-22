@@ -47,6 +47,7 @@ func (handler *TelemetryHandler) SubmitTelemetry(context *gin.Context) {
 	batteryLevel := float64(payload.BatteryPercentage)
 	tempC := payload.BatteryTemperatureC
 	cabinNoise := payload.CabinNoiseRMS
+	jolt := payload.Jolt
 	speed := payload.SpeedKmh
 	ambient := payload.AmbientLightLux
 	latency := payload.ServerLatencyMs
@@ -75,6 +76,7 @@ func (handler *TelemetryHandler) SubmitTelemetry(context *gin.Context) {
 		AmbientLightLux:  &ambient,
 		ServerLatencyMs:  &latency,
 		DeviceIPAddress:  payload.DeviceIPAddress,
+		Jolt:             &jolt,
 		CPUUsagePercent:  payload.CPUUsagePercent,
 		RAMUsagePercent:  payload.RAMUsagePercent,
 		RecordedAt:       recordedAt,

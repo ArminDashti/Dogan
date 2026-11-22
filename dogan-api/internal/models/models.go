@@ -111,6 +111,7 @@ type TelemetryPayload struct {
 	DeviceIPAddress          string       `json:"device_ip_address"`
 	CPUUsagePercent          *float64     `json:"cpu_usage_percent,omitempty"`
 	RAMUsagePercent          *float64     `json:"ram_usage_percent,omitempty"`
+	Jolt                     float64      `json:"jolt"`
 }
 
 // DeviceTelemetrySnapshot is the web live dashboard shape (GET /devices/:id/telemetry).
