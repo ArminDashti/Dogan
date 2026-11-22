@@ -1,6 +1,6 @@
 # Suggestion: migrate existing DataStore hosts
 
-Fresh installs get `dogan-api.xaigrok.ir` / `dogan-livekit.xaigrok.ir`. Devices that already saved the old `dogan.xaigrok.ir` default keep the old host until the user edits Connectivity.
+Fresh installs get `dogan-api.xaigrok.ir` / `dogan-media.xaigrok.ir`. Devices that already saved the old `dogan.xaigrok.ir` default keep the old host until the user edits Connectivity.
 
 **Why:** Changing `DEFAULT_*` only affects empty prefs.
 

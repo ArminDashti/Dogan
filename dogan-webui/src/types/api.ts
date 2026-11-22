@@ -76,15 +76,24 @@ export interface CaptureResponse {
   capturedAt: string
 }
 
+export interface IceServerConfig {
+  urls: string[]
+  username?: string
+  credential?: string
+}
+
 export interface StreamResponse {
   deviceId: string
   token: string
   url: string
+  whepUrl: string
+  hlsUrl?: string
+  path: string
   room: string
   identity: string
   expiresAt: string
   urlWarnings?: string[]
-  iceServers?: { urls: string[] }[]
+  iceServers?: IceServerConfig[]
 }
 
 export interface GalleryImage {
@@ -121,9 +130,10 @@ export interface ApiErrorBody {
 export interface HealthStatus {
   status: string
   timestamp: string
-  livekitConfigured: boolean
-  livekitClientUrl?: string
-  livekitWarnings?: string[]
+  streamingConfigured: boolean
+  streamingWebRtcUrl?: string
+  streamingHlsUrl?: string
+  streamingWarnings?: string[]
   turnDomain?: string
 }
 

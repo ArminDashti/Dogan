@@ -6,24 +6,24 @@ import (
 	"net/http"
 	"time"
 
-	livekitauth "github.com/dogan/dogan-server/internal/livekit"
+	"github.com/dogan/dogan-server/internal/mediamtx"
 	"github.com/dogan/dogan-server/internal/models"
 	"github.com/dogan/dogan-server/internal/store"
 	"github.com/gin-gonic/gin"
 )
 
 type WebRTCSessionHandler struct {
-	tokenIssuer *livekitauth.TokenIssuer
+	tokenIssuer *mediamtx.TokenIssuer
 	webrtcStore store.WebRTCStore
 	deviceStore store.DeviceStore
-	iceOptions  livekitauth.IceServerOptions
+	iceOptions  mediamtx.IceServerOptions
 }
 
 func NewWebRTCSessionHandler(
-	tokenIssuer *livekitauth.TokenIssuer,
+	tokenIssuer *mediamtx.TokenIssuer,
 	webrtcStore store.WebRTCStore,
 	deviceStore store.DeviceStore,
-	iceOptions livekitauth.IceServerOptions,
+	iceOptions mediamtx.IceServerOptions,
 ) *WebRTCSessionHandler {
 	return &WebRTCSessionHandler{
 		tokenIssuer: tokenIssuer,
@@ -35,16 +35,16 @@ func NewWebRTCSessionHandler(
 
 func (handler *WebRTCSessionHandler) ensureConnectionAndDevice(
 	deviceID string,
-	tokenResponse livekitauth.TokenResponse,
+	tokenResponse mediamtx.TokenResponse,
 ) error {
 	if err := handler.deviceStore.EnsureDevice(deviceID); err != nil {
 		return err
 	}
 	_, err := handler.webrtcStore.SaveConnection(models.WebRTCConnectionRecord{
 		DeviceID:    deviceID,
-		Room:        tokenResponse.Room,
+		Room:        tokenResponse.Path,
 		Identity:    tokenResponse.Identity,
-		Role:        livekitauth.RolePublisher,
+		Role:        mediamtx.RolePublisher,
 		ConnectedAt: time.Now().UTC(),
 		Status:      "active",
 	})
@@ -53,7 +53,7 @@ func (handler *WebRTCSessionHandler) ensureConnectionAndDevice(
 
 func (handler *WebRTCSessionHandler) CreateSession(context *gin.Context) {
 	if !handler.tokenIssuer.Enabled() {
-		context.JSON(http.StatusServiceUnavailable, models.ErrorResponse{Error: "livekit is not configured"})
+		context.JSON(http.StatusServiceUnavailable, models.ErrorResponse{Error: "streaming is not configured"})
 		return
 	}
 
@@ -63,12 +63,13 @@ func (handler *WebRTCSessionHandler) CreateSession(context *gin.Context) {
 		return
 	}
 
-	tokenResponse, err := handler.tokenIssuer.IssueToken(livekitauth.TokenRequest{
+	tokenResponse, err := handler.tokenIssuer.IssueToken(mediamtx.TokenRequest{
 		DeviceID: request.DeviceID,
-		Role:     livekitauth.RolePublisher,
+		Identity: request.Identity,
+		Role:     mediamtx.RolePublisher,
 	})
 	if err != nil {
-		context.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "failed to issue livekit token"})
+		context.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "failed to issue stream token"})
 		return
 	}
 
@@ -79,28 +80,30 @@ func (handler *WebRTCSessionHandler) CreateSession(context *gin.Context) {
 	}
 
 	context.JSON(http.StatusOK, models.WebRTCSessionResponse{
-		SessionID:  tokenResponse.Room,
+		SessionID:  tokenResponse.Path,
 		Token:      tokenResponse.Token,
-		URL:        tokenResponse.URL,
-		Room:       tokenResponse.Room,
+		URL:        tokenResponse.WHIPURL,
+		WHIPURL:    tokenResponse.WHIPURL,
+		Room:       tokenResponse.Path,
+		Path:       tokenResponse.Path,
 		Identity:   tokenResponse.Identity,
 		ExpiresAt:  tokenResponse.ExpiresAt,
-		IceServers: livekitauth.IceServers(handler.iceOptions),
+		IceServers: mediamtx.IceServers(handler.iceOptions, tokenResponse.Identity),
 	})
 }
 
 type DevicesHandler struct {
 	deviceStore store.DeviceStore
-	tokenIssuer *livekitauth.TokenIssuer
+	tokenIssuer *mediamtx.TokenIssuer
 	webrtcStore store.WebRTCStore
-	iceOptions  livekitauth.IceServerOptions
+	iceOptions  mediamtx.IceServerOptions
 }
 
 func NewDevicesHandler(
 	deviceStore store.DeviceStore,
-	tokenIssuer *livekitauth.TokenIssuer,
+	tokenIssuer *mediamtx.TokenIssuer,
 	webrtcStore store.WebRTCStore,
-	iceOptions livekitauth.IceServerOptions,
+	iceOptions mediamtx.IceServerOptions,
 ) *DevicesHandler {
 	return &DevicesHandler{
 		deviceStore: deviceStore,
@@ -141,7 +144,7 @@ func (handler *DevicesHandler) DeleteDevice(context *gin.Context) {
 
 func (handler *DevicesHandler) GetDeviceStream(context *gin.Context) {
 	if !handler.tokenIssuer.Enabled() {
-		context.JSON(http.StatusServiceUnavailable, models.ErrorResponse{Error: "livekit is not configured"})
+		context.JSON(http.StatusServiceUnavailable, models.ErrorResponse{Error: "streaming is not configured"})
 		return
 	}
 
@@ -151,30 +154,30 @@ func (handler *DevicesHandler) GetDeviceStream(context *gin.Context) {
 		return
 	}
 
-	tokenResponse, err := handler.tokenIssuer.IssueToken(livekitauth.TokenRequest{
+	tokenResponse, err := handler.tokenIssuer.IssueToken(mediamtx.TokenRequest{
 		DeviceID: deviceID,
-		Role:     livekitauth.RoleSubscriber,
+		Role:     mediamtx.RoleSubscriber,
 	})
 	if err != nil {
 		switch {
-		case errors.Is(err, livekitauth.ErrInvalidRole):
+		case errors.Is(err, mediamtx.ErrInvalidRole):
 			context.JSON(http.StatusBadRequest, models.ErrorResponse{Error: err.Error()})
 		default:
-			context.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "failed to issue livekit token"})
+			context.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "failed to issue stream token"})
 		}
 		return
 	}
 
-	urlWarnings := livekitauth.ClientURLWarnings(tokenResponse.URL)
+	urlWarnings := mediamtx.ClientURLWarnings(tokenResponse.WHEPURL)
 	if len(urlWarnings) > 0 {
-		log.Printf("livekit stream credentials for device %s: %v", deviceID, urlWarnings)
+		log.Printf("stream credentials for device %s: %v", deviceID, urlWarnings)
 	}
 
 	_, _ = handler.webrtcStore.SaveConnection(models.WebRTCConnectionRecord{
 		DeviceID:    deviceID,
-		Room:        tokenResponse.Room,
+		Room:        tokenResponse.Path,
 		Identity:    tokenResponse.Identity,
-		Role:        livekitauth.RoleSubscriber,
+		Role:        mediamtx.RoleSubscriber,
 		ConnectedAt: time.Now().UTC(),
 		Status:      "active",
 	})
@@ -182,11 +185,14 @@ func (handler *DevicesHandler) GetDeviceStream(context *gin.Context) {
 	context.JSON(http.StatusOK, models.DeviceStreamResponse{
 		DeviceID:    deviceID,
 		Token:       tokenResponse.Token,
-		URL:         tokenResponse.URL,
-		Room:        tokenResponse.Room,
+		URL:         tokenResponse.WHEPURL,
+		WHEPURL:     tokenResponse.WHEPURL,
+		HLSURL:      tokenResponse.HLSURL,
+		Room:        tokenResponse.Path,
+		Path:        tokenResponse.Path,
 		Identity:    tokenResponse.Identity,
 		ExpiresAt:   tokenResponse.ExpiresAt,
-		IceServers:  livekitauth.IceServers(handler.iceOptions),
+		IceServers:  mediamtx.IceServers(handler.iceOptions, tokenResponse.Identity),
 		URLWarnings: urlWarnings,
 	})
 }

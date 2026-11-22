@@ -8,7 +8,7 @@ Vue 3 frontend for the Dogan device platform — login, device info, live stream
 - Vue Router with auth guards
 - Pinia for session state
 - Tailwind CSS (Vite plugin)
-- LiveKit client for WebRTC live streaming
+- Browser WHEP player for MediaMTX WebRTC streaming, with HLS fallback
 
 ## Setup
 
@@ -48,7 +48,7 @@ npm run preview
 |------|------|
 | `/login` | Sign in |
 | `/device` | Selected handset details (`/dashboard` redirects here) |
-| `/stream` | LiveKit camera stream with Play/Stop/Capture |
+| `/stream` | MediaMTX camera stream with Play/Stop/HLS fallback/Capture |
 | `/gallery` | Image gallery |
 | `/logs` | Sign-in audit and WebRTC session history |
 | `/settings` | Preferences |
@@ -84,7 +84,7 @@ The app expects a REST API at `VITE_API_BASE_URL` with bearer token auth.
 | `GET` | `/devices` | List devices |
 | `GET` | `/devices/:id/metrics` | Temperature + noise history |
 | `GET` | `/devices/:id/telemetry` | Live telemetry snapshot |
-| `GET` | `/devices/:id/stream` | LiveKit stream credentials |
+| `GET` | `/devices/:id/stream` | WHEP/HLS stream credentials |
 | `POST` | `/devices/:id/capture` | Trigger frame capture on device |
 | `GET` | `/images` | Gallery images |
 | `GET` | `/settings` | User preferences |

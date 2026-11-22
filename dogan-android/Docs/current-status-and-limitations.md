@@ -31,7 +31,7 @@ These items are **out of scope** for the current app version:
 | Gap | Impact |
 |-----|--------|
 | **GPS / location reporting** | No map or geofencing; server cannot see where the vehicle was parked from the app alone |
-| **User accounts or login in the app** | Username + password on Connectivity (`POST /auth`); same token used for API and LiveKit |
+| **User accounts or login in the app** | Username + password on Connectivity (`POST /auth`); same token used for API and streaming |
 | **Embedded device API key login** | Android no longer sends `api_key`; use username/password only |
 | **Remote start/stop from server** | Monitoring is controlled only from the phone |
 | **iOS version** | Android only |
@@ -52,7 +52,7 @@ Roadmap priorities should be confirmed with the product owner; the list above re
 - Continuous camera and background operation **consume battery**. Long sessions should use power adapter when possible.
 - By default the camera is **duty-cycled** (open only to take each frame, then closed). Continuous camera applies while Preview is open or Recording is enabled.
 - Shorter capture intervals / higher FPS increase battery and mobile data use.
-- Power knobs live in Settings: General (telemetry/upload intervals, ambient light), Watchman (mic, motion rate, GPS), Copilot (GPS, wake lock). LiveKit publisher runs only in Watchman when connected.
+- Power knobs live in Settings: General (telemetry/upload intervals, ambient light), Watchman (mic, motion rate, GPS), Copilot (GPS, wake lock). MediaMTX WHIP publisher runs only in Watchman when connected.
 - Monitoring uses a **foreground service** while a mode is on; turn mode OFF to stop it.
 - Uploads require **network reachability** to the configured server; offline periods mean gaps in server-side data.
 

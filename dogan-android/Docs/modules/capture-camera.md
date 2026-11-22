@@ -5,7 +5,7 @@ Foreground monitoring service and CameraX bindings.
 ## Responsibility
 
 - Start/stop when operating mode ≠ OFF
-- Telemetry, uploads, LiveKit, bump/sound sensors
+- Telemetry, uploads, WHIP streaming, bump/sound sensors
 
 ## Camera policy
 

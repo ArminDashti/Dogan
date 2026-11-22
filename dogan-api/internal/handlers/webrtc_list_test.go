@@ -28,7 +28,7 @@ func (s *stubWebRTCStore) ListConnections(deviceID string, limit int) ([]models.
 func TestListConnectionsWithoutDeviceIDReturnsOK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	stub := &stubWebRTCStore{}
-	handler := NewWebRTCHandler(stub)
+	handler := NewWebRTCHandler(stub, nil)
 
 	recorder := httptest.NewRecorder()
 	context, _ := gin.CreateTestContext(recorder)

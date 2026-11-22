@@ -1,11 +1,22 @@
-package livekit
+package mediamtx
 
 import (
+	"errors"
 	"strings"
 	"unicode"
 )
 
-func RoomNameForDevice(deviceID string) string {
+const (
+	RolePublisher  = "publisher"
+	RoleSubscriber = "subscriber"
+)
+
+var (
+	ErrInvalidRole   = errors.New("role must be publisher or subscriber")
+	ErrNotConfigured = errors.New("streaming is not configured")
+)
+
+func PathForDevice(deviceID string) string {
 	sanitized := sanitizeIdentifier(deviceID)
 	if sanitized == "" {
 		return "device-unknown"
@@ -14,18 +25,17 @@ func RoomNameForDevice(deviceID string) string {
 	return "device-" + sanitized
 }
 
-func DefaultParticipantIdentity(role, deviceID string) string {
+func DefaultIdentity(role, deviceID string) string {
 	sanitizedDeviceID := sanitizeIdentifier(deviceID)
 	if sanitizedDeviceID == "" {
 		sanitizedDeviceID = "unknown"
 	}
 
-	switch role {
-	case RolePublisher:
+	if role == RolePublisher {
 		return "publisher-" + sanitizedDeviceID
-	default:
-		return "subscriber-" + sanitizedDeviceID
 	}
+
+	return "subscriber-" + sanitizedDeviceID
 }
 
 func sanitizeIdentifier(value string) string {

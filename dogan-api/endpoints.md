@@ -28,11 +28,11 @@ JSON wire format is **snake_case** unless noted. Bearer token required except wh
 | GET | /sounds | Yes | Downloadable alert sounds for Android |
 | GET | /sounds/:id | Yes | Download sound file |
 | POST | /diagnostic-audio | Yes | Multipart cabin diagnostic WAV |
-| GET | /webrtc/connections | Yes | Recent WebRTC sessions |
-| POST | /streaming/token | Yes | Issue LiveKit token |
-| POST | /webrtc/session | Yes | Create LiveKit publisher session (Android) |
+| GET | /webrtc/connections | Yes | Recent WebRTC sessions with MediaMTX `live` state |
+| POST | /streaming/token | Yes | Issue MediaMTX stream token |
+| POST | /webrtc/session | Yes | Create MediaMTX publisher session (Android) |
 | GET | /devices | Yes | List registered devices |
-| GET | /devices/:id/stream | Yes | LiveKit subscriber credentials (web) |
+| GET | /devices/:id/stream | Yes | MediaMTX subscriber credentials (web) |
 | GET | /devices/:id/telemetry | Yes | Live telemetry snapshot (web) |
 | GET | /devices/:id/metrics | Yes | Metrics history for charts (web) |
 | POST | /devices/:id/capture | Yes | Queue capture; return latest frame |
@@ -41,12 +41,40 @@ JSON wire format is **snake_case** unless noted. Bearer token required except wh
 | POST | /vision/analyze | Yes | Analyze a stored (`image_id`) or inline (`image_base64`) camera image with OpenCode Go |
 | GET | /vision/latest | Yes | Latest OpenCode Go vision analysis (`?device-id=`) |
 
+## MediaMTX callback
+
+`POST /dogan/api/v1/mediamtx/auth` is public (no bearer middleware) because MediaMTX calls it from the docker network. MediaMTX calls it for every publish/read/playback attempt.
+
+Request fields: `action` (`publish`, `read`, `playback`), `path`, `user`, `password`, `token`, `query`, `ip`, `host`. Denials return `401 {"error":"unauthorized"}`; approvals return `200`.
+
 ## Client base URLs
 
 - **Web:** `VITE_API_BASE_URL` = `http://host:8080/dogan/api/v1`
 - **Android:** server base URL must include `/dogan` (e.g. `http://host:8080/dogan`); client appends `/api/v1/...`
 
 ## Key payload notes
+
+### GET /health
+
+`status`, `timestamp`, `streaming_configured`, `streaming_webrtc_url`, `streaming_hls_url`, `streaming_warnings`, `turn_domain`.
+
+### GET /webrtc/connections
+
+`id`, `device_id`, `room`, `identity`, `role`, `connected_at`, `disconnected_at`, `status`, `live`. `live` is null when the MediaMTX control API is unavailable and otherwise reflects `paths[].ready || paths[].available`.
+
+### POST /streaming/token
+
+Request: `device_id` (required), `identity`, `role`. Response: `token`, `url`, `room`, `path`, `identity`, `role`, `whip_url`, `whep_url`, `hls_url`, `expires_at`, `ice_servers`.
+
+`path` is `device-<sanitized device id>`. `ice_servers` contains STUN plus TURN; the REST credential is `base64(hmac-sha1(DOGAN_TURN_SECRET, "<expiry>:<identity>"))`.
+
+### POST /webrtc/session
+
+Request: `device_id` (required), `identity`. Response: `session_id`, `token`, `url`, `whip_url`, `room`, `path`, `identity`, `expires_at`, `ice_servers`.
+
+### GET /devices/:id/stream
+
+Response: `device_id`, `token`, `url`, `whep_url`, `hls_url`, `room`, `path`, `identity`, `expires_at`, `ice_servers`, `url_warnings`.
 
 ### POST /telemetry (Android)
 

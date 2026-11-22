@@ -1,0 +1,27 @@
+---
+description: Fix local Docker MediaMTX ICE so the Android emulator can publish WHIP. Use when Watchman gets a stream token but ICE fails or the web live view stays dark on local Docker.
+---
+
+# Local MediaMTX ICE for the Android emulator
+
+**Goal:** Make Watchman WHIP media publish reach `dogan-mediamtx` on local Docker from AVD. Status: unverified (post-migration).
+
+## Steps
+1. In `dogan-api/mediamtx.yml` keep the single WebRTC ICE port: `webrtcLocalUDPAddress: :8189` and `webrtcLocalTCPAddress: :8189`, with `webrtcIPsFromInterfaces: yes`.
+2. For the emulator path, set `MTX_WEBRTCADDITIONALHOSTS` to the host LAN IP the emulator can reach. Use a local uncommitted override; do not commit a machine address.
+3. Recreate MediaMTX only: `cd dogan-api` → `docker compose up -d --force-recreate dogan-mediamtx` (keep volumes).
+4. Emulator Connectivity: API `10.0.2.2:8080`, stream URL `http://10.0.2.2:8889` (or the host LAN IP), `admin`/`admin` (unverified (post-migration)).
+5. Install the current Dogan APK with `WhipStreamer` and `CaptureService.maybeStartStreaming`. Arm Watchman.
+6. Pass: MediaMTX logs show path `device-*` ready with the LAN candidate, WHIP POST returns 201, and WHEP/HLS playback works (unverified (post-migration)).
+
+## Gotchas
+- Advertising a VPN/public IP via `MTX_WEBRTCADDITIONALHOSTS` on the PC stack gives AVD an unreachable candidate; ICE pairs fail (0 responses).
+- Publish both `8189/udp` and `8189/tcp` locally: MediaMTX uses the same number for ICE-UDP and ICE-TCP.
+- Connectivity “Streaming Connected (N sessions)” is a probe/session count, not publish proof (unverified (post-migration)).
+- Emulator disk full (`ENOSPC`) from cabin WAV archives crashes CaptureService — `adb shell pm clear com.dogan` or free `/data`.
+- Locally use direct ICE to the LAN host; the TURN relay path is for the public 443 deployment (unverified (post-migration)).
+
+## What didn't work
+- Leaving production-style public `MTX_WEBRTCADDITIONALHOSTS` on the PC Docker stack.
+- Assuming probe Connected meant video was publishing.
+- Retesting an APK that still gated streaming away from Watchman — Watchman never called `CaptureService.maybeStartStreaming`.

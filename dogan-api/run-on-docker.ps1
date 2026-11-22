@@ -3,8 +3,8 @@
     Build and run the dogan-api stack with Docker Compose locally or over SSH.
 
 .DESCRIPTION
-    Uses the repo-root Dockerfile, docker-compose.yml, and livekit.yaml.
-    Builds the API image, then starts LiveKit and dogan-api (SQLite on the API volume).
+    Uses the repo-root Dockerfile, docker-compose.yml, and mediamtx.yml.
+    Builds the API image, then starts MediaMTX, coturn, and dogan-api (SQLite on the API volume).
     When --ssh-string is omitted, the local Docker daemon is used. When --ssh-string
     is set, the API image is built locally, exported, transferred to the remote host,
     loaded there, and compose is started without a remote build. When --delete-volume=yes,
@@ -94,7 +94,7 @@ $Script:TlsImageTag = 'nginx:alpine'
 $Script:DeploySyncFiles = @(
     'docker-compose.yml',
     'Dockerfile',
-    'livekit.yaml',
+    'mediamtx.yml',
     '.dockerignore',
     '.docker/stack.manifest.json'
 )
@@ -924,9 +924,9 @@ function Test-DockerComposeFile {
         throw 'Missing Dockerfile in the repo root.'
     }
 
-    $livekitPath = Join-Path $ProjectRoot 'livekit.yaml'
-    if (-not (Test-Path $livekitPath)) {
-        throw 'Missing livekit.yaml in the repo root.'
+    $mediamtxPath = Join-Path $ProjectRoot 'mediamtx.yml'
+    if (-not (Test-Path $mediamtxPath)) {
+        throw 'Missing mediamtx.yml in the repo root.'
     }
 }
 
@@ -1155,7 +1155,7 @@ try {
         Write-Host 'Stack is running on localhost.' -ForegroundColor Green
         Write-Host ("  API:      http://localhost:{0}/dogan/api/v1/health" -f $hostApiPort) -ForegroundColor Green
         Write-Host '  SQLite:   /data/dogan.db (inside API volume)' -ForegroundColor Green
-        Write-Host '  LiveKit:  ws://localhost:7880' -ForegroundColor Green
+        Write-Host '  MediaMTX:  http://localhost:8889' -ForegroundColor Green
         Write-Host ("  Network:  {0}" -f $networkValue) -ForegroundColor Green
         Write-Host ("  Volume:   {0} ({1})" -f $volumeNameValue, $volumeDirValue) -ForegroundColor Green
     }

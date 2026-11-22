@@ -33,7 +33,7 @@ Field-ops phone UI that shares Lot Signal with the Dogan web Control Center: bay
 ## Typography
 
 - **UI:** Bricolage Grotesque (400 / 600 / 700) via Material type scale
-- **Readings / status:** IBM Plex Mono Medium for ping, API, LiveKit lines and logs
+- **Readings / status:** IBM Plex Mono Medium for ping, API, streaming lines and logs
 - Roles: Title Large for Dogan mark; Title Medium for bay labels; Body Medium for settings; Label Medium for service lane
 
 ## Shape & space

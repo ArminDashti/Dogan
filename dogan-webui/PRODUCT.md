@@ -2,7 +2,7 @@
 
 ## Product
 
-Dogan Control Center is the operator web app for monitoring remote field devices (edge cameras and sensors). Operators sign in, pick a device, read live telemetry, watch LiveKit streams, capture frames, browse the gallery, and review metrics.
+Dogan Control Center is the operator web app for monitoring remote field devices (edge cameras and sensors). Operators sign in, pick a device, read live telemetry, watch MediaMTX streams, capture frames, browse the gallery, and review metrics.
 
 ## Users
 
@@ -25,7 +25,7 @@ Dogan Control Center is the operator web app for monitoring remote field devices
 
 ## Constraints
 
-- Preserve routes, auth flow, LiveKit stream controls, and API field mappings
+- Preserve routes, auth flow, WHEP/HLS stream controls, and API field mappings
 - Self-hosted; default local account is `admin` / `admin` (`admin@local.local`)
 - No new UI framework dependency
 

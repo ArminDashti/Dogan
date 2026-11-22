@@ -53,7 +53,7 @@ class CaptureService : Service(), LifecycleOwner {
     private val watcherEngine by lazy { WatcherEngine(alertManager) }
     private val modeController by lazy { ModeController(watcherEngine) }
     private val telemetryUploader by lazy { TelemetryUploader(apiClient, telemetryDatabase) }
-    private val liveKitStreamer by lazy { LiveKitStreamer(this, apiClient) }
+    private val whipStreamer by lazy { WhipStreamer(this, apiClient) }
     private val resourceMonitor by lazy { DeviceResourceMonitor(this) }
 
     private lateinit var audioCapture: AudioCapture
@@ -138,7 +138,7 @@ class CaptureService : Service(), LifecycleOwner {
 
         if (ServerConnectionManager.isConnected()) {
             ServerSettingsSync.start(this)
-            maybeStartLiveKit(settings)
+            maybeStartStreaming(settings)
         }
 
         applySensitivity(settings)
@@ -161,7 +161,7 @@ class CaptureService : Service(), LifecycleOwner {
         startForeground(NOTIF_ID, buildNotification())
         if (ServerConnectionManager.isConnected() && isValidBaseUrl(settings.serverBaseUrl)) {
             ServerSettingsSync.start(this)
-            maybeStartLiveKit(settings)
+            maybeStartStreaming(settings)
         }
     }
 
@@ -172,14 +172,13 @@ class CaptureService : Service(), LifecycleOwner {
         )
     }
 
-    private fun maybeStartLiveKit(settings: AppSettings) {
-        // LiveKit publisher is Watchman-only; Copilot/OFF never stream.
+    private fun maybeStartStreaming(settings: AppSettings) {
         if (settings.operatingMode != OperatingMode.WATCHER) {
-            liveKitStreamer.stop()
+            whipStreamer.stop()
             return
         }
         if (ServerConnectionManager.isConnected() && isValidBaseUrl(settings.serverBaseUrl)) {
-            if (liveKitStreamer.isPublishingSame(
+            if (whipStreamer.isPublishingSame(
                     settings.serverBaseUrl,
                     settings.streamMode,
                     settings.streamBaseUrl,
@@ -187,7 +186,7 @@ class CaptureService : Service(), LifecycleOwner {
             ) {
                 return
             }
-            liveKitStreamer.start(
+            whipStreamer.start(
                 settings.serverBaseUrl,
                 settings.streamMode,
                 settings.streamBaseUrl,
@@ -238,7 +237,7 @@ class CaptureService : Service(), LifecycleOwner {
         locationTracker.stop()
         ambientLightSensor.stop()
         audioCapture.stop()
-        liveKitStreamer.stop()
+        whipStreamer.stop()
         alertManager.release()
         wakeLock?.release()
         wakeLock = null
@@ -550,7 +549,7 @@ class CaptureService : Service(), LifecycleOwner {
         if (connected) {
             AppLogger.info("Server", "Auto-connected for ${settings.operatingMode.displayName}")
             ServerSettingsSync.start(this)
-            maybeStartLiveKit(settings)
+            maybeStartStreaming(settings)
         } else {
             AppLogger.error("Server", "Auto-connect failed: ${ServerConnectionManager.lastError}")
         }

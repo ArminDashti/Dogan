@@ -48,7 +48,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <AppLayout title="Logs" subtitle="Sign-in audit and LiveKit / WebRTC session history.">
+  <AppLayout title="Logs" subtitle="Sign-in audit and MediaMTX WebRTC session history.">
     <div class="space-y-6">
       <ErrorAlert v-if="errorMessage" title="Logs unavailable" :message="errorMessage" />
 
@@ -103,7 +103,7 @@ onMounted(() => {
         <section class="yoda-card overflow-hidden">
           <div class="border-b border-[var(--border)] px-5 py-4">
             <h2 class="text-base font-semibold tracking-tight text-[var(--text)]">Stream sessions</h2>
-            <p class="text-sm text-[var(--muted)]">Recent WebRTC / LiveKit connections from devices and the web UI.</p>
+            <p class="text-sm text-[var(--muted)]">Recent MediaMTX WebRTC connections from devices and the web UI.</p>
           </div>
 
           <div

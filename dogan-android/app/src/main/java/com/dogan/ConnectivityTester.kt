@@ -3,7 +3,7 @@ package com.dogan
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** Runs connectivity diagnostics for internet, server API, and LiveKit. */
+/** Runs connectivity diagnostics for internet, server API, and streaming. */
 class ConnectivityTester(
     private val apiClient: DoganApiClient,
 ) {
@@ -63,24 +63,25 @@ class ConnectivityTester(
         )
     }
 
-    suspend fun testLiveKit(baseUrl: String): TestResult = withContext(Dispatchers.IO) {
+    suspend fun testStreaming(baseUrl: String): TestResult = withContext(Dispatchers.IO) {
         val session = apiClient.createWebRtcSession(baseUrl)
         if (session == null) {
             return@withContext TestResult(
-                name = "LiveKit",
+                name = "Streaming",
                 passed = false,
                 latencyMs = 0,
                 detail = "Could not create WebRTC session",
             )
         }
+        val whipUrl = session.whipUrl.ifBlank { session.url }
         val hasToken = session.token.isNotBlank()
-        val hasUrl = session.url.isNotBlank()
-        val hasRoom = session.room.isNotBlank()
+        val hasUrl = whipUrl.isNotBlank()
+        val hasPath = session.path.isNotBlank()
         TestResult(
-            name = "LiveKit",
-            passed = hasToken && hasUrl && hasRoom,
+            name = "Streaming",
+            passed = hasToken && hasUrl && hasPath,
             latencyMs = 0,
-            detail = "Session=${session.sessionId}, token=$hasToken, url=$hasUrl, room=$hasRoom",
+            detail = "Session=${session.sessionId}, path=${session.path}, token=$hasToken, url=$hasUrl",
         )
     }
 
@@ -88,7 +89,7 @@ class ConnectivityTester(
         return listOf(
             testInternet(),
             testServerApi(baseUrl),
-            testLiveKit(baseUrl),
+            testStreaming(baseUrl),
         )
     }
 }

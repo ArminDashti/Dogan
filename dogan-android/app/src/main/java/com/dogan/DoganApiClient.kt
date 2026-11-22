@@ -14,7 +14,7 @@ import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 /**
- * HTTP client for the Dogan API only (auth, telemetry, sounds, diagnostics, LiveKit session).
+ * HTTP client for the Dogan API only (auth, telemetry, sounds, diagnostics, streaming session).
  *
  * Camera frames leave the phone via [submitTelemetry] → `POST {base}/api/v1/telemetry`.
  * Do not call LLM providers from Android; the Dogan API forwards stored frames server-side.
@@ -30,8 +30,8 @@ class DoganApiClient(
         return authenticate(baseUrl)
     }
 
-    /** Authenticate and verify the same bearer works for LiveKit session creation. */
-    fun connectWithApiAndLiveKit(baseUrl: String): ConnectProbeResult {
+    /** Authenticate and verify the same bearer works for streaming session creation. */
+    fun connectWithApiAndStreaming(baseUrl: String): ConnectProbeResult {
         if (!isValidBaseUrl(baseUrl)) {
             return ConnectProbeResult(false, false, "Invalid server URL")
         }
@@ -40,11 +40,11 @@ class DoganApiClient(
             return ConnectProbeResult(false, false, auth.error ?: "Authentication failed")
         }
         registerDevice(baseUrl)
-        val liveKit = probeLiveKitAvailable(baseUrl)
+        val streaming = probeStreamingAvailable(baseUrl)
         return ConnectProbeResult(
             apiOk = true,
-            liveKitOk = liveKit.success,
-            error = if (liveKit.success) null else liveKit.error,
+            streamingOk = streaming.success,
+            error = if (streaming.success) null else streaming.error,
         )
     }
 
@@ -59,12 +59,12 @@ class DoganApiClient(
             httpClient.newCall(request).execute().use { response ->
                 val latency = System.currentTimeMillis() - start
                 val body = response.body?.string().orEmpty()
-                var liveKitConfigured = false
+                var streamingConfigured = false
                 var turnDomain = ""
                 if (body.isNotBlank()) {
                     try {
                         val json = JSONObject(body)
-                        liveKitConfigured = json.optBoolean("livekit_configured", false)
+                        streamingConfigured = json.optBoolean("streaming_configured", false)
                         turnDomain = json.optString("turn_domain", "")
                     } catch (_: Exception) {
                         Unit
@@ -74,7 +74,7 @@ class DoganApiClient(
                     success = response.isSuccessful,
                     latencyMs = latency,
                     httpCode = response.code,
-                    liveKitConfigured = liveKitConfigured,
+                    streamingConfigured = streamingConfigured,
                     turnDomain = turnDomain,
                 )
             }
@@ -197,6 +197,8 @@ class DoganApiClient(
             WebRtcSessionResult(
                 sessionId = json.optString("session_id"),
                 token = json.optString("token"),
+                whipUrl = json.optString("whip_url"),
+                path = json.optString("path"),
                 url = json.optString("url"),
                 room = json.optString("room"),
                 identity = json.optString("identity"),
@@ -379,18 +381,18 @@ class DoganApiClient(
         }
     }
 
-    private fun probeLiveKitAvailable(baseUrl: String): AuthResult {
+    private fun probeStreamingAvailable(baseUrl: String): AuthResult {
         return try {
             val health = pingHealthWithLatency(baseUrl)
             when {
                 health == null -> AuthResult(false, error = "Health check failed")
                 !health.success -> AuthResult(false, error = "Health check HTTP ${health.httpCode}")
-                !health.liveKitConfigured ->
-                    AuthResult(false, error = "LiveKit is not configured on the server")
+                !health.streamingConfigured ->
+                    AuthResult(false, error = "MediaMTX streaming is not configured on the server")
                 else -> AuthResult(true)
             }
         } catch (e: Exception) {
-            AuthResult(false, error = e.message ?: "LiveKit probe failed")
+            AuthResult(false, error = e.message ?: "Streaming probe failed")
         }
     }
 
@@ -478,7 +480,7 @@ class DoganApiClient(
         val latencyMs: Long,
         val httpCode: Int = 0,
         val error: String? = null,
-        val liveKitConfigured: Boolean = false,
+        val streamingConfigured: Boolean = false,
         val turnDomain: String = "",
     )
 
@@ -491,10 +493,10 @@ class DoganApiClient(
 
     data class ConnectProbeResult(
         val apiOk: Boolean,
-        val liveKitOk: Boolean,
+        val streamingOk: Boolean,
         val error: String? = null,
     ) {
-        val success: Boolean get() = apiOk && liveKitOk
+        val success: Boolean get() = apiOk && streamingOk
     }
 
     data class WebRtcConnectionInfo(
@@ -516,6 +518,8 @@ class DoganApiClient(
     data class WebRtcSessionResult(
         val sessionId: String,
         val token: String,
+        val whipUrl: String,
+        val path: String,
         val url: String,
         val room: String,
         val identity: String,

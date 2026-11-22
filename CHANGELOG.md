@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.0.0
+
+### Changed (breaking)
+- **Streaming:** Replace LiveKit with **MediaMTX** (`bluenviron/mediamtx:1.21.4`). Android publishes over **WHIP**, the WebUI plays over **WHEP** with an **HLS** fallback (hls.js). WebRTC media uses a single ICE port `8189` (UDP, plus ICE-TCP on the same number). API `3.0.0`, Android `3.0.0` (versionCode 15), WebUI `0.4.0`.
+- **Infra:** `dogan-livekit` container, `livekit.yaml`, `livekit.t3.yaml`, ports `7880`/`7881`/`50000-50050/udp` and the `dogan-livekit-vol` volume are gone. New `dogan-mediamtx` (`mediamtx.yml`) and `dogan-turn` (coturn `4.19`, TURN REST secret) containers; coturn replaces the LiveKit-embedded TURN behind `turns://dogan-turn.xaigrok.ir:443`.
+- **API:** Auth stays in `dogan-api`. Stream endpoints keep their paths but return short-lived HS256 stream tokens plus WHIP/WHEP/HLS URLs instead of LiveKit JWTs: `POST /streaming/token`, `POST /webrtc/session` (`whip_url`), `GET /devices/:id/stream` (`whep_url`, `hls_url`). MediaMTX calls the new `POST /dogan/api/v1/mediamtx/auth` hook (`authMethod: http`) to validate token, path and action. `GET /webrtc/connections` adds `live`, `paths` and `media_server_reachable` from the MediaMTX control API. `GET /health` replaces `livekit_*` fields with `streaming_configured`, `streaming_webrtc_url`, `streaming_hls_url`, `streaming_warnings`. TURN credentials in `ice_servers` are now ephemeral (TURN REST).
+- **Env:** removed `DOGAN_LIVEKIT_URL`, `DOGAN_LIVEKIT_PUBLIC_URL`, `DOGAN_LIVEKIT_API_KEY`, `DOGAN_LIVEKIT_API_SECRET`, `DOGAN_LIVEKIT_TOKEN_TTL`, `DOGAN_LIVEKIT_TURN_DOMAIN`, `DOGAN_LIVEKIT_TURN_EXTERNAL_TLS`, `DOGAN_LIVEKIT_ICE_SERVER_URLS`. Added `DOGAN_MEDIAMTX_WEBRTC_PUBLIC_URL`, `DOGAN_MEDIAMTX_HLS_PUBLIC_URL`, `DOGAN_MEDIAMTX_API_URL`, `DOGAN_STREAM_TOKEN_SECRET`, `DOGAN_STREAM_TOKEN_TTL`, `DOGAN_TURN_DOMAIN`, `DOGAN_TURN_EXTERNAL_TLS`, `DOGAN_TURN_SECRET`, `DOGAN_TURN_TTL`, `DOGAN_ICE_SERVER_URLS` (T3 overlay also `DOGAN_MEDIAMTX_ADDITIONAL_HOSTS`, `DOGAN_MEDIAMTX_AUTH_URL`).
+- **Android:** LiveKit SDK removed; `WhipStreamer` publishes with `io.github.webrtc-sdk:android:144.7559.15` (relay-only ICE on the public 443 path when the API returns a TURN server). Default stream host `dogan-media.xaigrok.ir:443`.
+- **WebUI:** `livekit-client` removed; native `RTCPeerConnection` WHEP player plus `hls.js` fallback with Bearer auth.
+
 ## 2.5.5
 
 ### Fixed

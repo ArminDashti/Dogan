@@ -11,7 +11,7 @@ Installable Progressive Web App support via `vite-plugin-pwa`.
 
 ## What it does not do
 
-- Offline API or LiveKit streaming — those stay network-only
+- Offline API or MediaMTX WebRTC/HLS streaming — those stay network-only
 - Push notifications
 - Custom “new version available” UI (updates activate silently)
 

@@ -4,21 +4,28 @@ from pathlib import Path
 p = Path("/cloud-admin/docker/dogan/docker-compose.yml")
 t = p.read_text()
 old = '''    expose:
-      - "7880"
-      - "7881"
-      - "7882"
+      - "8889"
+      - "8888"
+      - "9997"
     ports:
-      - "7881:7881"
-      - "50000-50050:50000-50050/udp"
+      - "8889:8889"
+      - "8888:8888"
+      - "8189:8189/udp"
+      - "8189:8189/tcp"
 '''
 new = '''    expose:
-      - "7880"
-      - "7881"
-      - "7882"
-      - "5349"
-    # Public media via TURN on 443 (dogan-turn); do not publish UDP/7881
+      - "8889"
+      - "8888"
+      - "9997"
+    ports:
+      - target: 8189
+        published: 8189
+        protocol: udp
+      - target: 8189
+        published: 8189
+        protocol: tcp
 '''
-if "5349" in t and "50000-50050" not in t:
+if "8889:8889" not in t and "target: 8189" in t:
     print("already_patched")
 elif old not in t:
     raise SystemExit("ports block not found")

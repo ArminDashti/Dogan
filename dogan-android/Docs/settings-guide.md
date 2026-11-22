@@ -12,7 +12,7 @@ Each section (except Copilot, unchanged) follows **Configure → Retention → B
 | Password | `password` | Required; default `dogan123` |
 | API URL | `api_endpoint` + `api_port` | Combined `host:port` field |
 | Stream URL | `stream_endpoint` + `stream_port` | Combined `host:port` field |
-| Status panel | — | Ping ms, API, LiveKit |
+| Status panel | — | Ping ms, API, Streaming |
 | Connect / Disconnect | — | Manual only; default Disconnected; no auto-connect |
 | Keep logs (days) | `log_retention_days` | Shared app-wide |
 | Logs / Flush history / Flush logs | — | Local actions |
@@ -48,7 +48,7 @@ Field set covers alerts, distance, history frames, alert duration, frame quality
 | Custom jolt scale | `custom_jolt_scale` | 1.0 (shown when Custom) |
 | Keep logs | `log_retention_days` | 7 |
 
-Battery: Watchman uses duty-cycled stills, balanced GPS, LiveKit when connected, and timed wake locks between work. Jolt/mic stay on for alerts. Copilot does not publish LiveKit.
+Battery: Watchman uses duty-cycled stills, balanced GPS, MediaMTX WHIP streaming when connected, and timed wake locks between work. Jolt/mic stay on for alerts. Copilot does not publish streams.
 
 UI label is **Watchman**; stored/API mode value remains `watcher`.
 

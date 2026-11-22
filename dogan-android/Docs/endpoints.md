@@ -7,8 +7,8 @@
 | GET | /api/v1/settings | Pull server operational settings | Bearer |
 | GET | /api/v1/sounds | List downloadable alert sounds | Bearer |
 | GET | /api/v1/sounds/:id | Download alert sound file | Bearer |
-| POST | /api/v1/webrtc/session | LiveKit session / streaming token (same bearer as API) | Bearer |
-| GET | /api/v1/webrtc/connections | List recent LiveKit sessions for device | Bearer |
+| POST | /api/v1/webrtc/session | MediaMTX WHIP session / streaming token (same bearer as API) | Bearer |
+| GET | /api/v1/webrtc/connections | List recent WHIP streaming sessions for device | Bearer |
 | GET | /api/v1/health | Latency / reachability check | No |
 | GET | /api/v1/actions/pending | Pending capture/actions for device | Bearer |
 

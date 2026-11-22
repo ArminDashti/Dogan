@@ -28,10 +28,10 @@ JSON wire format is **snake_case** unless noted. Bearer token required except wh
 | GET | /sounds/:id | Yes | Download sound file |
 | POST | /diagnostic-audio | Yes | Multipart cabin diagnostic WAV |
 | GET | /webrtc/connections | Yes | Recent WebRTC sessions |
-| POST | /streaming/token | Yes | Issue LiveKit token |
-| POST | /webrtc/session | Yes | Create LiveKit publisher session (Android) |
+| POST | /streaming/token | Yes | Issue streaming token |
+| POST | /webrtc/session | Yes | Create MediaMTX WHIP publisher session (Android) |
 | GET | /devices | Yes | List registered devices |
-| GET | /devices/:id/stream | Yes | LiveKit subscriber credentials (web) |
+| GET | /devices/:id/stream | Yes | WHEP subscriber credentials (web) |
 | GET | /devices/:id/telemetry | Yes | Live telemetry snapshot (web) |
 | GET | /devices/:id/metrics | Yes | Metrics history for charts (web) |
 | POST | /devices/:id/capture | Yes | Queue capture; return latest frame |
@@ -44,7 +44,7 @@ JSON wire format is **snake_case** unless noted. Bearer token required except wh
 |---------|-----------|-----|
 | Dogan API | `8090` (`DOGAN_API_PORT`) | container listens on `8080` |
 | Dogan Web | `8092` (`DOGAN_WEB_PORT`) | — |
-| LiveKit | `7880` / `7881` / `7882` | public `ws://host:7880` |
+| MediaMTX WebRTC | `8889` | public `http://host:8889` |
 
 - **Web:** `VITE_API_BASE_URL` = `http://host:8090/dogan/api/v1`
 - **Android:** server base URL must include `/dogan` (e.g. `http://host:8090/dogan`); client appends `/api/v1/...`

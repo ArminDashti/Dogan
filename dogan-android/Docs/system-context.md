@@ -39,7 +39,7 @@ The app is not a standalone cloud product—it is the **edge client** that feeds
 
 ### Authentication
 
-The phone authenticates with **username and password** on Connectivity (`POST /api/v1/auth`). The returned bearer token authorizes both REST API calls and LiveKit session creation (`POST /webrtc/session`). Dev defaults live in repo-root `credentials.txt`.
+The phone authenticates with **username and password** on Connectivity (`POST /api/v1/auth`). The returned bearer token authorizes both REST API calls and MediaMTX WHIP streaming session creation (`POST /webrtc/session`). Dev defaults live in repo-root `credentials.txt`.
 
 ## Device identity
 
@@ -50,7 +50,7 @@ Each installation is treated as one **device** on the server, identified automat
 | Scenario | Description |
 |----------|-------------|
 | **Home / lab** | Phone and server on the same Wi‑Fi; server address is `http://<host-ip>:8090/dogan` (Docker `DOGAN_API_PORT` default). |
-| **Hosted server** | Server on the public internet; phone uses HTTPS URL with `/dogan` path (default `https://dogan-api.xaigrok.ir/dogan`); LiveKit default `wss://dogan-livekit.xaigrok.ir`; requires stable connectivity from the parking location. |
+| **Hosted server** | Server on the public internet; phone uses HTTPS URL with `/dogan` path (default `https://dogan-api.xaigrok.ir/dogan`); MediaMTX WHIP default `https://dogan-media.xaigrok.ir`; requires stable connectivity from the parking location. |
 
 ## Privacy and data considerations
 

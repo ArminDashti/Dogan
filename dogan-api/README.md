@@ -1,10 +1,10 @@
 # dogan-server
 
-Go API server for Dogan Android/Web clients: REST image and telemetry transfer, SQLite persistence, and LiveKit WebRTC streaming.
+Go API server for Dogan Android/Web clients: REST image and telemetry transfer, SQLite persistence, and MediaMTX WebRTC streaming.
 
 ## Docker
 
-Build and run with Docker Compose (includes LiveKit; SQLite file on the API volume):
+Build and run with Docker Compose (includes MediaMTX and coturn; SQLite file on the API volume):
 
 ```powershell
 .\create-image.ps1
@@ -17,7 +17,7 @@ Remote over SSH (config alias only):
 .\run-on-docker-server.ps1 --ssh-string=<alias>
 ```
 
-Local API host port defaults to `8080` (override with `--internal-port`). PostgreSQL uses a free high port locally. LiveKit on `7880`.
+Local API host port defaults to `8080` (override with `--internal-port`). MediaMTX on `8889` (HLS on `8888`); TURN on `5349`.
 
 Compat: `build-docker-image.ps1` and `run-on-docker.ps1` still work; prefer the scripts above.
 
@@ -52,6 +52,6 @@ Test with dummy data after Docker is running:
 1. Obtain a JWT from `POST /dogan/api/v1/auth` (or `POST /auth/login` from the web app).
 2. **Android:** call `POST /dogan/api/v1/webrtc/session` with `device_id` (or `POST /streaming/token` with `role: publisher`).
 3. **Web:** call `GET /dogan/api/v1/devices/:id/stream` for subscriber credentials.
-4. Connect with a LiveKit client SDK using the returned `url`, `token`, and `room`.
+4. Connect with a MediaMTX-backed WebRTC client using the returned `url`, `token`, and `room`.
 
-Set `DOGAN_LIVEKIT_PUBLIC_URL` (e.g. `ws://localhost:7880`) so clients receive a reachable LiveKit URL when the API runs in Docker.
+Set `DOGAN_MEDIAMTX_WEBRTC_PUBLIC_URL` (e.g. `http://localhost:8889`) so clients receive a reachable MediaMTX URL when the API runs in Docker.

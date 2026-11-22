@@ -93,7 +93,7 @@ class SettingsActivity : AppCompatActivity() {
         val connectionBtn = findViewById<MaterialButton>(R.id.connectionBtn)
         val pingStatusTxt = findViewById<TextView>(R.id.pingStatusTxt)
         val apiStatusTxt = findViewById<TextView>(R.id.apiStatusTxt)
-        val liveKitStatusTxt = findViewById<TextView>(R.id.liveKitStatusTxt)
+        val streamStatusTxt = findViewById<TextView>(R.id.streamStatusTxt)
         val connectionErrorTxt = findViewById<TextView>(R.id.connectionErrorTxt)
         val username = findViewById<TextInputEditText>(R.id.usernameInput)
         val password = findViewById<TextInputEditText>(R.id.passwordInput)
@@ -103,7 +103,7 @@ class SettingsActivity : AppCompatActivity() {
 
         fun refreshStatusUi() {
             updateConnectionButton(connectionBtn, ServerConnectionManager.status.value)
-            updateConnectivityStatusPanel(pingStatusTxt, apiStatusTxt, liveKitStatusTxt, connectionErrorTxt)
+            updateConnectivityStatusPanel(pingStatusTxt, apiStatusTxt, streamStatusTxt, connectionErrorTxt)
         }
 
         connectionBtn.setOnClickListener { toggleConnection() }
@@ -119,12 +119,12 @@ class SettingsActivity : AppCompatActivity() {
         }
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                LiveKitStatusCache.streaming.collect { refreshStatusUi() }
+                StreamStatusCache.streaming.collect { refreshStatusUi() }
             }
         }
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                LiveKitStatusCache.activeSessionCount.collect { refreshStatusUi() }
+                StreamStatusCache.activeSessionCount.collect { refreshStatusUi() }
             }
         }
         lifecycleScope.launch {
@@ -133,7 +133,7 @@ class SettingsActivity : AppCompatActivity() {
                     if (ServerConnectionManager.isConnected()) {
                         val current = settingsStore.settingsFlow.first()
                         ServerConnectionManager.refreshPing(this@SettingsActivity, current)
-                        ServerConnectionManager.refreshLiveKitConnections(this@SettingsActivity, current)
+                        ServerConnectionManager.refreshStreamingConnections(this@SettingsActivity, current)
                     }
                     delay(30_000L)
                 }
@@ -152,7 +152,7 @@ class SettingsActivity : AppCompatActivity() {
     private fun updateConnectivityStatusPanel(
         pingStatusTxt: TextView,
         apiStatusTxt: TextView,
-        liveKitStatusTxt: TextView,
+        streamStatusTxt: TextView,
         connectionErrorTxt: TextView,
     ) {
         val latency = PingLatencyCache.latencyMs.value
@@ -166,21 +166,21 @@ class SettingsActivity : AppCompatActivity() {
             R.string.api_connection_status,
             getString(if (apiConnected) R.string.connected_label else R.string.disconnected_label),
         )
-        val liveKitConnected = LiveKitStatusCache.isConnected
-        val sessions = LiveKitStatusCache.activeSessionCount.value
-        liveKitStatusTxt.text = if (sessions > 0) {
+        val streamingConnected = StreamStatusCache.isConnected
+        val sessions = StreamStatusCache.activeSessionCount.value
+        streamStatusTxt.text = if (sessions > 0) {
             getString(
-                R.string.livekit_connection_status_sessions,
-                getString(if (liveKitConnected) R.string.connected_label else R.string.disconnected_label),
+                R.string.streaming_connection_status_sessions,
+                getString(if (streamingConnected) R.string.connected_label else R.string.disconnected_label),
                 sessions,
             )
         } else {
             getString(
-                R.string.livekit_connection_status,
-                getString(if (liveKitConnected) R.string.connected_label else R.string.disconnected_label),
+                R.string.streaming_connection_status,
+                getString(if (streamingConnected) R.string.connected_label else R.string.disconnected_label),
             )
         }
-        val error = ServerConnectionManager.lastError ?: LiveKitStatusCache.lastError.value
+        val error = ServerConnectionManager.lastError ?: StreamStatusCache.lastError.value
         if (error.isNullOrBlank()) {
             connectionErrorTxt.visibility = View.GONE
             connectionErrorTxt.text = ""

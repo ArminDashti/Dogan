@@ -2,7 +2,7 @@ package com.dogan
 
 /**
  * Shared username/password and bearer token for all [DoganApiClient] instances
- * (API + LiveKit use the same token from `POST /api/v1/auth`).
+ * (API + streaming use the same token from `POST /api/v1/auth`).
  */
 object SessionCredentials {
     @Volatile

@@ -16,7 +16,7 @@
 â”œâ”€â”€ cmd/
 â”‚   â”œâ”€â”€ issue-token/main.go      # Generate embedded API token (dg_*)
 â”‚   â””â”€â”€ server/main.go           # HTTP server entry point
-â”œâ”€â”€ docker-compose.yml           # sqlite (api volume) + livekit + dogan-api
+â”œâ”€â”€ docker-compose.yml           # sqlite (api volume) + mediamtx + coturn + dogan-api
 â”œâ”€â”€ Dockerfile                   # Multi-stage Go build image
 â”œâ”€â”€ .docker/
 â”‚   â””â”€â”€ stack.manifest.json      # Stack/image/network defaults
@@ -28,12 +28,12 @@
 â”‚   â”œâ”€â”€ auth/                    # JWT, bcrypt login, embedded token
 â”‚   â”œâ”€â”€ config/config.go         # DOGAN_* env config (incl. CORS origins)
 â”‚   â”œâ”€â”€ handlers/                # REST HTTP handlers
-â”‚   â”œâ”€â”€ livekit/                 # LiveKit token and room naming
+â”‚   â”œâ”€â”€ mediamtx/                # MediaMTX paths, tokens, auth, control API
 â”‚   â”œâ”€â”€ middleware/auth.go       # Bearer token middleware
 â”‚   â”œâ”€â”€ models/models.go         # Request/response DTOs
 â”‚   â”œâ”€â”€ router/router.go         # Routes + CORS middleware
 â”‚   â””â”€â”€ store/                   # SQLite persistence layer
-â”œâ”€â”€ livekit.yaml                 # LiveKit server config
+â”œâ”€â”€ mediamtx.yml                 # MediaMTX server config
 â”œâ”€â”€ README.md                    # Quick start guide
 â””â”€â”€ scripts/
     â””â”€â”€ test-dummy-data.ps1      # Docker integration smoke test

@@ -26,7 +26,7 @@ dogan-android/
 │       │   ├── ModeController.kt
 │       │   ├── OperatingMode.kt
 │       │   ├── SettingsStore.kt
-│       │   └── …                      # API, telemetry, LiveKit, UI
+│       │   └── …                      # API, telemetry, WHIP streaming, UI
 │       └── res/
 │           ├── layout/
 │           ├── drawable/

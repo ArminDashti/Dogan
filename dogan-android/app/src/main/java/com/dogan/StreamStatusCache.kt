@@ -4,8 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/** Cached LiveKit publisher + server session status for Connectivity UI. */
-object LiveKitStatusCache {
+object StreamStatusCache {
     private val _streaming = MutableStateFlow(false)
     val streaming: StateFlow<Boolean> = _streaming.asStateFlow()
 

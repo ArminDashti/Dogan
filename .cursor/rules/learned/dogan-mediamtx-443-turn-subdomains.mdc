@@ -1,0 +1,27 @@
+---
+description: Expose Dogan MediaMTX on Irancell T3 using only TCP 443 via HAProxy SNI + coturn TURN. Use when WHIP/WHEP/HLS is unreachable behind a firewall or public Watchman streams stay dark.
+---
+
+# Dogan MediaMTX 443-only (TURN + subdomains)
+
+**Goal:** Public Watchman WHIP publish and WHEP/HLS playback with only TCP 443. Status: unverified (post-migration).
+
+## Steps
+1. Hosts: `dogan` (WebUI), `dogan-api`, `dogan-media.xaigrok.ir` (WHIP/WHEP on MediaMTX `:8889`), `dogan-hls.xaigrok.ir` (HLS on `:8888`), `dogan-turn.xaigrok.ir` (TURN TLS).
+2. `docker-compose.t3.yml`: `dogan-mediamtx` publishes only `8189:8189/udp` and `8189:8189/tcp`; WHIP/WHEP, HLS and the control API stay on the docker network. `dogan-turn` listens for plain TURN on `:5349` behind HAProxy.
+3. HAProxy: SNI `dogan-turn.xaigrok.ir` → TLS terminate → `dogan-turn:5349`; SNI `dogan-media.xaigrok.ir` → `mediamtx:8889`; SNI `dogan-hls.xaigrok.ir` → `mediamtx:8888`. Use `scripts/patch-haproxy-dogan-turn.py`.
+4. DNS: `dogan-turn` A record **grey-cloud** (Cloudflare proxy breaks TURN). Soft-reload HAProxy with `USR2`.
+5. `mediamtx.yml`: keep `webrtcLocalUDPAddress: :8189` and `webrtcLocalTCPAddress: :8189`; on T3 set `MTX_WEBRTCADDITIONALHOSTS` to the public IP/hostname. The API supplies `turns://dogan-turn.xaigrok.ir:443?transport=tcp` with ephemeral TURN REST credentials.
+6. Pass: (L1) API/MediaMTX HTTPS OK; (L2) `python3 scripts/verify-dogan-turn.py` TLS + TURN allocate; (L3) MediaMTX path `device-*` ready + Watchman WHIP 201 + WebUI WHEP/HLS play. TLS-only does not prove allocate or ICE (unverified (post-migration)).
+
+## Gotchas
+- Active T3 compose uses short service names (`mediamtx`, `api`, `turn`) under `/cloud-admin/docker/dogan` (not `/home/cloud-admin/docker/dogan`).
+- coturn relays media to MediaMTX over the docker network; no host UDP relay range is needed for TURN.
+- Android defaults are `dogan-api.xaigrok.ir:443` and `dogan-media.xaigrok.ir:443` (unverified (post-migration)).
+- Local PC keeps `mediamtx.yml` with host port `8189` for emulator ICE.
+- Relay-only ICE on the public 443 path depends on the API returning a TURN server; without it, WHIP cannot publish from a 443-only network (unverified (post-migration)).
+
+## What didn't work
+- Publishing WebRTC UDP on T3 under a 443-only firewall.
+- Orange-cloud Cloudflare on `dogan-turn` (non-HTTP TURN).
+- Overlay service keys `dogan-mediamtx` against T3 compose that only defines `mediamtx`.

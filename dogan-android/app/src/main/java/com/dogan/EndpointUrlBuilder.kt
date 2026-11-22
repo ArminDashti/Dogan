@@ -20,8 +20,12 @@ object EndpointUrlBuilder {
 
     fun buildStreamUrl(endpoint: String, port: Int): String {
         val host = endpoint.trim().trimEnd('/')
-        if (host.startsWith("ws://") || host.startsWith("wss://")) return host
-        val scheme = if (port == 443) "wss" else "ws"
+        when {
+            host.startsWith("http://") || host.startsWith("https://") -> return host.trimEnd('/')
+            host.startsWith("wss://") -> return "https://" + host.removePrefix("wss://").trimEnd('/')
+            host.startsWith("ws://") -> return "http://" + host.removePrefix("ws://").trimEnd('/')
+        }
+        val scheme = if (port == 443) "https" else "http"
         val portSuffix = if ((scheme == "wss" && port == 443) || (scheme == "ws" && port == 80)) {
             ""
         } else {
