@@ -230,11 +230,12 @@ export async function connectWhep(
       }
     }
 
-    const answer = (await response.text()).trim()
-    if (!answer) {
+    const answer = await response.text()
+    if (!answer.trim()) {
       throw new Error('The media server returned an empty WebRTC answer.')
     }
-    await peerConnection.setRemoteDescription({ type: 'answer', sdp: answer })
+    const sdp = answer.endsWith('\r\n') ? answer : `${answer}\r\n`
+    await peerConnection.setRemoteDescription({ type: 'answer', sdp })
 
     return {
       stop: async () => {

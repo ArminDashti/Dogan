@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1
+
+### Fixed
+- **WebUI:** Preserve WHEP SDP line endings and prefer authenticated hls.js playback before native HLS fallback.
+
 ## 3.0.0
 
 ### Changed (breaking)
