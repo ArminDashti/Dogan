@@ -23,5 +23,5 @@ Deploy scripts merge the defaults above and, when `--domain` is set, add `https:
 
 ## Dependencies
 
-- `internal/config` â€” listen address, secrets, CORS origins
-- `internal/handlers`, `internal/middleware`, `internal/store`, `internal/auth`, `internal/livekit`
+- `internal/config` — listen address, secrets, CORS origins
+- `internal/handlers`, `internal/middleware`, `internal/store`, `internal/auth`, `internal/mediamtx`

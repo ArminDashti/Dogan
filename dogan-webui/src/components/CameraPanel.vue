@@ -1,22 +1,27 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
-import { Room, RoomEvent, Track } from 'livekit-client'
 import { captureDeviceFrame } from '@/services/api/capture'
 import { fetchStreamCredentials } from '@/services/api/stream'
 import { getErrorMessage } from '@/services/api/errors'
+import { connectHls } from '@/services/streaming/hls'
 import {
-  attachLiveKitConnectionLogging,
-  formatLiveKitStreamError,
-  liveKitConnectOptions,
-  preflightLiveKitUrl,
-} from '@/services/livekit/connection'
+  connectWhep,
+  formatStreamError,
+  preflightStreamUrl,
+} from '@/services/streaming/whep'
+import type { StreamResponse } from '@/types/api'
 
 export type ConnectionState = 'idle' | 'connecting' | 'live' | 'error'
+
+type StreamMode = 'webrtc' | 'hls'
+
+interface PlayerSession {
+  stop(): Promise<void>
+}
 
 const props = defineProps<{
   deviceId: string
   deviceName?: string
-  /** Fill parent height instead of locking to 16:9 (Dashboard one-shot). */
   fill?: boolean
 }>()
 
@@ -31,15 +36,18 @@ const loadingStream = ref(false)
 const capturing = ref(false)
 const captureMessage = ref<string | null>(null)
 const errorMessage = ref<string | null>(null)
-const videoContainer = ref<HTMLDivElement | null>(null)
+const streamNotice = ref<string | null>(null)
+const streamMode = ref<StreamMode>('webrtc')
+const credentials = ref<StreamResponse | null>(null)
+const videoElement = ref<HTMLVideoElement | null>(null)
 
-let room: Room | null = null
-let detachLiveKitLogging: (() => void) | null = null
+let player: PlayerSession | null = null
+let connectionGeneration = 0
 
 const statusLabel = computed(() => {
   switch (connectionState.value) {
     case 'connecting':
-      return 'Connecting to LiveKit…'
+      return `Connecting via ${streamMode.value === 'hls' ? 'HLS' : 'WebRTC'}…`
     case 'live':
       return 'Live'
     case 'error':
@@ -54,26 +62,101 @@ const canPlay = computed(
 )
 const canStop = computed(() => connectionState.value === 'live' || connectionState.value === 'connecting')
 const canCapture = computed(() => Boolean(props.deviceId) && connectionState.value === 'live' && !capturing.value)
+const canToggleMode = computed(
+  () => connectionState.value !== 'connecting' && connectionState.value !== 'live',
+)
+const modeButtonLabel = computed(() =>
+  streamMode.value === 'webrtc' ? 'Use HLS fallback' : 'Use WebRTC',
+)
 
-function clearMediaElements(): void {
-  if (videoContainer.value) {
-    videoContainer.value.replaceChildren()
+function clearVideo(): void {
+  const element = videoElement.value
+  if (!element) {
+    return
+  }
+  element.pause()
+  if (element.srcObject instanceof MediaStream) {
+    element.srcObject.getTracks().forEach((track) => track.stop())
+    element.srcObject = null
+  }
+  element.removeAttribute('src')
+  element.load()
+}
+
+async function teardownPlayer(): Promise<void> {
+  const session = player
+  player = null
+  if (session) {
+    await session.stop()
+  }
+  clearVideo()
+}
+
+function markLive(): void {
+  if (connectionState.value === 'connecting') {
+    connectionState.value = 'live'
+    emit('connectionStateChange', connectionState.value)
   }
 }
 
-async function disconnectStream(): Promise<void> {
-  if (detachLiveKitLogging) {
-    detachLiveKitLogging()
-    detachLiveKitLogging = null
+function reportStreamError(error: Error): void {
+  if (connectionState.value === 'idle') {
+    return
   }
-  if (room) {
-    room.removeAllListeners()
-    await room.disconnect()
-    room = null
-  }
-  clearMediaElements()
-  connectionState.value = 'idle'
+  const url = credentials.value?.whepUrl ?? credentials.value?.url ?? ''
+  const message = formatStreamError(error, url)
+  connectionState.value = 'error'
+  errorMessage.value = message
   emit('connectionStateChange', connectionState.value)
+  emit('error', message)
+}
+
+async function connectSession(
+  streamCredentials: StreamResponse,
+  mode: StreamMode,
+): Promise<PlayerSession> {
+  const element = videoElement.value
+  if (!element) {
+    throw new Error('The video element is unavailable.')
+  }
+
+  if (mode === 'hls') {
+    if (!streamCredentials.hlsUrl) {
+      throw new Error('The API did not provide an HLS URL for this device.')
+    }
+    return connectHls({
+      hlsUrl: streamCredentials.hlsUrl,
+      token: streamCredentials.token,
+      videoElement: element,
+      onLive: markLive,
+      onError: reportStreamError,
+    })
+  }
+
+  const whepUrl = streamCredentials.whepUrl || streamCredentials.url
+  const urlBlock = preflightStreamUrl(whepUrl)
+  if (urlBlock) {
+    throw new Error(urlBlock)
+  }
+  return connectWhep({
+    whepUrl,
+    token: streamCredentials.token,
+    iceServers: streamCredentials.iceServers,
+    videoElement: element,
+    onLive: markLive,
+    onError: reportStreamError,
+  })
+}
+
+async function disconnectStream(): Promise<void> {
+  connectionGeneration += 1
+  await teardownPlayer()
+  credentials.value = null
+  streamNotice.value = null
+  if (connectionState.value !== 'idle') {
+    connectionState.value = 'idle'
+    emit('connectionStateChange', connectionState.value)
+  }
 }
 
 async function playStream(): Promise<void> {
@@ -81,68 +164,75 @@ async function playStream(): Promise<void> {
     return
   }
 
+  const generation = ++connectionGeneration
   loadingStream.value = true
   errorMessage.value = null
   captureMessage.value = null
+  streamNotice.value = null
   connectionState.value = 'connecting'
   emit('connectionStateChange', connectionState.value)
 
-  let liveKitUrl = ''
   try {
-    await disconnectStream()
-    connectionState.value = 'connecting'
-    emit('connectionStateChange', connectionState.value)
+    await teardownPlayer()
 
-    const credentials = await fetchStreamCredentials(props.deviceId)
-    liveKitUrl = credentials.url
+    const streamCredentials = await fetchStreamCredentials(props.deviceId)
+    if (generation !== connectionGeneration) {
+      return
+    }
+    credentials.value = streamCredentials
 
-    const urlBlock = preflightLiveKitUrl(credentials.url)
-    if (urlBlock) {
-      throw new Error(urlBlock)
+    let session: PlayerSession
+    if (streamMode.value === 'hls' && streamCredentials.hlsUrl) {
+      session = await connectSession(streamCredentials, 'hls')
+    } else {
+      try {
+        session = await connectSession(streamCredentials, 'webrtc')
+      } catch (error) {
+        if (!streamCredentials.hlsUrl) {
+          throw error
+        }
+        streamNotice.value = `${formatStreamError(error, streamCredentials.whepUrl)} Switched to HLS.`
+        console.warn('[dogan stream] WebRTC playback failed, using HLS', error)
+        streamMode.value = 'hls'
+        session = await connectSession(streamCredentials, 'hls')
+      }
     }
 
-    const liveKitRoom = new Room({ adaptiveStream: true })
-    detachLiveKitLogging = attachLiveKitConnectionLogging(liveKitRoom, props.deviceId)
-    liveKitRoom.on(RoomEvent.TrackSubscribed, (track) => {
-      if (track.kind === Track.Kind.Video || track.kind === Track.Kind.Audio) {
-        const element = track.attach()
-        element.classList.add('h-full', 'w-full', 'object-cover')
-        videoContainer.value?.appendChild(element)
-      }
-    })
-    liveKitRoom.on(RoomEvent.TrackUnsubscribed, (track) => {
-      track.detach().forEach((element) => element.remove())
-    })
-    liveKitRoom.on(RoomEvent.Connected, () => {
-      connectionState.value = 'live'
-      emit('connectionStateChange', connectionState.value)
-    })
-    liveKitRoom.on(RoomEvent.Disconnected, () => {
-      connectionState.value = 'idle'
-      emit('connectionStateChange', connectionState.value)
-    })
-
-    await liveKitRoom.connect(credentials.url, credentials.token, liveKitConnectOptions)
-    room = liveKitRoom
+    if (generation !== connectionGeneration) {
+      await session.stop()
+      return
+    }
+    player = session
   } catch (error) {
+    if (generation !== connectionGeneration) {
+      return
+    }
     connectionState.value = 'error'
     emit('connectionStateChange', connectionState.value)
-    const message =
-      liveKitUrl !== ''
-        ? formatLiveKitStreamError(error, liveKitUrl)
-        : getErrorMessage(error, 'Unable to fetch stream credentials from the API.')
-    console.error('[dogan stream] connect failed', error)
+    const message = credentials.value
+      ? formatStreamError(error, credentials.value.whepUrl || credentials.value.url)
+      : getErrorMessage(error, 'Unable to fetch stream credentials from the API.')
     errorMessage.value = message
     emit('error', message)
-    await disconnectStream()
+    await teardownPlayer()
   } finally {
-    loadingStream.value = false
+    if (generation === connectionGeneration) {
+      loadingStream.value = false
+    }
   }
 }
 
 async function stopStream(): Promise<void> {
   errorMessage.value = null
   await disconnectStream()
+}
+
+function toggleStreamMode(): void {
+  if (!canToggleMode.value) {
+    return
+  }
+  streamMode.value = streamMode.value === 'webrtc' ? 'hls' : 'webrtc'
+  streamNotice.value = null
 }
 
 async function captureFrame(): Promise<void> {
@@ -193,7 +283,13 @@ onUnmounted(() => {
       class="relative bg-[#0d1218]"
       :class="fill ? 'min-h-0 flex-1' : 'aspect-video'"
     >
-      <div ref="videoContainer" class="absolute inset-0" />
+      <video
+        ref="videoElement"
+        class="absolute inset-0 h-full w-full object-cover"
+        autoplay
+        muted
+        playsinline
+      />
       <div
         v-if="connectionState !== 'live'"
         class="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6 text-center"
@@ -238,6 +334,14 @@ onUnmounted(() => {
       <button
         type="button"
         class="yoda-btn yoda-btn--outline cursor-pointer"
+        :disabled="!canToggleMode"
+        @click="toggleStreamMode"
+      >
+        {{ modeButtonLabel }}
+      </button>
+      <button
+        type="button"
+        class="yoda-btn yoda-btn--outline cursor-pointer"
         :disabled="!canCapture"
         @click="captureFrame"
       >
@@ -261,6 +365,9 @@ onUnmounted(() => {
       </span>
     </div>
 
+    <p v-if="streamNotice" class="border-t border-[var(--border)] px-5 py-3 text-sm text-[var(--muted)]">
+      {{ streamNotice }}
+    </p>
     <p v-if="captureMessage" class="border-t border-[var(--border)] px-5 py-3 text-sm text-[var(--live)]">
       {{ captureMessage }}
     </p>

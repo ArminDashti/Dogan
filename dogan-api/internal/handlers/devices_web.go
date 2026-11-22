@@ -195,7 +195,6 @@ func toTelemetrySnapshot(metrics models.DeviceMetricsRecord) models.DeviceTeleme
 	}
 }
 
-
 func toMetricReading(item models.DeviceMetricsRecord) models.MetricReading {
 	return models.MetricReading{
 		Timestamp:                 item.RecordedAt,

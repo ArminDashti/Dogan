@@ -2,7 +2,7 @@
 
 ## Responsibility
 
-Build and deploy the dogan Compose stack (`dogan-api`, `dogan-cv`, `dogan-livekit`, plus `dogan-webui` from its own compose file) locally or over SSH via YAML-only scripts under `.armin/docker-scripts/`. `dogan-cv` stores camera JPEGs and calls Pont vision. The API reaches it at `DOGAN_CV_URL` (default `http://dogan-cv:8090`) on the shared `/data` volume.
+Build and deploy the dogan Compose stack (`dogan-api`, `dogan-cv`, `dogan-mediamtx`, `dogan-turn`, plus `dogan-webui` from its own compose file) locally or over SSH via YAML-only scripts under `.armin/docker-scripts/`. `dogan-cv` stores camera JPEGs and calls Pont vision. The API reaches it at `DOGAN_CV_URL` (default `http://dogan-cv:8090`) on the shared `/data` volume.
 
 ## Entry points
 
@@ -44,12 +44,12 @@ Compose sets `DOGAN_CORS_ALLOWED_ORIGINS` (local web + `https://dogan.xaigrok.ir
 
 ## Public T3 (443/TCP only)
 
-Use overlay + TURN profile (no public UDP / `7881`):
+Use the T3 overlay with the distinct MediaMTX and coturn services (no public media UDP):
 
 | File | Role |
 |------|------|
-| `docker-compose.t3.yml` | Clears LiveKit host ports; sets `DOGAN_LIVEKIT_PUBLIC_URL=wss://dogan-livekit.xaigrok.ir` |
-| `livekit.t3.yaml` | `use_external_ip` + LiveKit-embedded TURN (`dogan-turn.xaigrok.ir`, `external_tls`) |
+| `docker-compose.t3.yml` | Clears MediaMTX host port publishes; sets `DOGAN_MEDIAMTX_WEBRTC_PUBLIC_URL=https://dogan-media.xaigrok.ir` and `DOGAN_MEDIAMTX_HLS_PUBLIC_URL=https://dogan-hls.xaigrok.ir` |
+| `mediamtx.yml` | HTTP auth callback to `dogan-api` + coturn TURN relay via `dogan-turn.xaigrok.ir` |
 
 Full subdomain / HAProxy / DNS rules: [public-443-subdomains.md](public-443-subdomains.md).
 
@@ -59,6 +59,6 @@ docker compose -f docker-compose.yml -f docker-compose.t3.yml up -d
 
 ## Dependencies
 
-- `Dockerfile`, `docker-compose.yml`, `docker-compose.t3.yml`, `livekit.yaml`, `livekit.t3.yaml`
+- `Dockerfile`, `docker-compose.yml`, `docker-compose.t3.yml`, `mediamtx.yml`, `.env.example`
 - Docker CLI; remote also needs SSH alias (or `sshpass` for password mode) + `scp`
 - Local publish defaults to host port `30251` via YAML (`lexmora-api` already owns `8080` on shared hosts)

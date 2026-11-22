@@ -1,21 +1,50 @@
 # Overlay for Irancell-T3 active stack (/cloud-admin/docker/dogan).
-# Service names there are short: livekit, api, webui, pgsql.
+# Service names there are short: mediamtx, turn, api, webui, pgsql.
 #
-#   docker compose -f docker-compose.yml -f docker-compose.t3.yml up -d --force-recreate livekit api
-#
-# Requires livekit.yaml to be the T3 TURN profile (copy from livekit.t3.yaml).
-# Local PC: keep plain docker-compose.yml + livekit.yaml (LAN ICE / UDP).
+#   docker compose -f docker-compose.yml -f docker-compose.t3.yml up -d --force-recreate mediamtx turn api
 services:
-  livekit:
+  mediamtx:
     expose:
-      - "7880"
-      - "7881"
+      - "8889"
+      - "8888"
+      - "9997"
+    ports: !reset
+      - target: 8189
+        published: 8189
+        protocol: udp
+      - target: 8189
+        published: 8189
+        protocol: tcp
+    environment:
+      MTX_WEBRTCADDITIONALHOSTS: ${DOGAN_MEDIAMTX_ADDITIONAL_HOSTS:-2.144.27.124}
+      MTX_AUTHHTTPADDRESS: ${DOGAN_MEDIAMTX_AUTH_URL:-http://dogan-api:8080/dogan/api/v1/mediamtx/auth}
+
+  turn:
+    image: coturn/coturn:4.19
+    command:
+      - --listening-port=5349
+      - --no-tls
+      - --no-dtls
+      - --fingerprint
+      - --realm=dogan-turn.xaigrok.ir
+      - --no-cli
+      - --min-port=49160
+      - --max-port=49200
+      - --use-auth-secret
+      - --static-auth-secret=${DOGAN_TURN_SECRET:?set DOGAN_TURN_SECRET}
+    expose:
       - "5349"
     ports: !reset []
 
   api:
     environment:
-      DOGAN_LIVEKIT_URL: ${DOGAN_LIVEKIT_URL:-ws://dogan-livekit:7880}
-      DOGAN_LIVEKIT_PUBLIC_URL: ${DOGAN_LIVEKIT_PUBLIC_URL:-wss://dogan-livekit.xaigrok.ir}
-      DOGAN_LIVEKIT_TURN_DOMAIN: ${DOGAN_LIVEKIT_TURN_DOMAIN:-dogan-turn.xaigrok.ir}
-      DOGAN_LIVEKIT_TURN_EXTERNAL_TLS: ${DOGAN_LIVEKIT_TURN_EXTERNAL_TLS:-true}
+      DOGAN_MEDIAMTX_WEBRTC_PUBLIC_URL: ${DOGAN_MEDIAMTX_WEBRTC_PUBLIC_URL:-https://dogan-media.xaigrok.ir}
+      DOGAN_MEDIAMTX_HLS_PUBLIC_URL: ${DOGAN_MEDIAMTX_HLS_PUBLIC_URL:-https://dogan-hls.xaigrok.ir}
+      DOGAN_MEDIAMTX_API_URL: ${DOGAN_MEDIAMTX_API_URL:-http://mediamtx:9997}
+      DOGAN_STREAM_TOKEN_SECRET: ${DOGAN_STREAM_TOKEN_SECRET:-}
+      DOGAN_STREAM_TOKEN_TTL: ${DOGAN_STREAM_TOKEN_TTL:-3600}
+      DOGAN_TURN_DOMAIN: ${DOGAN_TURN_DOMAIN:-dogan-turn.xaigrok.ir}
+      DOGAN_TURN_EXTERNAL_TLS: ${DOGAN_TURN_EXTERNAL_TLS:-true}
+      DOGAN_TURN_SECRET: ${DOGAN_TURN_SECRET:?set DOGAN_TURN_SECRET}
+      DOGAN_TURN_TTL: ${DOGAN_TURN_TTL:-86400}
+      DOGAN_ICE_SERVER_URLS: ${DOGAN_ICE_SERVER_URLS:-}

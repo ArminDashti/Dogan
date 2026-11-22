@@ -19,12 +19,13 @@ type AuthResponse struct {
 }
 
 type HealthResponse struct {
-	Status            string    `json:"status"`
-	Timestamp         time.Time `json:"timestamp"`
-	LiveKitConfigured bool      `json:"livekit_configured"`
-	LiveKitClientURL  string    `json:"livekit_client_url,omitempty"`
-	LiveKitWarnings   []string  `json:"livekit_warnings,omitempty"`
-	TurnDomain        string    `json:"turn_domain,omitempty"`
+	Status              string    `json:"status"`
+	Timestamp           time.Time `json:"timestamp"`
+	StreamingConfigured bool      `json:"streaming_configured"`
+	StreamingWebRTCURL  string    `json:"streaming_webrtc_url,omitempty"`
+	StreamingHLSURL     string    `json:"streaming_hls_url,omitempty"`
+	StreamingWarnings   []string  `json:"streaming_warnings,omitempty"`
+	TurnDomain          string    `json:"turn_domain,omitempty"`
 }
 
 type EndpointDescriptor struct {
@@ -67,24 +68,24 @@ type DeviceMetricsPayload struct {
 }
 
 type DeviceMetricsRecord struct {
-	DeviceID           string    `json:"device_id"`
-	BatteryLevel       *float64  `json:"battery_level_percent,omitempty"`
-	SignalStrength     *int      `json:"signal_strength_dbm,omitempty"`
-	NetworkType        string    `json:"network_type,omitempty"`
-	TemperatureC       *float64  `json:"temperature_celsius,omitempty"`
-	Latitude           *float64  `json:"latitude,omitempty"`
-	Longitude          *float64  `json:"longitude,omitempty"`
-	CabinNoiseRMS      *float64  `json:"cabin_noise_rms,omitempty"`
-	GPSSignalQuality   string    `json:"gps_signal_quality,omitempty"`
-	SpeedKmh           *float64  `json:"speed_kmh,omitempty"`
-	AmbientLightLux    *float64  `json:"ambient_light_lux,omitempty"`
-	ServerLatencyMs    *int      `json:"server_latency_ms,omitempty"`
-	DeviceIPAddress    string    `json:"device_ip_address,omitempty"`
-	Jolt               *float64  `json:"jolt,omitempty"`
-	CPUUsagePercent    *float64  `json:"cpu_usage_percent,omitempty"`
-	RAMUsagePercent    *float64  `json:"ram_usage_percent,omitempty"`
-	RecordedAt         time.Time `json:"recorded_at"`
-	ReceivedAt         time.Time `json:"received_at"`
+	DeviceID         string    `json:"device_id"`
+	BatteryLevel     *float64  `json:"battery_level_percent,omitempty"`
+	SignalStrength   *int      `json:"signal_strength_dbm,omitempty"`
+	NetworkType      string    `json:"network_type,omitempty"`
+	TemperatureC     *float64  `json:"temperature_celsius,omitempty"`
+	Latitude         *float64  `json:"latitude,omitempty"`
+	Longitude        *float64  `json:"longitude,omitempty"`
+	CabinNoiseRMS    *float64  `json:"cabin_noise_rms,omitempty"`
+	GPSSignalQuality string    `json:"gps_signal_quality,omitempty"`
+	SpeedKmh         *float64  `json:"speed_kmh,omitempty"`
+	AmbientLightLux  *float64  `json:"ambient_light_lux,omitempty"`
+	ServerLatencyMs  *int      `json:"server_latency_ms,omitempty"`
+	DeviceIPAddress  string    `json:"device_ip_address,omitempty"`
+	Jolt             *float64  `json:"jolt,omitempty"`
+	CPUUsagePercent  *float64  `json:"cpu_usage_percent,omitempty"`
+	RAMUsagePercent  *float64  `json:"ram_usage_percent,omitempty"`
+	RecordedAt       time.Time `json:"recorded_at"`
+	ReceivedAt       time.Time `json:"received_at"`
 }
 
 type GPSLocation struct {
@@ -115,16 +116,16 @@ type TelemetryPayload struct {
 
 // DeviceTelemetrySnapshot is the web live dashboard shape (GET /devices/:id/telemetry).
 type DeviceTelemetrySnapshot struct {
-	DeviceID                   string    `json:"device_id"`
-	BatteryPercent             float64   `json:"battery_percent"`
-	BatteryTemperatureCelsius  float64   `json:"battery_temperature_celsius"`
-	NoiseDb                    float64   `json:"noise_db"`
-	Jolt                       float64   `json:"jolt"`
-	SignalStrength             float64   `json:"signal_strength"`
-	NetworkType                string    `json:"network_type"`
-	ServerPhoneLatencyMs       float64   `json:"server_phone_latency_ms"`
-	ServerWebLatencyMs         float64   `json:"server_web_latency_ms"`
-	RecordedAt                 time.Time `json:"recorded_at"`
+	DeviceID                  string    `json:"device_id"`
+	BatteryPercent            float64   `json:"battery_percent"`
+	BatteryTemperatureCelsius float64   `json:"battery_temperature_celsius"`
+	NoiseDb                   float64   `json:"noise_db"`
+	Jolt                      float64   `json:"jolt"`
+	SignalStrength            float64   `json:"signal_strength"`
+	NetworkType               string    `json:"network_type"`
+	ServerPhoneLatencyMs      float64   `json:"server_phone_latency_ms"`
+	ServerWebLatencyMs        float64   `json:"server_web_latency_ms"`
+	RecordedAt                time.Time `json:"recorded_at"`
 }
 
 type MetricReading struct {
@@ -271,24 +272,32 @@ type WebRTCConnectionRecord struct {
 	ConnectedAt    time.Time  `json:"connected_at"`
 	DisconnectedAt *time.Time `json:"disconnected_at,omitempty"`
 	Status         string     `json:"status"`
+	Live           *bool      `json:"live,omitempty"`
 }
 
-type LiveKitTokenRequest struct {
+type StreamTokenRequest struct {
 	DeviceID string `json:"device_id" binding:"required"`
 	Identity string `json:"identity"`
 	Role     string `json:"role"`
 }
 
-type LiveKitTokenResponse struct {
-	Token     string    `json:"token"`
-	URL       string    `json:"url"`
-	Room      string    `json:"room"`
-	Identity  string    `json:"identity"`
-	ExpiresAt time.Time `json:"expires_at"`
+type StreamTokenResponse struct {
+	Token      string            `json:"token"`
+	URL        string            `json:"url"`
+	Room       string            `json:"room"`
+	Path       string            `json:"path"`
+	Identity   string            `json:"identity"`
+	Role       string            `json:"role"`
+	WHIPURL    string            `json:"whip_url,omitempty"`
+	WHEPURL    string            `json:"whep_url,omitempty"`
+	HLSURL     string            `json:"hls_url,omitempty"`
+	ExpiresAt  time.Time         `json:"expires_at"`
+	IceServers []IceServerConfig `json:"ice_servers"`
 }
 
 type WebRTCSessionRequest struct {
 	DeviceID string `json:"device_id" binding:"required"`
+	Identity string `json:"identity"`
 }
 
 type IceServerConfig struct {
@@ -301,7 +310,9 @@ type WebRTCSessionResponse struct {
 	SessionID  string            `json:"session_id"`
 	Token      string            `json:"token"`
 	URL        string            `json:"url"`
+	WHIPURL    string            `json:"whip_url"`
 	Room       string            `json:"room"`
+	Path       string            `json:"path"`
 	Identity   string            `json:"identity"`
 	ExpiresAt  time.Time         `json:"expires_at"`
 	IceServers []IceServerConfig `json:"ice_servers"`
@@ -321,14 +332,17 @@ type DeviceListItem struct {
 }
 
 type DeviceStreamResponse struct {
-	DeviceID   string            `json:"device_id"`
-	Token      string            `json:"token"`
-	URL        string            `json:"url"`
-	Room       string            `json:"room"`
-	Identity   string            `json:"identity"`
-	ExpiresAt  time.Time         `json:"expires_at"`
-	IceServers []IceServerConfig `json:"ice_servers,omitempty"`
-	URLWarnings []string         `json:"url_warnings,omitempty"`
+	DeviceID    string            `json:"device_id"`
+	Token       string            `json:"token"`
+	URL         string            `json:"url"`
+	WHEPURL     string            `json:"whep_url"`
+	HLSURL      string            `json:"hls_url,omitempty"`
+	Room        string            `json:"room"`
+	Path        string            `json:"path"`
+	Identity    string            `json:"identity"`
+	ExpiresAt   time.Time         `json:"expires_at"`
+	IceServers  []IceServerConfig `json:"ice_servers,omitempty"`
+	URLWarnings []string          `json:"url_warnings,omitempty"`
 }
 
 type WebLoginRequest struct {
@@ -352,10 +366,10 @@ type ErrorResponse struct {
 }
 
 type VisionAnalyzeRequest struct {
-	DeviceID     string `json:"device_id"`
-	ImageID      int64  `json:"image_id"`
-	ImageBase64  string `json:"image_base64"`
-	Prompt       string `json:"prompt"`
+	DeviceID    string `json:"device_id"`
+	ImageID     int64  `json:"image_id"`
+	ImageBase64 string `json:"image_base64"`
+	Prompt      string `json:"prompt"`
 }
 
 type VisionAnalyzeResponse struct {

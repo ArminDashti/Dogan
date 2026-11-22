@@ -12,13 +12,16 @@ Shared REST client and per-resource fetch functions for the Dogan backend.
 | `telemetry.ts` | `fetchDeviceTelemetry` | `GET /devices/:id/telemetry` |
 | `capture.ts` | `captureDeviceFrame` | `POST /devices/:id/capture` |
 | `stream.ts` | `fetchStreamCredentials` | `GET /devices/:id/stream` |
+| `health.ts` | `fetchHealth` | `GET /health` (no auth) |
+| `logs.ts` | `fetchLoginLogs`, `fetchWebRtcConnections` | Audit endpoints |
 | `devices.ts` | `fetchDevices` | `GET /devices` |
 | `metrics.ts` | `fetchDeviceMetrics` | `GET /devices/:id/metrics` |
 
 ## Conventions
 
-- All backend JSON uses snake_case; services map to camelCase for the UI (telemetry, capture, stream, metrics, gallery, settings).
+- All backend JSON uses snake_case; services map to camelCase for the UI (telemetry, capture, stream, metrics, gallery, settings, health).
 - Devices list fields (`id`, `name`, `status`, `location`) are identical in both conventions.
+- Stream credentials include `whep_url`, optional `hls_url`, `path`, and `ice_servers` with relay credentials.
 
 ## Dependencies
 

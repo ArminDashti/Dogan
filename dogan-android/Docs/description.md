@@ -1,12 +1,12 @@
 # Dogan — Project Description
 
-Dogan is a Kotlin Android app for multi-mode vehicle monitoring and driving assistance (Watchman, Copilot, OFF). It captures camera frames on a duty cycle (open → still → close), detects vehicle jolts and cabin sound spikes, uploads telemetry to a Dogan server, and streams via LiveKit in Watchman when connected.
+Dogan is a Kotlin Android app for multi-mode vehicle monitoring and driving assistance (Watchman, Copilot, OFF). It captures camera frames on a duty cycle (open → still → close), detects vehicle jolts and cabin sound spikes, uploads telemetry to a Dogan server, and streams via MediaMTX WHIP in Watchman when connected.
 
 ## Tech stack
 
 - Kotlin, Android 10–17 (`minSdk` 29, `targetSdk` 37, `compileSdk` 37)
 - Android Gradle Plugin **9.1.1** + Gradle **9.3.1** (required for `compileSdk` 37; built-in Kotlin — no `kotlin-android` plugin)
-- CameraX, DataStore, OkHttp, LiveKit Android SDK
+- CameraX, DataStore, OkHttp, org.webrtc (MediaMTX WHIP)
 
 ## How to run
 
@@ -15,7 +15,7 @@ Dogan is a Kotlin Android app for multi-mode vehicle monitoring and driving assi
    - Windows: `.\install-on-phone-directly.ps1` (rebuilds from current sources by default; add `-Launch` to open the app, `-SkipBuild` to reuse an existing APK)
    - macOS/Linux: `./scripts/install-apk.sh --build --launch`
    - Or export only: `.\scripts\export-apk.ps1` / `./scripts/export-apk.sh`, then `adb install -r <apk>`
-3. Open **Connectivity** (defaults: `dogan-api.xaigrok.ir:443`, `dogan-livekit.xaigrok.ir:443`, `armin`/`dogan123`), Connect manually if needed, then pick a mode on the main grid.
+3. Open **Connectivity** (defaults: `dogan-api.xaigrok.ir:443`, `dogan-media.xaigrok.ir:443`, `armin`/`dogan123`), Connect manually if needed, then pick a mode on the main grid.
 
 ## Main UI
 

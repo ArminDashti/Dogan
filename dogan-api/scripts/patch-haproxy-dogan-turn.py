@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""Idempotent HAProxy patch for dogan-turn SNI → LiveKit TURN :5349."""
+"""Idempotent HAProxy patch for dogan-turn SNI to coturn TURN :5349."""
 from pathlib import Path
 
 CFG = Path("/cloud-admin/docker-volumes/reverse-proxy/haproxy/config/haproxy.cfg")
 text = CFG.read_text()
 
-needle = "    use_backend be_ssl_offload if { req_ssl_sni -i dogan-livekit.xaigrok.ir }\n"
+needle = "    use_backend be_ssl_offload if { req_ssl_sni -i dogan-turn.xaigrok.ir }\n"
 insert = needle + "    use_backend be_dogan_turn_edge if { req_ssl_sni -i dogan-turn.xaigrok.ir }\n"
 block = """
-# Dogan TURN TLS (443 SNI) → LiveKit plain TURN :5349
+# Dogan TURN TLS (443 SNI) to plain TURN :5349
 backend be_dogan_turn_edge
     mode tcp
     server turn_ssl 127.0.0.1:13443
@@ -23,13 +23,13 @@ backend be_dogan_turn
     timeout connect 5s
     timeout client  1h
     timeout server  1h
-    server dogan_livekit_turn dogan-livekit:5349 check resolvers docker resolve-prefer ipv4
+    server dogan_turn dogan-turn:5349 check resolvers docker resolve-prefer ipv4
 """
 
 changed = False
 if "be_dogan_turn_edge" not in text:
     if needle not in text:
-        raise SystemExit("needle for dogan-livekit SNI not found")
+        raise SystemExit("needle for dogan-turn SNI not found")
     text = text.replace(needle, insert, 1)
     changed = True
 

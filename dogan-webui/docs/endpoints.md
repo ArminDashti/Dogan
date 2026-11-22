@@ -12,7 +12,7 @@ Canonical contract (shared with Android + server): see `dogan-server/endpoints.m
 | GET | `/devices` | Yes | List devices (name, location, status) |
 | GET | `/devices/:id/metrics` | Yes | Temperature + noise history |
 | GET | `/devices/:id/telemetry` | Yes | Live telemetry snapshot |
-| GET | `/devices/:id/stream` | Yes | LiveKit credentials |
+| GET | `/devices/:id/stream` | Yes | WHEP/HLS stream credentials |
 | POST | `/devices/:id/capture` | Yes | Trigger frame capture on device |
 | GET | `/images` | Yes | Gallery images |
 | GET | `/settings` | Yes | Web user preferences |
@@ -32,7 +32,7 @@ All responses and request bodies use **snake_case**. Service layer maps to camel
 
 ### Stream
 
-`device_id`, `token`, `url`, `room`, `identity`, `expires_at`
+`device_id`, `token`, `url`, `whep_url`, `hls_url`, `path`, `room`, `identity`, `expires_at`, `ice_servers`, `url_warnings`
 
 ### Settings
 

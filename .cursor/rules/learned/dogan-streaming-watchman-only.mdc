@@ -1,0 +1,20 @@
+---
+description: MediaMTX WHIP publisher runs only in Watchman mode. Use when changing CaptureService streaming, Copilot settings, or stream mode gates.
+---
+
+# MediaMTX WHIP Watchman-only publisher
+
+**Goal:** Keep Android WHIP media publish tied to Watchman, not Copilot. Status: unverified (post-migration).
+
+## Steps
+1. Gate in `CaptureService.maybeStartStreaming`: start only when `operatingMode == OperatingMode.WATCHER` and connected; otherwise `whipStreamer.stop()`.
+2. Do not add Copilot live-stream toggles (`copilot_live_stream_enabled` was removed).
+3. Keep Connectivity probes, API token/session routes, the WebUI WHEP subscriber, and `WhipStreamer` — they are shared.
+
+## Gotchas
+- UI “Streaming Connected (N sessions)” is a probe/session count, not proof of publish (unverified (post-migration)).
+- Watchman publishes automatically when Connectivity is connected; there is no separate Watchman streaming switch (unverified (post-migration)).
+
+## What didn't work
+- Starting WHIP from Copilot (with a Copilot switch) while stopping it on Watchman — inverted product intent and left the web live view dark in Watchman.
+- Deleting the whole streaming stack (API/WebUI/Docker) when only the Copilot publisher path was wrong.

@@ -48,7 +48,7 @@ class DiagnosticsActivity : AppCompatActivity() {
             val results = when (type) {
                 TestType.INTERNET -> listOf(tester.testInternet())
                 TestType.SERVER_API -> listOf(tester.testServerApi(settings.serverBaseUrl))
-                TestType.WEBRTC -> listOf(tester.testLiveKit(settings.serverBaseUrl))
+                TestType.WEBRTC -> listOf(tester.testStreaming(settings.serverBaseUrl))
                 TestType.ALL -> tester.runAll(settings.serverBaseUrl)
             }
 

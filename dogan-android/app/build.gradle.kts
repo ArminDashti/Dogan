@@ -11,8 +11,8 @@ android {
         applicationId = "com.dogan"
         minSdk = 29
         targetSdk = 37
-        versionCode = 14
-        versionName = "2.5.5"
+        versionCode = 15
+        versionName = "3.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -58,7 +58,5 @@ dependencies {
 
     implementation("com.google.android.gms:play-services-location:21.3.0")
 
-    val livekitVersion = "2.27.0"
-    implementation("io.livekit:livekit-android:$livekitVersion")
-    implementation("io.livekit:livekit-android-camerax:$livekitVersion")
+    implementation("io.github.webrtc-sdk:android:144.7559.15")
 }

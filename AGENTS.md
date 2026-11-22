@@ -153,11 +153,10 @@ After any change, always:
 ## Learned User Preferences
 
 - Android settings other than Copilot come from the server. Copilot settings stay on the device. App sections are Copilot, Watchman, Settings, Logs, and Test. Sign-in is baked into the APK with username `dogan`; do not record the password.
-- Verify Android against the API and LiveKit on the emulator over the real network path. A LAN-only check is not enough. Confirm LiveKit and image POST before calling the test done.
+- Verify Android against the API and MediaMTX WHIP publish on the emulator over the real network path. A LAN-only check is not enough. Confirm WHEP/HLS playback and image POST before calling the test done.
 
 ## Learned Workspace Facts
 
-- Local Docker is the four containers `dogan-api`, `dogan-cv`, `dogan-webui`, and `dogan-livekit`. `dogan-cv` processes images.
+- Local Docker is five containers: `dogan-api`, `dogan-cv`, `dogan-webui`, `dogan-mediamtx`, and `dogan-turn`. `dogan-cv` processes images.
 - Production Dogan WebUI is `https://dogan.xaigrok.ir/` (Irancell T3).
-- On this PC, LiveKit is reached on port `17880`. `ws://localhost:7880` does not open.
-- Android Watchman publishes LiveKit only through the TURN relay on TCP 443 (`turns://dogan-turn.xaigrok.ir:443?transport=tcp`). Signaling is `wss://dogan-livekit.xaigrok.ir`. Direct UDP is not the production path.
+- Android Watchman publishes over WHIP to MediaMTX only through the TURN relay on TCP 443 (`turns://dogan-turn.xaigrok.ir:443?transport=tcp`), served by the `dogan-turn` coturn container; WHIP/WHEP host is `dogan-media.xaigrok.ir`. Direct UDP is not the production path (unverified (post-migration)).

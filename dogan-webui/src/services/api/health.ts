@@ -4,9 +4,10 @@ import type { HealthStatus } from '@/types/api'
 interface HealthWire {
   status: string
   timestamp: string
-  livekit_configured?: boolean
-  livekit_client_url?: string
-  livekit_warnings?: string[]
+  streaming_configured?: boolean
+  streaming_webrtc_url?: string
+  streaming_hls_url?: string
+  streaming_warnings?: string[]
   turn_domain?: string
 }
 
@@ -15,9 +16,10 @@ export async function fetchHealth(): Promise<HealthStatus> {
   return {
     status: raw.status,
     timestamp: raw.timestamp,
-    livekitConfigured: Boolean(raw.livekit_configured),
-    livekitClientUrl: raw.livekit_client_url,
-    livekitWarnings: raw.livekit_warnings,
+    streamingConfigured: Boolean(raw.streaming_configured),
+    streamingWebRtcUrl: raw.streaming_webrtc_url,
+    streamingHlsUrl: raw.streaming_hls_url,
+    streamingWarnings: raw.streaming_warnings,
     turnDomain: raw.turn_domain,
   }
 }

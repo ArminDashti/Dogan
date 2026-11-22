@@ -55,7 +55,7 @@
             android:textColor="@color/dogan_on_surface" />
 
         <TextView
-            android:id="@+id/liveKitStatusTxt"
+            android:id="@+id/streamStatusTxt"
             android:fontFamily="@font/ibm_plex_mono_medium"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

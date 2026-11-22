@@ -18,13 +18,13 @@ Response:
 { "token": "<bearer>", "expires_at": "2026-07-11T12:00:00Z" }
 ```
 
-The bearer token authorizes REST calls and LiveKit session creation.
+The bearer token authorizes REST calls and MediaMTX WHIP streaming session creation.
 
 ## Health
 
 ### GET /health
 
-Returns HTTP 200 when the server is reachable. Used for latency measurement.
+Returns HTTP 200 when the server is reachable. Used for latency measurement; reports `streaming_configured` for MediaMTX availability.
 
 ## Sounds
 
@@ -112,9 +112,9 @@ Multipart form:
 - `metadata` — JSON with `segment_id`, `start_ms`, `end_ms`, `rms_peak`, `linked_alert_id`, `mode`, `device_id`
 - `audio` — WAV file
 
-## WebRTC (LiveKit)
+## WebRTC (MediaMTX WHIP)
 
-Streaming uses **LiveKit**. The server issues short-lived tokens; Android and web connect directly to the LiveKit server. Custom WebSocket signaling is not used.
+Streaming uses **MediaMTX over WHIP/WHEP**. The server issues short-lived stream tokens; Android publishes with an HTTP POST of SDP to the WHIP URL, and the web plays over WHEP. Custom WebSocket signaling is not used.
 
 ### POST /streaming/token
 
@@ -133,7 +133,9 @@ Response:
 ```json
 {
   "token": "<jwt>",
-  "url": "ws://localhost:7880",
+  "url": "http://localhost:8889/device-<android_id>/whip",
+  "whip_url": "http://localhost:8889/device-<android_id>/whip",
+  "path": "device-<android_id>",
   "room": "device-<android_id>",
   "identity": "publisher-<android_id>",
   "expires_at": "2026-07-14T10:00:00Z"
@@ -154,7 +156,9 @@ Response:
 {
   "session_id": "device-abc123",
   "token": "<jwt>",
-  "url": "ws://localhost:7880",
+  "url": "http://localhost:8889/device-abc123/whip",
+  "whip_url": "http://localhost:8889/device-abc123/whip",
+  "path": "device-abc123",
   "room": "device-abc123",
   "identity": "publisher-abc123",
   "expires_at": "2026-07-14T10:00:00Z",
@@ -166,7 +170,7 @@ Response:
 
 ### GET /webrtc/connections?device-id=
 
-Lists recent LiveKit session records for a device.
+Lists recent WHIP streaming session records for a device.
 
 ## Deprecated Endpoints
 
@@ -180,6 +184,6 @@ This document is the Android client contract. The Go server at `/dogan/api/v1` i
 Docker compose (`dogan.yml`) publishes:
 - API: host **8090** → container `8080` → clients use `http://host:8090/dogan`
 - Web UI: host **8092**; baked `VITE_API_BASE_URL` = `http://host:8090/dogan/api/v1`
-- LiveKit: **7880** (WS), **7881** (TCP), **7882** (UDP); public URL `ws://host:7880`
+- MediaMTX WebRTC: **8889** (WHIP/WHEP HTTP); HLS **8888**; ICE UDP/TCP **8189**; public WHIP URL `http://host:8889`
 - Device API key default: `dogan-dev-key`
 

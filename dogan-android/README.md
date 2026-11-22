@@ -1,6 +1,6 @@
 # Dogan (Android 10–17)
 
-Multi-mode Kotlin Android app for vehicle monitoring and driving assistance. Supports Watchman and Copilot modes with motion/sound alerts, Watchman-only LiveKit WebRTC streaming, and telemetry upload to a configurable **Dogan** HTTP server.
+Multi-mode Kotlin Android app for vehicle monitoring and driving assistance. Supports Watchman and Copilot modes with motion/sound alerts, Watchman-only MediaMTX WHIP WebRTC streaming, and telemetry upload to a configurable **Dogan** HTTP server.
 
 ## Overview
 
@@ -21,7 +21,7 @@ Multi-mode Kotlin Android app for vehicle monitoring and driving assistance. Sup
 2. Open **Settings** and set server address and API key (`dogan-dev-key` default).
 3. Select operating mode on the main screen.
 4. Connect to server in Settings, then select a camera to start monitoring.
-5. Use **Diagnostics** to test internet, server API, and LiveKit WebRTC session.
+5. Use **Diagnostics** to test internet, server API, and MediaMTX WHIP streaming session.
 
 ## Telemetry
 

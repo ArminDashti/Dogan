@@ -17,9 +17,9 @@
 | Item | Value |
 |------|-------|
 | Volume dir | `/home/cloud-admin/docker/dogan` |
-| Containers | `dogan-api` (SQLite on api volume), `dogan-livekit`, `dogan-webui` (on `t3-net`) |
+| Containers | `dogan-api` (SQLite on api volume), `dogan-mediamtx`, `dogan-turn` (coturn), `dogan-webui` (on `t3-net`) (unverified (post-migration)) |
 | Image | `dogan-api:latest`; web UI `dogan-web:latest` |
-| HAProxy hosts | `dogan-api.xaigrok.ir` → `dogan-api:8080`; `dogan-livekit.xaigrok.ir` → `livekit:7880`; `dogan.xaigrok.ir` → `dogan-webui:80` |
+| HAProxy hosts | `dogan-api.xaigrok.ir` → `dogan-api:8080`; `dogan-media.xaigrok.ir` → `mediamtx:8889` (WHIP/WHEP); `dogan-hls.xaigrok.ir` → `mediamtx:8888`; `dogan-turn.xaigrok.ir` → TLS terminate → `dogan-turn:5349`; `dogan.xaigrok.ir` → `dogan-webui:80` (unverified (post-migration)) |
 | Web UI volume | `/cloud-admin/docker-volumes/dogan-web:/data` |
 
 ### Notes

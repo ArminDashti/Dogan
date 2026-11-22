@@ -24,7 +24,7 @@ object ServerConnectionManager {
     fun connect(context: Context, settings: AppSettings): Boolean {
         _status.value = ConnectionStatus.CONNECTING
         lastError = null
-        LiveKitStatusCache.setError(null)
+        StreamStatusCache.setError(null)
         SessionCredentials.updateFrom(settings)
         AppLogger.info("Server", "Connecting to ${settings.serverBaseUrl}")
 
@@ -37,12 +37,12 @@ object ServerConnectionManager {
 
         val deviceId = DeviceIdentity.resolveDeviceId(context)
         val client = DoganApiClient(deviceId = deviceId)
-        val probe = client.connectWithApiAndLiveKit(settings.serverBaseUrl)
+        val probe = client.connectWithApiAndStreaming(settings.serverBaseUrl)
 
         if (!probe.apiOk) {
             _status.value = ConnectionStatus.FAILED
             lastError = probe.error ?: "Authentication or health check failed"
-            LiveKitStatusCache.clear()
+            StreamStatusCache.clear()
             AppLogger.error("Server", lastError!!)
             client.consumeSslWarning()?.let { warning ->
                 AppLogger.warn("SSL", warning)
@@ -57,12 +57,12 @@ object ServerConnectionManager {
         AppLogger.info("Server", "API connected")
         ServerSettingsSync.start(context)
         refreshPing(context, settings)
-        refreshLiveKitStatus(client, settings.serverBaseUrl, probe.liveKitOk, probe.error)
+        refreshStreamingStatus(client, settings.serverBaseUrl, probe.streamingOk, probe.error)
         client.consumeSslWarning()?.let { warning ->
             AppLogger.warn("SSL", warning)
         }
-        if (!probe.liveKitOk) {
-            lastError = probe.error ?: "LiveKit is not available"
+        if (!probe.streamingOk) {
+            lastError = probe.error ?: "Streaming is not available"
             AppLogger.warn("Server", lastError!!)
         }
         return true
@@ -74,7 +74,7 @@ object ServerConnectionManager {
         lastError = null
         SessionCredentials.clearToken()
         PingLatencyCache.clear()
-        LiveKitStatusCache.clear()
+        StreamStatusCache.clear()
         AppLogger.info("Server", "Disconnected")
     }
 
@@ -97,31 +97,31 @@ object ServerConnectionManager {
         }.start()
     }
 
-    fun refreshLiveKitConnections(context: Context, settings: AppSettings) {
+    fun refreshStreamingConnections(context: Context, settings: AppSettings) {
         if (!isConnected()) return
         Thread {
             SessionCredentials.updateFrom(settings)
             val client = DoganApiClient(deviceId = DeviceIdentity.resolveDeviceId(context))
-            refreshLiveKitStatus(client, settings.serverBaseUrl, liveKitOk = null, error = null)
+            refreshStreamingStatus(client, settings.serverBaseUrl, streamingOk = null, error = null)
         }.start()
     }
 
-    private fun refreshLiveKitStatus(
+    private fun refreshStreamingStatus(
         client: DoganApiClient,
         baseUrl: String,
-        liveKitOk: Boolean?,
+        streamingOk: Boolean?,
         error: String?,
     ) {
-        if (liveKitOk == false) {
-            LiveKitStatusCache.setError(error)
+        if (streamingOk == false) {
+            StreamStatusCache.setError(error)
         }
         val connections = client.listWebRtcConnections(baseUrl)
         val active = connections.count { it.isActive }
-        LiveKitStatusCache.setActiveSessionCount(active)
-        if (liveKitOk == true || LiveKitStatusCache.streaming.value || active > 0) {
-            LiveKitStatusCache.setError(null)
+        StreamStatusCache.setActiveSessionCount(active)
+        if (streamingOk == true || StreamStatusCache.streaming.value || active > 0) {
+            StreamStatusCache.setError(null)
         } else if (error != null) {
-            LiveKitStatusCache.setError(error)
+            StreamStatusCache.setError(error)
         }
     }
 }

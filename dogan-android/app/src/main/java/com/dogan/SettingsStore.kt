@@ -334,7 +334,7 @@ class SettingsStore(private val context: Context) {
         const val DEFAULT_PASSWORD = "Kp7#mQv2\$nLx9wRd4!bT"
         const val DEFAULT_API_ENDPOINT = "dogan-api.xaigrok.ir"
         const val DEFAULT_API_PORT = 443
-        const val DEFAULT_STREAM_ENDPOINT = "dogan-livekit.xaigrok.ir"
+        const val DEFAULT_STREAM_ENDPOINT = "dogan-media.xaigrok.ir"
         const val DEFAULT_STREAM_PORT = 443
         const val DEFAULT_CUSTOM_JOLT_SCALE = 1.0f
         const val DEFAULT_CUSTOM_SOUND_THRESHOLD = 2500.0

@@ -1,6 +1,6 @@
 # Dogan Web
 
-Vue 3 SPA for monitoring Dogan edge devices: sign in, view live telemetry, control camera streams via LiveKit, browse captured images, and manage preferences.
+Vue 3 SPA for monitoring Dogan edge devices: sign in, view live telemetry, control camera streams via MediaMTX WHEP/HLS, browse captured images, and manage preferences.
 
 ## Stack
 
@@ -8,8 +8,8 @@ Vue 3 SPA for monitoring Dogan edge devices: sign in, view live telemetry, contr
 - Vue Router + Pinia (auth session)
 - Tailwind CSS
 - Bricolage Grotesque + IBM Plex Mono (Google Fonts)
-- LiveKit client (WebRTC subscriber)
-- PWA via `vite-plugin-pwa` (installable; static asset precache; API/LiveKit stay network-only)
+- Browser WHEP client with HLS fallback for MediaMTX streams
+- PWA via `vite-plugin-pwa` (installable; static asset precache; API/WebRTC/HLS stay network-only)
 
 ## Entry points
 

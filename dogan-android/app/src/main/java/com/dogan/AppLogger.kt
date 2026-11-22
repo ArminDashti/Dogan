@@ -130,7 +130,7 @@ object AppLogger {
         if (explicit != null) return explicit
         return when (tag) {
             "Audio", "Watcher", "Watchman" -> LogSection.WATCHMAN
-            "Server", "LiveKit", "SSL", "SettingsSync", "Settings" -> LogSection.CONNECTIVITY
+            "Server", "Streaming", "SSL", "SettingsSync", "Settings" -> LogSection.CONNECTIVITY
             else -> LogSection.GENERAL
         }
     }

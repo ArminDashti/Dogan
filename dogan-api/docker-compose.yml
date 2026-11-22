@@ -1,28 +1,44 @@
 name: dogan
 
 services:
-  dogan-livekit:
-    image: livekit/livekit-server:latest
-    container_name: dogan-livekit
-    command: --config /etc/livekit.yaml
+  dogan-mediamtx:
+    image: bluenviron/mediamtx:1.21.4
+    container_name: dogan-mediamtx
     volumes:
-      - ./livekit.yaml:/etc/livekit.yaml:ro
-      - dogan-livekit-vol:/data
+      - ./mediamtx.yml:/mediamtx.yml:ro
     networks:
       - t3-net
     restart: "no"
     expose:
-      - "7880"
-      - "7881"
-      - "7882"
-    # Local/emulator: publish signaling + ICE UDP/TCP on the host.
-    # Public T3 is 443/TCP only — use docker-compose.t3.yml (TURN on :5349,
-    # no host UDP/7881). See Docs/modules/public-443-subdomains.md.
-    # Keep UDP publish range small - large ranges hang docker-proxy on this host.
+      - "8889"
+      - "8888"
+      - "8189"
+      - "9997"
     ports:
-      - "7880:7880"
-      - "7881:7881"
-      - "50000-50050:50000-50050/udp"
+      - "8889:8889"
+      - "8888:8888"
+      - "8189:8189/udp"
+      - "8189:8189/tcp"
+
+  dogan-turn:
+    image: coturn/coturn:4.19
+    container_name: dogan-turn
+    command:
+      - --listening-port=5349
+      - --no-tls
+      - --no-dtls
+      - --fingerprint
+      - --realm=dogan-turn.xaigrok.ir
+      - --no-cli
+      - --min-port=49160
+      - --max-port=49200
+      - --use-auth-secret
+      - --static-auth-secret=${DOGAN_TURN_SECRET:-dogan-dev-turn-secret}
+    networks:
+      - t3-net
+    restart: "no"
+    expose:
+      - "5349"
 
   dogan-cv:
     build:
@@ -52,7 +68,9 @@ services:
     image: ${API_IMAGE_TAG:-dogan-api:latest}
     container_name: dogan-api
     depends_on:
-      dogan-livekit:
+      dogan-mediamtx:
+        condition: service_started
+      dogan-turn:
         condition: service_started
       dogan-cv:
         condition: service_started
@@ -70,12 +88,16 @@ services:
       DOGAN_TOKEN_TTL: ${DOGAN_TOKEN_TTL:-86400}
       DOGAN_DATABASE_URL: file:/data/dogan.db
       DOGAN_FRAMES_DIR: /data/frames
-      DOGAN_LIVEKIT_URL: ${DOGAN_LIVEKIT_URL:-ws://dogan-livekit:7880}
-      # Local default; T3 overlay sets wss://dogan-livekit.xaigrok.ir
-      DOGAN_LIVEKIT_PUBLIC_URL: ${DOGAN_LIVEKIT_PUBLIC_URL:-ws://localhost:7880}
-      DOGAN_LIVEKIT_API_KEY: ${DOGAN_LIVEKIT_API_KEY:-devkey}
-      DOGAN_LIVEKIT_API_SECRET: ${DOGAN_LIVEKIT_API_SECRET:-secret}
-      DOGAN_LIVEKIT_TOKEN_TTL: ${DOGAN_LIVEKIT_TOKEN_TTL:-3600}
+      DOGAN_MEDIAMTX_WEBRTC_PUBLIC_URL: ${DOGAN_MEDIAMTX_WEBRTC_PUBLIC_URL:-http://localhost:8889}
+      DOGAN_MEDIAMTX_HLS_PUBLIC_URL: ${DOGAN_MEDIAMTX_HLS_PUBLIC_URL:-http://localhost:8888}
+      DOGAN_MEDIAMTX_API_URL: ${DOGAN_MEDIAMTX_API_URL:-http://dogan-mediamtx:9997}
+      DOGAN_STREAM_TOKEN_SECRET: ${DOGAN_STREAM_TOKEN_SECRET:-}
+      DOGAN_STREAM_TOKEN_TTL: ${DOGAN_STREAM_TOKEN_TTL:-3600}
+      DOGAN_TURN_DOMAIN: ${DOGAN_TURN_DOMAIN:-}
+      DOGAN_TURN_EXTERNAL_TLS: ${DOGAN_TURN_EXTERNAL_TLS:-true}
+      DOGAN_TURN_SECRET: ${DOGAN_TURN_SECRET:-dogan-dev-turn-secret}
+      DOGAN_TURN_TTL: ${DOGAN_TURN_TTL:-86400}
+      DOGAN_ICE_SERVER_URLS: ${DOGAN_ICE_SERVER_URLS:-}
       DOGAN_CORS_ALLOWED_ORIGINS: ${DOGAN_CORS_ALLOWED_ORIGINS:-http://localhost:30808,http://127.0.0.1:30808,http://localhost:8083,https://dogan.xaigrok.ir}
       DOGAN_CV_URL: ${DOGAN_CV_URL:-http://dogan-cv:8090}
     volumes:
@@ -92,5 +114,3 @@ networks:
 volumes:
   dogan-api-vol:
     name: dogan-api-vol
-  dogan-livekit-vol:
-    name: dogan-livekit-vol

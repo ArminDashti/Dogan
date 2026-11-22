@@ -1,0 +1,34 @@
+logLevel: info
+
+authMethod: http
+authHTTPAddress: http://dogan-api:8080/dogan/api/v1/mediamtx/auth
+authHTTPExclude:
+  - action: api
+  - action: metrics
+  - action: pprof
+
+api: yes
+apiAddress: :9997
+
+rtsp: no
+rtmp: no
+srt: no
+moq: no
+
+hls: yes
+hlsAddress: :8888
+hlsAllowOrigins: ['*']
+hlsVariant: lowLatency
+
+webrtc: yes
+webrtcAddress: :8889
+webrtcAllowOrigins: ['*']
+webrtcLocalUDPAddress: :8189
+webrtcLocalTCPAddress: :8189
+webrtcIPsFromInterfaces: yes
+webrtcAdditionalHosts: []
+# On T3 set the public IP / hostname via env MTX_WEBRTCADDITIONALHOSTS.
+webrtcICEServers2: []
+
+paths:
+  all_others: {}

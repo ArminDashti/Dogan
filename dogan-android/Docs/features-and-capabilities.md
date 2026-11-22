@@ -24,10 +24,10 @@ Sent every `telemetry_interval_sec` when connected:
 
 ## Connectivity
 
-- Connect/Disconnect in Connectivity settings (Connected/Disconnected button; ping + API + LiveKit status above)
-- Defaults: API `dogan-api.xaigrok.ir:443`, LiveKit `dogan-livekit.xaigrok.ir:443`, username `armin` / password `dogan123`
-- Username/password login; same bearer token for API and LiveKit
-- Diagnostics: Internet (1.1.1.1 + 8.8.8.8), Server (8 packets), LiveKit session
+- Connect/Disconnect in Connectivity settings (Connected/Disconnected button; ping + API + Streaming status above)
+- Defaults: API `dogan-api.xaigrok.ir:443`, MediaMTX `dogan-media.xaigrok.ir:443`, username `armin` / password `dogan123`
+- Username/password login; same bearer token for API and streaming
+- Diagnostics: Internet (1.1.1.1 + 8.8.8.8), Server (8 packets), WHIP streaming session
 - SSL certificate warnings logged; self-signed certs accepted with warning
 - Setting changes push via `PUT /api/v1/settings` when connected
 - Section Logs (Watchman / Connectivity / General) filter by section; main **Logs** shows all

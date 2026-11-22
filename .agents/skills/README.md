@@ -4,7 +4,7 @@ Curated from `C:/Users/armin/.cursor/skills` (synced as `ArminDashti/.cursor` / 
 
 | Area | Stack signal |
 | --- | --- |
-| API | Go + Gin, PostgreSQL, LiveKit, Docker Compose |
+| API | Go + Gin, SQLite, MediaMTX, coturn, Docker Compose |
 | WebUI | Vue 3 + Vite + Tailwind + PWA |
 | Android | Kotlin (Watchman / Copilot), camera / WebRTC |
 | Agent ops | GitNexus index, ponytail, Armin meta skills |

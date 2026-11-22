@@ -1,7 +1,7 @@
 {
   "name": "dogan-web",
   "private": true,
-  "version": "0.3.10",
+  "version": "0.4.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@toon-format/toon": "^4.4.0",
-    "livekit-client": "^2.20.1",
+    "hls.js": "^1.7.4",
     "pinia": "^3.0.3",
     "vue": "^3.5.17",
     "vue-router": "^4.5.1"

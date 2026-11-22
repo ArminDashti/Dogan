@@ -33,9 +33,9 @@ Tap **Connectivity** (or its gear) and enter:
 
 - **Username / password** — defaults `armin` / `dogan123` (also in repo-root `credentials.txt`)
 - **API URL** — Dogan server as `host:port` (default `dogan-api.xaigrok.ir:443`; local Docker example `192.168.1.10:8090`)
-- **Stream URL** — LiveKit as `host:port` (default `dogan-livekit.xaigrok.ir:443`)
+- **Stream URL** — MediaMTX as `host:port` (default `dogan-media.xaigrok.ir:443`)
 
-Above the Connect button you see **ping**, **API**, and **LiveKit** status. The button itself is only **Connected** or **Disconnected**. The app starts **disconnected**; connect manually. Failures show an error near the button. Changes save automatically.
+Above the Connect button you see **ping**, **API**, and **Streaming** status. The button itself is only **Connected** or **Disconnected**. The app starts **disconnected**; connect manually. Failures show an error near the button. Changes save automatically.
 
 ### 4. Pick a mode
 
@@ -65,4 +65,4 @@ Select the active mode again (re-tap) to turn **OFF**, or tap **Exit** to close 
 
 ## Troubleshooting (non-technical)
 
-See [current-status-and-limitations.md](current-status-and-limitations.md) for known limits. Prefer **Diagnostics** (if available from Logs/tools) for Internet / Server / LiveKit checks.
+See [current-status-and-limitations.md](current-status-and-limitations.md) for known limits. Prefer **Diagnostics** (if available from Logs/tools) for Internet / Server / Streaming checks.

@@ -1,8 +1,8 @@
 # Dogan Server
 
-Dogan is a Go REST API for a personal Android + web monitoring stack. It stores camera frames, Android telemetry, app settings, and phone actions in SQLite, and issues LiveKit tokens for WebRTC streaming between Android and the web client.
+Dogan is a Go REST API for a personal Android + web monitoring stack. It stores camera frames, Android telemetry, app settings, and phone actions in SQLite, and issues MediaMTX stream tokens for WebRTC streaming between Android and the web client.
 
-**Stack:** Go 1.26, Gin, SQLite, LiveKit, Docker Compose.
+**Stack:** Go 1.26, Gin, SQLite, MediaMTX, coturn, Docker Compose.
 
 **Run (preferred):**
 ```powershell
@@ -21,7 +21,7 @@ Remote (Irancell-T3 â€” YAML already set for `ssh t3`):
 .\.armin\docker-scripts\run-on-docker-server.ps1
 ```
 
-Production HAProxy hosts on t3: `https://dogan-api.xaigrok.ir`, `wss://dogan-livekit.xaigrok.ir`, web `https://dogan.xaigrok.ir` (separate `dogan-webui` container).
+Production HAProxy hosts on t3: `https://dogan-api.xaigrok.ir`, `https://dogan-media.xaigrok.ir`, `https://dogan-hls.xaigrok.ir`, `turns://dogan-turn.xaigrok.ir:443`, web `https://dogan.xaigrok.ir` (separate `dogan-webui` container).
 
 Legacy root wrappers (`.\run-on-docker-local.ps1`, `.\create-image.ps1`) still exist; prefer `.armin/docker-scripts/`.
 

@@ -11,7 +11,8 @@ INTERNAL="http://127.0.0.1:6080/dogan/api/v1"
 PUBLIC="https://dogan-api.xaigrok.ir/dogan/api/v1"
 WEB_API_PATH="https://dogan.xaigrok.ir/dogan/api/v1"
 WEB_ORIGIN="https://dogan.xaigrok.ir"
-LIVEKIT_PUBLIC="https://dogan-livekit.xaigrok.ir"
+STREAMING_PUBLIC="https://dogan-media.xaigrok.ir"
+HLS_PUBLIC="https://dogan-hls.xaigrok.ir"
 OUT_DIR="${OUT_DIR:-/tmp/dogan-endpoint-tests}"
 mkdir -p "$OUT_DIR"
 RESULTS="$OUT_DIR/results.tsv"
@@ -109,8 +110,10 @@ log "Loading container env (values not printed)..."
 DEVICE_API_KEY=$(docker exec dogan-api printenv DOGAN_DEVICE_API_KEY || true)
 EMBEDDED_TOKEN=$(docker exec dogan-api printenv DOGAN_EMBEDDED_API_TOKEN || true)
 CORS_ORIGINS=$(docker exec dogan-api printenv DOGAN_CORS_ALLOWED_ORIGINS || true)
-LK_URL=$(docker exec dogan-api printenv DOGAN_LIVEKIT_URL || true)
-LK_PUB=$(docker exec dogan-api printenv DOGAN_LIVEKIT_PUBLIC_URL || true)
+MTX_WEBRTC_PUB=$(docker exec dogan-api printenv DOGAN_MEDIAMTX_WEBRTC_PUBLIC_URL || true)
+MTX_HLS_PUB=$(docker exec dogan-api printenv DOGAN_MEDIAMTX_HLS_PUBLIC_URL || true)
+TURN_DOMAIN=$(docker exec dogan-api printenv DOGAN_TURN_DOMAIN || true)
+TURN_SECRET_SET=$(docker exec dogan-api sh -c 'if [ -n "${DOGAN_TURN_SECRET:-}" ]; then echo yes; else echo no; fi')
 OPENCODE_KEY_SET=$(docker exec dogan-api sh -c 'if [ -n "${OPENCODE_GO_API_KEY:-}" ]; then echo yes; else echo no; fi')
 OPENCODE_BASE=$(docker exec dogan-api printenv OPENCODE_GO_BASE_URL || true)
 OPENCODE_MODEL=$(docker exec dogan-api printenv OPENCODE_GO_MODEL || true)
@@ -457,14 +460,18 @@ do_case internal POST /diagnostic-audio 201 \
   -F "metadata=$META;type=application/json" \
   -F "audio=@$OUT_DIR/probe.wav;type=audio/wav"
 
-# LiveKit / WebRTC
+# MediaMTX / WebRTC
 do_case internal POST /streaming/token 200 -H 'Content-Type: application/json' \
   --data '{"device_id":"'"$DEVICE_ID"'","role":"subscriber","identity":"dogan-test-sub"}'
-LK_TOKEN_URL=""
+STREAM_TOKEN_URL=""
 if [[ "$LAST_STATUS" = 200 ]]; then
-  LK_TOKEN_URL=$(json_get "$LAST_BODY" url)
+  STREAM_TOKEN_URL=$(json_get "$LAST_BODY" url)
+  if json_has "$LAST_BODY" whep_url && json_has "$LAST_BODY" path && json_has "$LAST_BODY" ice_servers; then
+    record internal POST /streaming/token "$LAST_STATUS" "$LAST_MS" 200 OK "stream token payload has whep_url/path/ice_servers"
+  else
+    record internal POST /streaming/token "$LAST_STATUS" "$LAST_MS" 200 FAIL "stream token payload is missing whep_url/path/ice_servers"
+  fi
   cp "$LAST_BODY" "$OUT_DIR/streaming-token.json"
-  # redact token in saved copy
   python3 "$HELPERS" redact_token_file "$OUT_DIR/streaming-token.json"
 fi
 
@@ -628,93 +635,15 @@ else
 fi
 
 # =====================================================================
-log "===== LiveKit public WSS ====="
+log "===== MediaMTX public WebRTC/HLS ====="
 
-# HTTP health
-call GET "$LIVEKIT_PUBLIC/"
-if [[ "$LAST_STATUS" = 200 ]]; then
-  record livekit GET / "$LAST_STATUS" "$LAST_MS" 200 OK "https://dogan-livekit.xaigrok.ir body=$(preview "$LAST_BODY")"
-else
-  record livekit GET / "$LAST_STATUS" "$LAST_MS" 200 FAIL "LiveKit HTTP health unexpected; body=$(preview "$LAST_BODY") err=$LAST_ERR"
+call GET "$HLS_PUBLIC/"
+record streaming GET "$HLS_PUBLIC/" "$LAST_STATUS" "$LAST_MS" "200,301,302,404" INFO "public HLS root reachable; ct=$LAST_CT body=$(preview "$LAST_BODY")"
+
+if [[ -n "$STREAM_TOKEN_URL" ]]; then
+  call GET "$STREAM_TOKEN_URL"
+  record streaming GET "$STREAM_TOKEN_URL" "$LAST_STATUS" "$LAST_MS" "any" INFO "WHEP endpoint reachable without SDP offer; status=$LAST_STATUS"
 fi
-
-# WebSocket upgrade
-python3 - << 'PY' > /tmp/dogan-endpoint-tests/ws-livekit.txt 2>&1
-import socket, ssl, base64, os, time, sys
-host = "dogan-livekit.xaigrok.ir"
-port = 443
-paths = ["/", "/rtc"]
-key = base64.b64encode(os.urandom(16)).decode()
-ctx = ssl.create_default_context()
-for path in paths:
-    t0 = time.time()
-    try:
-        raw = socket.create_connection((host, port), timeout=10)
-        sock = ctx.wrap_socket(raw, server_hostname=host)
-        req = (
-            f"GET {path} HTTP/1.1\r\n"
-            f"Host: {host}\r\n"
-            "Upgrade: websocket\r\n"
-            "Connection: Upgrade\r\n"
-            f"Sec-WebSocket-Key: {key}\r\n"
-            "Sec-WebSocket-Version: 13\r\n"
-            "\r\n"
-        )
-        sock.sendall(req.encode())
-        sock.settimeout(8)
-        data = b""
-        while b"\r\n\r\n" not in data and len(data) < 8192:
-            chunk = sock.recv(1024)
-            if not chunk:
-                break
-            data += chunk
-        sock.close()
-        header = data.split(b"\r\n\r\n", 1)[0].decode("iso-8859-1", "replace")
-        first = header.split("\r\n", 1)[0]
-        ms = int((time.time() - t0) * 1000)
-        print(f"PATH={path} MS={ms} STATUS_LINE={first}")
-        # print a few headers without cookies if any
-        for line in header.split("\r\n")[1:12]:
-            if line.lower().startswith(("set-cookie", "authorization")):
-                continue
-            print("  " + line)
-    except Exception as e:
-        ms = int((time.time() - t0) * 1000)
-        print(f"PATH={path} MS={ms} ERROR={type(e).__name__}: {e}")
-PY
-cat "$OUT_DIR/ws-livekit.txt" >&2
-python3 - << 'PY'
-import re
-text=open("/tmp/dogan-endpoint-tests/ws-livekit.txt").read()
-# parse and append results via a small sidecar the bash will read
-open("/tmp/dogan-endpoint-tests/ws-livekit.parsed","w").write(text)
-PY
-
-# Record WS results
-while IFS= read -r line; do
-  if [[ "$line" == PATH=* ]]; then
-    path=$(echo "$line" | sed -n 's/^PATH=\([^ ]*\).*/\1/p')
-    ms=$(echo "$line" | sed -n 's/.*MS=\([0-9]*\).*/\1/p')
-    if echo "$line" | grep -q 'STATUS_LINE=HTTP/1.1 101'; then
-      record livekit GET "wss://dogan-livekit.xaigrok.ir$path" 101 "$ms" 101 OK "WebSocket upgrade accepted"
-    elif echo "$line" | grep -q 'ERROR='; then
-      record livekit GET "wss://dogan-livekit.xaigrok.ir$path" 000 "$ms" 101 FAIL "$line"
-    else
-      # LiveKit may 200 or 404 on / but 101 on /rtc
-      sl=$(echo "$line" | sed -n 's/.*STATUS_LINE=//p')
-      if echo "$sl" | grep -q ' 101 '; then
-        record livekit GET "wss://dogan-livekit.xaigrok.ir$path" 101 "$ms" 101 OK "WebSocket upgrade accepted ($sl)"
-      else
-        record livekit GET "wss://dogan-livekit.xaigrok.ir$path" 000 "$ms" 101 INFO "no 101 on $path ($sl)"
-      fi
-    fi
-  fi
-done < "$OUT_DIR/ws-livekit.txt"
-
-# Internal livekit via docker network (optional)
-call GET "http://127.0.0.1:7881/"
-# 7881 is advertised in compose (TCP published). May or may not be HTTP.
-record livekit GET "http://127.0.0.1:7881/" "$LAST_STATUS" "$LAST_MS" "any" INFO "host-published livekit 7881; ct=$LAST_CT body=$(preview "$LAST_BODY")"
 
 # =====================================================================
 log "===== dogan-turn TURN (443/TLS) ====="
@@ -722,13 +651,9 @@ log "===== dogan-turn TURN (443/TLS) ====="
 TURN_HOST="${DOGAN_TURN_HOST:-dogan-turn.xaigrok.ir}"
 VERIFY_PY="$SCRIPT_DIR/verify-dogan-turn.py"
 if [[ -f "$VERIFY_PY" ]]; then
-  LK_API_KEY="$(docker exec dogan-api printenv DOGAN_LIVEKIT_API_KEY 2>/dev/null || true)"
-  LK_API_SECRET="$(docker exec dogan-api printenv DOGAN_LIVEKIT_API_SECRET 2>/dev/null || true)"
-  LK_API_KEY="${LK_API_KEY:-devkey}"
-  LK_API_SECRET="${LK_API_SECRET:-secret}"
+  TURN_SECRET="$(docker exec dogan-api printenv DOGAN_TURN_SECRET 2>/dev/null || true)"
   set +e
-  VERIFY_OUT="$(DOGAN_LIVEKIT_API_KEY="$LK_API_KEY" DOGAN_LIVEKIT_API_SECRET="$LK_API_SECRET" \
-    python3 "$VERIFY_PY" --host "$TURN_HOST" 2>&1)"
+  VERIFY_OUT="$(DOGAN_TURN_SECRET="$TURN_SECRET" python3 "$VERIFY_PY" --host "$TURN_HOST" 2>&1)"
   VERIFY_RC=$?
   set -e
   printf '%s\n' "$VERIFY_OUT" >&2
@@ -785,7 +710,7 @@ if ep_file.exists():
 # from router / docs (hardcoded expected set)
 docs = [
     ("POST","/auth"),("POST","/auth/login"),("GET","/auth/me"),("POST","/auth/logout"),
-    ("GET","/endpoints"),("GET","/health"),
+    ("GET","/endpoints"),("GET","/health"),("POST","/mediamtx/auth"),
     ("POST","/telemetry"),("POST","/frame"),("GET","/last-frame"),("GET","/frame/image"),
     ("POST","/device-metrics"),("GET","/device-metrics"),
     ("POST","/actions"),("GET","/actions/pending"),("PUT","/actions/:id/ack"),
@@ -839,8 +764,6 @@ if df.exists():
 log_txt = (out/"dogan-api.logs").read_text(encoding="utf-8", errors="replace") if (out/"dogan-api.logs").exists() else ""
 log_hits = [ln for ln in log_txt.splitlines() if re.search(r"error|panic|fatal|fail", ln, re.I)]
 
-ws = (out/"ws-livekit.txt").read_text(encoding="utf-8", errors="replace") if (out/"ws-livekit.txt").exists() else ""
-
 def esc(s):
     return (s or "").replace("|","\\|").replace("\n"," ")
 
@@ -856,7 +779,7 @@ a("- **Internal (from T3):** `http://127.0.0.1:6080/dogan/api/v1` (docker publis
 a("- **Public API host:** `https://dogan-api.xaigrok.ir/dogan/api/v1` — HAProxy SNI/`Host` `dogan-api.xaigrok.ir` → backend `dogan-api:8080`. Cloudflare sits in front (cf-ray / server: cloudflare). **This public route works.**")
 a("- **Public web UI host:** `https://dogan.xaigrok.ir` — HAProxy → `dogan-webui:80`. Nginx is a static SPA (`try_files ... /index.html`). There is **no** path-based proxy of `/dogan/api/v1` on this host, so `https://dogan.xaigrok.ir/dogan/api/v1/health` returns the SPA `index.html`, not the API. This is expected given current routing.")
 a("- **How the web UI reaches the API:** `app-config.json` in the webui container has `apiBaseUrl: https://dogan-api.xaigrok.ir/dogan/api/v1`. Nginx has no API reverse-proxy.")
-a("- **LiveKit:** HAProxy `dogan-livekit.xaigrok.ir` → `dogan-livekit:7880` (long timeouts). Public URL env `wss://dogan-livekit.xaigrok.ir`. On T3, media is **TURN on 443** (`dogan-turn.xaigrok.ir`); UDP `50000-50050` / TCP `7881` must not be on the public NIC (see `livekit.t3.yaml`).")
+a("- **MediaMTX:** HAProxy `dogan-media.xaigrok.ir` → `mediamtx:8889` for WHIP/WHEP and `dogan-hls.xaigrok.ir` → `mediamtx:8888` for HLS. Public URL env `https://dogan-media.xaigrok.ir`. On T3, relay media is **TURN on 443** (`dogan-turn.xaigrok.ir`); only ICE `8189/udp` and `8189/tcp` are published on the host.")
 a("- **TURN verification:** `scripts/verify-dogan-turn.py` — level 1 TLS/SNI, level 2 TURN allocate (`turnutils_uclient`). That does **not** prove WebRTC ICE; level 3 is Watchman `mediaTrack published` + WebUI Play.")
 a("")
 a("## Credentials (values not printed)")
@@ -915,13 +838,6 @@ for r in rows:
     a(f"| {esc(r['base'])} | {esc(r['method'])} | `{esc(r['path'])}` | {esc(r['status'])} | {esc(r['expected'])} | {esc(r['ms'])} | {esc(r['verdict'])} | {esc(r['notes'][:240])} |")
 a("")
 
-a("## LiveKit WebSocket probe")
-a("")
-a("```")
-a(ws.strip() or "(no output)")
-a("```")
-a("")
-
 a("## dogan-api logs (last 100, redacted) — error/fail lines")
 a("")
 if log_hits:
@@ -954,8 +870,10 @@ PY
   echo "OPENCODE_GO_BASE_URL: $OPENCODE_BASE"
   echo "OPENCODE_GO_MODEL: $OPENCODE_MODEL"
   echo "DOGAN_CORS_ALLOWED_ORIGINS: $CORS_ORIGINS"
-  echo "DOGAN_LIVEKIT_URL: $LK_URL"
-  echo "DOGAN_LIVEKIT_PUBLIC_URL: $LK_PUB"
+  echo "DOGAN_MEDIAMTX_WEBRTC_PUBLIC_URL: $MTX_WEBRTC_PUB"
+  echo "DOGAN_MEDIAMTX_HLS_PUBLIC_URL: $MTX_HLS_PUB"
+  echo "DOGAN_TURN_DOMAIN: $TURN_DOMAIN"
+  echo "DOGAN_TURN_SECRET present: $TURN_SECRET_SET"
   echo "DOGAN_DEVICE_API_KEY present: $([[ -n "$DEVICE_API_KEY" ]] && echo yes || echo no) len=$(printf '%s' "$DEVICE_API_KEY" | wc -c)"
   echo "DOGAN_EMBEDDED_API_TOKEN present: $([[ -n "$EMBEDDED_TOKEN" ]] && echo yes || echo no) len=$(printf '%s' "$EMBEDDED_TOKEN" | wc -c)"
 } > "$OUT_DIR/CREDENTIALS.txt"

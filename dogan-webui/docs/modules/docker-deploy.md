@@ -58,8 +58,9 @@ Server flow: sync compose/yaml → optional down/image rm → build+upload (or r
 |------|----|
 | `https://dogan.xaigrok.ir:443` | `dogan-webui:80` |
 | `https://dogan-api.xaigrok.ir:443` | `dogan-api:8080` |
-| `https://dogan-livekit.xaigrok.ir:443` | `dogan-livekit:7880` (WSS) |
-| `turns://dogan-turn.xaigrok.ir:443` | HAProxy TLS → `dogan-livekit:5349` (TURN) |
+| `https://dogan-media.xaigrok.ir:443` | `dogan-mediamtx:8889` (WHEP) |
+| `https://dogan-hls.xaigrok.ir:443` | `dogan-mediamtx:8888` (HLS) |
+| `turns://dogan-turn.xaigrok.ir:443` | HAProxy TLS → `dogan-turn:5349` (TURN) |
 
 Cert PEMs under `/cloud-admin/docker-volumes/reverse-proxy/haproxy/certs/`.  
 `dogan-turn` DNS must be **grey-cloud** to origin (TURN is not HTTP). Details: `dogan-api/Docs/modules/public-443-subdomains.md`.

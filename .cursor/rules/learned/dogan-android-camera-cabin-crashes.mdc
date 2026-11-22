@@ -1,10 +1,10 @@
 ---
-description: Fix Dogan Android crashes that kill Watchman/Copilot before LiveKit. Use when FATAL Not in main thread (DoganCamera) or UNIQUE cabin_segments.id.
+description: Fix Dogan Android crashes that kill Watchman/Copilot before WHIP publishing starts. Use when FATAL Not in main thread (DoganCamera) or UNIQUE cabin_segments.id.
 ---
 
 # Dogan Android camera + cabin-noise crash fixes
 
-**Goal:** Keep CaptureService alive so Watchman can reach LiveKit connect.
+**Goal:** Keep CaptureService alive so Watchman can reach `CaptureService.maybeStartStreaming` and start WHIP publish.
 
 ## Steps
 1. Camera stills: `takePicture` callbacks run on `captureCallbackExecutor` (background). Always post `ProcessCameraProvider.unbindAll` / rebind via `ContextCompat.getMainExecutor` (`finishStillCaptureOnMain` in `DoganCamera.kt`).
@@ -12,9 +12,9 @@ description: Fix Dogan Android crashes that kill Watchman/Copilot before LiveKit
 3. Verify: install APK, arm Watchman with sound on; `logcat -b crash` must show no `Not in application's main thread` and no `UNIQUE constraint failed: cabin_segments.id`.
 
 ## Gotchas
-- UI “LiveKit Connected (N sessions)” is a token/session-count probe, not media publish.
-- LiveKit publisher starts only in Watchman when connected; Copilot/OFF call `liveKitStreamer.stop()`.
-- Emulator may still `SIGSEGV` in `libjingle_peerconnection_so.so` on LiveKit signaling — separate from these Java fixes.
+- UI “Streaming Connected (N sessions)” is a token/session-count probe, not media publish (unverified (post-migration)).
+- WHIP publisher starts only in Watchman when connected; Copilot/OFF call `whipStreamer.stop()` (unverified (post-migration)).
+- Emulator may still `SIGSEGV` in the WebRTC native library during WHIP signaling — separate from these Java fixes (unverified (post-migration)).
 
 ## What didn't work
 - Leaving `finishStillCapture` on the ImageCapture callback executor — CameraX requires main thread.

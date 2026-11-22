@@ -11,11 +11,11 @@ description: Verify Dogan Android on emulator can reach local Docker API via Mob
 2. Start AVD: `%LOCALAPPDATA%\Android\Sdk\emulator\emulator.exe -avd Dogan_UI_API33 -gpu auto` (adb serial often `emulator-5556`).
 3. Put `platform-tools` on PATH (bare `adb` may be missing).
 4. Mobile MCP: `mobile_list_available_devices` → device id `Dogan_UI_API33`; launch `com.dogan`.
-5. Connectivity settings → set API URL to `10.0.2.2:8080` (emulator alias for host loopback), stream URL to `10.0.2.2:7880` (host LiveKit), user/pass `admin`/`admin`, tap connect.
-6. Pass: UI shows `API: Connected`, ping ms, button `CONNECTED`. Optional network proof: `adb shell` + `nc 10.0.2.2 8080` HTTP GET `/dogan/api/v1/health` → 200.
+5. Connectivity settings → set API URL to `10.0.2.2:8080` (emulator alias for host loopback), stream URL to `http://10.0.2.2:8889` (host MediaMTX WHIP/WHEP), user/pass `admin`/`admin`, tap connect (unverified (post-migration)).
+6. Pass: UI shows `API: Connected`, ping ms, button `CONNECTED`. Optional network proof: `adb shell` + `nc 10.0.2.2 8080` HTTP GET `/dogan/api/v1/health` → 200; confirm MediaMTX path `device-*` ready for a WHIP publish (unverified (post-migration)).
 
 ## Gotchas
-- App default is remote `dogan-api.xaigrok.ir:443` — hub shows DISCONNECTED until local host/port set.
+- App defaults are remote `dogan-api.xaigrok.ir:443` and `dogan-media.xaigrok.ir:443` — hub shows DISCONNECTED until local host/port set (unverified (post-migration)).
 - Use `10.0.2.2`, not `localhost`/`127.0.0.1`, unless you also `adb reverse tcp:8080 tcp:8080`.
 - Cleartext allowed via `network_security_config` (`cleartextTrafficPermitted=true`).
 - Emulator image has no `curl`/`wget`; use `nc` for HTTP probes.

@@ -8,7 +8,7 @@ import (
 	"github.com/dogan/dogan-server/internal/config"
 	"github.com/dogan/dogan-server/internal/cvclient"
 	"github.com/dogan/dogan-server/internal/handlers"
-	livekitauth "github.com/dogan/dogan-server/internal/livekit"
+	"github.com/dogan/dogan-server/internal/mediamtx"
 	"github.com/dogan/dogan-server/internal/middleware"
 	"github.com/dogan/dogan-server/internal/store"
 	"github.com/gin-contrib/cors"
@@ -19,11 +19,11 @@ func New(applicationConfig config.Config) *gin.Engine {
 	engine := gin.New()
 	engine.Use(gin.Logger(), gin.Recovery())
 	engine.Use(cors.New(cors.Config{
-		AllowOrigins: applicationConfig.CORSAllowedOrigins,
-		AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders: []string{"Origin", "Content-Type", "Authorization", "Accept"},
+		AllowOrigins:  applicationConfig.CORSAllowedOrigins,
+		AllowMethods:  []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:  []string{"Origin", "Content-Type", "Authorization", "Accept"},
 		ExposeHeaders: []string{"Content-Length"},
-		MaxAge:       12 * time.Hour,
+		MaxAge:        12 * time.Hour,
 	}))
 
 	dataStore, err := store.Open(applicationConfig.DatabaseURL, applicationConfig.RetentionPeriod)
@@ -39,6 +39,26 @@ func New(applicationConfig config.Config) *gin.Engine {
 	retentionCleaner.Start()
 
 	tokenIssuer := auth.NewTokenIssuer(applicationConfig.JWTSecret, applicationConfig.TokenTTL)
+
+	streamTokenSecret := applicationConfig.StreamTokenSecret
+	if streamTokenSecret == "" {
+		streamTokenSecret = applicationConfig.JWTSecret
+	}
+	streamTokenIssuer := mediamtx.NewTokenIssuer(mediamtx.Config{
+		WebRTCPublicURL: applicationConfig.StreamingWebRTCURL,
+		HLSPublicURL:    applicationConfig.StreamingHLSURL,
+		APIURL:          applicationConfig.MediaMTXAPIURL,
+		TokenSecret:     streamTokenSecret,
+		TokenTTL:        applicationConfig.StreamTokenTTL,
+	})
+	iceOptions := mediamtx.IceServerOptions{
+		TurnDomain:      applicationConfig.TurnDomain,
+		TurnExternalTLS: applicationConfig.TurnExternalTLS,
+		TurnSecret:      applicationConfig.TurnSecret,
+		TurnTTL:         applicationConfig.TurnTTL,
+		ExtraURLs:       applicationConfig.IceServerURLs,
+	}
+	controlClient := mediamtx.NewControlClient(applicationConfig.MediaMTXAPIURL)
 
 	authHandler := handlers.NewAuthHandler(
 		tokenIssuer,
@@ -59,24 +79,17 @@ func New(applicationConfig config.Config) *gin.Engine {
 	settingsHandler := handlers.NewSettingsHandler(dataStore)
 	soundsHandler := handlers.NewSoundsHandler(applicationConfig.SoundsDir)
 	diagnosticAudioHandler := handlers.NewDiagnosticAudioHandler(dataStore, applicationConfig.AudioDir)
-	webrtcHandler := handlers.NewWebRTCHandler(dataStore)
-	liveKitTokenIssuer := livekitauth.NewTokenIssuer(livekitauth.Config{
-		URL:       applicationConfig.LiveKitURL,
-		PublicURL: applicationConfig.LiveKitPublicURL,
-		APIKey:    applicationConfig.LiveKitAPIKey,
-		APISecret: applicationConfig.LiveKitAPISecret,
-		TokenTTL:  applicationConfig.LiveKitTokenTTL,
-	})
-	liveKitIceOptions := livekitauth.IceServerOptions{
-		TurnDomain:      applicationConfig.LiveKitTurnDomain,
-		TurnExternalTLS: applicationConfig.LiveKitTurnExternalTLS,
-		ExtraURLs:       applicationConfig.LiveKitIceServerURLs,
-	}
-	clientLiveKitURL := applicationConfig.ClientLiveKitURL()
-	healthHandler := handlers.NewHealthHandler(liveKitTokenIssuer, clientLiveKitURL, applicationConfig.LiveKitTurnDomain)
-	liveKitHandler := handlers.NewLiveKitHandler(liveKitTokenIssuer, dataStore)
-	webrtcSessionHandler := handlers.NewWebRTCSessionHandler(liveKitTokenIssuer, dataStore, dataStore, liveKitIceOptions)
-	devicesHandler := handlers.NewDevicesHandler(dataStore, liveKitTokenIssuer, dataStore, liveKitIceOptions)
+	webrtcHandler := handlers.NewWebRTCHandler(dataStore, controlClient)
+	healthHandler := handlers.NewHealthHandler(
+		streamTokenIssuer,
+		applicationConfig.StreamingWebRTCURL,
+		applicationConfig.StreamingHLSURL,
+		applicationConfig.TurnDomain,
+	)
+	streamTokenHandler := handlers.NewStreamTokenHandler(streamTokenIssuer, dataStore, iceOptions)
+	mediaMTXAuthHandler := handlers.NewMediaMTXAuthHandler(streamTokenIssuer)
+	webrtcSessionHandler := handlers.NewWebRTCSessionHandler(streamTokenIssuer, dataStore, dataStore, iceOptions)
+	devicesHandler := handlers.NewDevicesHandler(dataStore, streamTokenIssuer, dataStore, iceOptions)
 	devicesWebHandler := handlers.NewDevicesWebHandler(dataStore, dataStore, dataStore, dataStore)
 
 	api := engine.Group("/dogan/api/v1")
@@ -85,6 +98,8 @@ func New(applicationConfig config.Config) *gin.Engine {
 		api.POST("/auth/login", authHandler.WebLogin)
 		api.GET("/endpoints", endpointsHandler.ListEndpoints)
 		api.GET("/health", healthHandler.GetHealth)
+		// MediaMTX authHTTPAddress hook: validates short-lived stream tokens (no bearer middleware).
+		api.POST("/mediamtx/auth", mediaMTXAuthHandler.Authorize)
 
 		protected := api.Group("/")
 		protected.Use(middleware.RequireBearerToken(tokenIssuer, applicationConfig.EmbeddedAPIToken))
@@ -111,7 +126,7 @@ func New(applicationConfig config.Config) *gin.Engine {
 			protected.GET("/sounds/:id", soundsHandler.GetSound)
 			protected.POST("/diagnostic-audio", diagnosticAudioHandler.SubmitDiagnosticAudio)
 			protected.GET("/webrtc/connections", webrtcHandler.ListConnections)
-			protected.POST("/streaming/token", liveKitHandler.IssueToken)
+			protected.POST("/streaming/token", streamTokenHandler.IssueToken)
 			protected.POST("/webrtc/session", webrtcSessionHandler.CreateSession)
 			protected.GET("/devices", devicesHandler.ListDevices)
 			protected.DELETE("/devices/:id", devicesHandler.DeleteDevice)
