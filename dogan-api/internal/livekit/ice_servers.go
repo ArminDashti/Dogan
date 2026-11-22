@@ -1,43 +1,43 @@
 package livekit
 
 import (
+	"crypto/hmac"
+	"crypto/sha1"
+	"encoding/base64"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/dogan/dogan-server/internal/models"
 )
 
-// IceServerOptions lists optional TURN hints for clients. LiveKit still issues
-// time-limited relay credentials over signaling; these URLs document the edge TURN host.
+const DefaultTurnCredentialTTL = 24 * time.Hour
+
+// IceServerOptions describes the coturn edge that fronts LiveKit TURN.
+// Credentials use coturn's use-auth-secret REST scheme so the app never needs the shared secret.
 type IceServerOptions struct {
-	TurnDomain        string
-	TurnExternalTLS   bool
-	ExtraURLs         []string
+	TurnURL       string
+	TurnSecret    string
+	CredentialTTL time.Duration
+	ExtraURLs     []string
 }
 
-func DefaultIceServers() []models.IceServerConfig {
-	return IceServers(IceServerOptions{})
-}
-
-func IceServers(options IceServerOptions) []models.IceServerConfig {
-	servers := []models.IceServerConfig{
-		{
-			URLs: []string{"stun:stun.l.google.com:19302"},
-		},
+// IceServers returns relay-only ICE entries with time-limited coturn credentials.
+// It returns nil when no TURN secret is configured so the field is omitted from API responses.
+func IceServers(options IceServerOptions, deviceID string) []models.IceServerConfig {
+	secret := strings.TrimSpace(options.TurnSecret)
+	turnURL := strings.TrimSpace(options.TurnURL)
+	if secret == "" || turnURL == "" {
+		return nil
 	}
 
-	turnDomain := strings.TrimSpace(options.TurnDomain)
-	if turnDomain != "" {
-		var turnURL string
-		if options.TurnExternalTLS {
-			// Matches livekit.t3.yaml external_tls: HAProxy terminates TLS on :443.
-			turnURL = fmt.Sprintf("turns:%s:443?transport=tcp", turnDomain)
-		} else {
-			turnURL = fmt.Sprintf("turn:%s:5349?transport=tcp", turnDomain)
-		}
-		servers = append(servers, models.IceServerConfig{
-			URLs: []string{turnURL},
-		})
+	username, credential := TurnCredentials(secret, deviceID, options.CredentialTTL, time.Now())
+	servers := []models.IceServerConfig{
+		{
+			URLs:       []string{turnURL},
+			Username:   username,
+			Credential: credential,
+		},
 	}
 
 	for _, extra := range options.ExtraURLs {
@@ -49,4 +49,20 @@ func IceServers(options IceServerOptions) []models.IceServerConfig {
 	}
 
 	return servers
+}
+
+// TurnCredentials builds coturn REST credentials: username "<unix_expiry>:<device_id>"
+// and credential base64(HMAC-SHA1(secret, username)).
+func TurnCredentials(secret string, deviceID string, ttl time.Duration, now time.Time) (string, string) {
+	if ttl <= 0 {
+		ttl = DefaultTurnCredentialTTL
+	}
+	subject := strings.TrimSpace(deviceID)
+	if subject == "" {
+		subject = "dogan"
+	}
+	username := fmt.Sprintf("%d:%s", now.Add(ttl).Unix(), subject)
+	mac := hmac.New(sha1.New, []byte(secret))
+	_, _ = mac.Write([]byte(username))
+	return username, base64.StdEncoding.EncodeToString(mac.Sum(nil))
 }

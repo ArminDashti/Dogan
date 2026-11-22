@@ -24,6 +24,8 @@ const (
 	defaultLiveKitAPISecret = "secret"
 	defaultLiveKitTokenTTL  = time.Hour
 	defaultLiveKitTurnDomain = "dogan-turn.xaigrok.ir"
+	defaultTurnURL           = "turns:dogan-turn.xaigrok.ir:443?transport=tcp"
+	defaultTurnCredentialTTL = 24 * time.Hour
 	defaultDeviceAPIKey     = auth.DefaultDeviceAPIKey
 	defaultCORSOrigins = "http://localhost:30808,http://127.0.0.1:30808,https://dogan.xaigrok.ir"
 )
@@ -45,7 +47,9 @@ type Config struct {
 	LiveKitAPISecret    string
 	LiveKitTokenTTL     time.Duration
 	LiveKitTurnDomain   string
-	LiveKitTurnExternalTLS bool
+	TurnURL             string
+	TurnSecret          string
+	TurnCredentialTTL   time.Duration
 	LiveKitIceServerURLs []string
 	CORSAllowedOrigins []string
 	CVURL              string
@@ -76,7 +80,9 @@ func Load() Config {
 		LiveKitAPISecret:   envOrDefault("DOGAN_LIVEKIT_API_SECRET", defaultLiveKitAPISecret),
 		LiveKitTokenTTL:    envDurationOrDefault("DOGAN_LIVEKIT_TOKEN_TTL", defaultLiveKitTokenTTL),
 		LiveKitTurnDomain:  envOrDefault("DOGAN_LIVEKIT_TURN_DOMAIN", defaultLiveKitTurnDomain),
-		LiveKitTurnExternalTLS: envBoolOrDefault("DOGAN_LIVEKIT_TURN_EXTERNAL_TLS", true),
+		TurnURL:            envOrDefault("DOGAN_TURN_URL", defaultTurnURL),
+		TurnSecret:         os.Getenv("DOGAN_TURN_SECRET"),
+		TurnCredentialTTL:  envDurationOrDefault("DOGAN_TURN_CREDENTIAL_TTL", defaultTurnCredentialTTL),
 		LiveKitIceServerURLs:   envCSVOrDefault("DOGAN_LIVEKIT_ICE_SERVER_URLS", ""),
 		CORSAllowedOrigins: envCSVOrDefault("DOGAN_CORS_ALLOWED_ORIGINS", defaultCORSOrigins),
 		CVURL:              envOrDefault("DOGAN_CV_URL", ""),
@@ -115,18 +121,6 @@ func envDurationOrDefault(key string, fallback time.Duration) time.Duration {
 	}
 
 	return time.Duration(seconds) * time.Second
-}
-
-func envBoolOrDefault(key string, fallback bool) bool {
-	raw := os.Getenv(key)
-	if raw == "" {
-		return fallback
-	}
-	parsed, err := strconv.ParseBool(raw)
-	if err != nil {
-		return fallback
-	}
-	return parsed
 }
 
 func envDaysOrDefault(key string, fallbackDays int) time.Duration {

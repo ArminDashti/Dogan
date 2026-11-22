@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.5.8
+
+### Fixed
+- **Android:** Telemetry and capture loops run in a supervised coroutine scope on `Dispatchers.IO` with per-cycle `Throwable` handling, `OutOfMemoryError` frame drop, a `@Volatile` running flag, idempotent `ensureLoops()` on every start/mode-activation path, and a watchdog that restarts the telemetry loop when no cycle completes in 3× the interval. Heartbeat logged per cycle; diagnostic-upload hot spin replaced with a delay.
+- **Android:** Sound monitoring and ambient light updates run after telemetry collection and never abort a cycle. `RECORD_AUDIO` is checked before `AudioRecord` creation, `AudioRecord` setup/`startRecording` run on their own thread and only mark running after success, and the mic can no longer block the telemetry loop. `RECORD_AUDIO` is requested in every mode because sound monitoring is on by default.
+- **Android:** LiveKit connect is bounded by a 20 s timeout with failure cleanup, `Disconnected` always clears reconnecting/streaming state, cancellation is rethrown, room state must be `CONNECTED` for single-flight publishing, disconnect is bounded by 5 s, and a periodic retry reconnects whenever the publisher is not streaming or connecting. Heavy work moved off the main dispatcher.
+- **Android:** CameraX never calls `provider.unbindAll()`; only DoganCamera's own use cases are unbound and provider acquisition is bounded by a 5 s timeout.
+- **API:** `POST /webrtc/session` returns `ice_servers` with coturn REST credentials (`username` = `<unix_expiry>:<device_id>`, `credential` = base64 HMAC-SHA1) from `DOGAN_TURN_SECRET`; URL from `DOGAN_TURN_URL` and TTL from `DOGAN_TURN_CREDENTIAL_TTL` (default 24 h). The field is omitted when no secret is set.
+
+### Changed
+- **Android:** LiveKit relay ICE comes from the API `ice_servers` list as explicit `PeerConnection.IceServer` entries with `TLS_CERT_POLICY_INSECURE_NO_CHECK` limited to `dogan-turn.xaigrok.ir`, passed via `ConnectOptions.iceServers` + `RTCConfiguration` relay-only. Removed the `io.livekit.android.room` shadow of `toWebrtc`, `IceServerDogan.kt`, the join-ICE diagnostics hooks, and the extra `protobuf-javalite` dependency. Android `2.5.8`, API `2.5.8`.
+
 ## 2.5.7
 
 - **Android:** Single-join LiveKit ICE via SDK `toWebrtc` shadow for dogan-turn TLS; remove prefetch join. Jolt in telemetry; Watchman noise sampling + RECORD_AUDIO.

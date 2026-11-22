@@ -68,9 +68,10 @@ func New(applicationConfig config.Config) *gin.Engine {
 		TokenTTL:  applicationConfig.LiveKitTokenTTL,
 	})
 	liveKitIceOptions := livekitauth.IceServerOptions{
-		TurnDomain:      applicationConfig.LiveKitTurnDomain,
-		TurnExternalTLS: applicationConfig.LiveKitTurnExternalTLS,
-		ExtraURLs:       applicationConfig.LiveKitIceServerURLs,
+		TurnURL:       applicationConfig.TurnURL,
+		TurnSecret:    applicationConfig.TurnSecret,
+		CredentialTTL: applicationConfig.TurnCredentialTTL,
+		ExtraURLs:     applicationConfig.LiveKitIceServerURLs,
 	}
 	clientLiveKitURL := applicationConfig.ClientLiveKitURL()
 	healthHandler := handlers.NewHealthHandler(liveKitTokenIssuer, clientLiveKitURL, applicationConfig.LiveKitTurnDomain)

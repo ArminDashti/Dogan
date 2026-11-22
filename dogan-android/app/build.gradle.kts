@@ -11,8 +11,8 @@ android {
         applicationId = "com.dogan"
         minSdk = 29
         targetSdk = 37
-        versionCode = 16
-        versionName = "2.5.7"
+        versionCode = 17
+        versionName = "2.5.8"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -61,8 +61,7 @@ dependencies {
     val livekitVersion = "2.27.0"
     implementation("io.livekit:livekit-android:$livekitVersion")
     implementation("io.livekit:livekit-android-camerax:$livekitVersion")
-    // Compile-time access to LivekitRtc protos for join ICE prefetch (SDK ships runtime-only).
-    implementation("com.google.protobuf:protobuf-javalite:3.22.0")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
 }

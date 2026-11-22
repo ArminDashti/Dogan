@@ -4,10 +4,15 @@ import io.livekit.android.ConnectOptions
 import io.livekit.android.LiveKit
 import io.livekit.android.util.LKLog
 import io.livekit.android.util.LoggingLevel
+import livekit.org.webrtc.PeerConnection
 
 /**
- * Single signal join: leave [ConnectOptions.rtcConfig] null so SDK merges join ICE (with dogan-turn TLS
- * via [io.livekit.android.room.toWebrtc]). Production wss should use relay candidates from TURN.
+ * Single-signal join with relay-only ICE servers supplied by the API.
+ *
+ * The SDK converts join-response ICE with a top-level `toWebrtc` function
+ * (`io.livekit.android.room.RTCEngineKt.toWebrtc`, verified in livekit-android 2.27.0 bytecode),
+ * so join ICE cannot carry a per-host TLS policy. Supplying `ConnectOptions.rtcConfig` replaces the
+ * join ICE list entirely; `ConnectOptions.iceServers` is merged into it.
  */
 object LiveKitRelayConnect {
     fun isProductionPath(signalingUrl: String, streamPort: Int): Boolean {
@@ -17,8 +22,28 @@ object LiveKitRelayConnect {
             normalized.contains(":443")
     }
 
-    fun connectOptions(signalingUrl: String, streamPort: Int): ConnectOptions {
-        return ConnectOptions()
+    fun connectOptions(
+        signalingUrl: String,
+        streamPort: Int,
+        iceServers: List<PeerConnection.IceServer>,
+    ): ConnectOptions {
+        if (iceServers.isEmpty()) {
+            AppLogger.warn(
+                "LiveKit",
+                "API returned no ICE servers; falling back to SDK join ICE (dogan-turn TLS may be rejected)",
+            )
+            return ConnectOptions()
+        }
+        AppLogger.info(
+            "LiveKit",
+            "ICE servers=${iceServers.size} production=${isProductionPath(signalingUrl, streamPort)} mode=relay",
+        )
+        val rtcConfig = PeerConnection.RTCConfiguration(iceServers).apply {
+            sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN
+            continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY
+            iceTransportsType = PeerConnection.IceTransportsType.RELAY
+        }
+        return ConnectOptions(iceServers = iceServers, rtcConfig = rtcConfig)
     }
 
     private const val LIVEKIT_LOG_TAG = "LiveKit"
@@ -27,14 +52,12 @@ object LiveKitRelayConnect {
         Regex("""(?i)ice|candidate|relay|turn|stun|pc connection|peer connection|transport|ssl""")
 
     fun enableDiagnosticsLogging() {
-        LiveKitIceDiagnostics.reset()
         LiveKit.loggingLevel = LoggingLevel.INFO
         LKLog.logger = object : LKLog.Logger {
             override fun log(priority: LoggingLevel, t: Throwable?, message: String) {
                 if (!iceDiagnosticsPattern.containsMatchIn(message)) {
                     return
                 }
-                LiveKitIceDiagnostics.logIceLogLine(message)
                 val line = if (t != null) {
                     "$message (${t.javaClass.simpleName}: ${t.message})"
                 } else {

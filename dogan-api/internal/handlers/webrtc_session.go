@@ -85,7 +85,7 @@ func (handler *WebRTCSessionHandler) CreateSession(context *gin.Context) {
 		Room:       tokenResponse.Room,
 		Identity:   tokenResponse.Identity,
 		ExpiresAt:  tokenResponse.ExpiresAt,
-		IceServers: livekitauth.IceServers(handler.iceOptions),
+		IceServers: livekitauth.IceServers(handler.iceOptions, request.DeviceID),
 	})
 }
 
@@ -186,7 +186,7 @@ func (handler *DevicesHandler) GetDeviceStream(context *gin.Context) {
 		Room:        tokenResponse.Room,
 		Identity:    tokenResponse.Identity,
 		ExpiresAt:   tokenResponse.ExpiresAt,
-		IceServers:  livekitauth.IceServers(handler.iceOptions),
+		IceServers:  livekitauth.IceServers(handler.iceOptions, deviceID),
 		URLWarnings: urlWarnings,
 	})
 }

@@ -305,7 +305,7 @@ type WebRTCSessionResponse struct {
 	Room       string            `json:"room"`
 	Identity   string            `json:"identity"`
 	ExpiresAt  time.Time         `json:"expires_at"`
-	IceServers []IceServerConfig `json:"ice_servers"`
+	IceServers []IceServerConfig `json:"ice_servers,omitempty"`
 }
 
 type DeviceListItem struct {

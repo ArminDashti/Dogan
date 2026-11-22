@@ -14,7 +14,17 @@ import androidx.core.app.NotificationCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import java.io.File
@@ -31,6 +41,15 @@ class CaptureService : Service(), LifecycleOwner {
         private const val MOTION_CHANNEL = "dogan_motion_channel"
         private const val NOTIF_ID = 81
         private const val WORK_WAKE_LOCK_MS = 30_000L
+        private const val DEFAULT_TELEMETRY_INTERVAL_MS = 1_000L
+        private const val ERROR_RETRY_DELAY_MS = 5_000L
+        private const val MIN_LOOP_DELAY_MS = 250L
+        private const val DIAGNOSTIC_UPLOAD_INTERVAL_MS = 30_000L
+        private const val KEEP_ALIVE_INTERVAL_MS = 5_000L
+        private const val WATCHDOG_INTERVAL_MS = 15_000L
+        private const val WATCHDOG_GRACE_MS = 30_000L
+        private const val HEARTBEAT_LOG_INTERVAL_MS = 60_000L
+        private const val CAPTURE_LATCH_TIMEOUT_SEC = 15L
     }
 
     private val lifecycleRegistry = LifecycleRegistry(this)
@@ -40,8 +59,6 @@ class CaptureService : Service(), LifecycleOwner {
     private val deviceId by lazy { DeviceIdentity.resolveDeviceId(this) }
     private val apiClient by lazy { DoganApiClient(deviceId = deviceId) }
     private val io = Executors.newSingleThreadExecutor()
-    private val uploadExecutor = Executors.newSingleThreadExecutor()
-    private val keepAliveExecutor = Executors.newSingleThreadExecutor()
     private val captureCallbackExecutor = Executors.newSingleThreadExecutor()
 
     private val telemetryDatabase by lazy { TelemetryDatabase(this) }
@@ -59,8 +76,31 @@ class CaptureService : Service(), LifecycleOwner {
     private lateinit var audioCapture: AudioCapture
     private lateinit var telemetryCollector: TelemetryCollector
 
+    @Volatile
     private var running = false
     private var wakeLock: PowerManager.WakeLock? = null
+
+    private val loopLock = Any()
+    private var loopScope: CoroutineScope? = null
+    private var telemetryJob: Job? = null
+    private var uploadJob: Job? = null
+    private var diagnosticUploadJob: Job? = null
+    private var keepAliveJob: Job? = null
+    private var watchdogJob: Job? = null
+
+    @Volatile
+    private var lastTelemetryCycleAt = 0L
+
+    @Volatile
+    private var lastHeartbeatLogAt = 0L
+
+    private val loopExceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        if (throwable is CancellationException) return@CoroutineExceptionHandler
+        AppLogger.error(
+            "Capture",
+            "Loop crashed: ${throwable.javaClass.simpleName}: ${throwable.message}",
+        )
+    }
 
     @Volatile private var cachedSettings: AppSettings? = null
     @Volatile private var lastMotionTriggeredCaptureAt = 0L
@@ -80,6 +120,7 @@ class CaptureService : Service(), LifecycleOwner {
         lifecycleRegistry.currentState = Lifecycle.State.CREATED
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         audioCapture = AudioCapture(
+            this,
             onSpike = { rms ->
                 cachedSettings?.let { modeController.onSoundSpike(rms, it) }
             },
@@ -106,6 +147,7 @@ class CaptureService : Service(), LifecycleOwner {
                 } else {
                     startCapture()
                 }
+                ensureLoops()
             }
             else -> {
                 if (running) {
@@ -113,20 +155,28 @@ class CaptureService : Service(), LifecycleOwner {
                 } else {
                     startCapture()
                 }
+                ensureLoops()
             }
         }
         return START_STICKY
     }
 
     private fun startCapture() {
-        if (running) return
+        if (running) {
+            ensureLoops()
+            return
+        }
         running = true
         createChannels()
         startForeground(NOTIF_ID, buildNotification())
         lifecycleRegistry.currentState = Lifecycle.State.STARTED
 
         cachedSettings = runBlocking { settingsStore.settingsFlow.first() }
-        val settings = cachedSettings ?: return
+        ensureLoops()
+        val settings = cachedSettings ?: run {
+            AppLogger.error("Capture", "Settings unavailable; telemetry loops still supervised")
+            return
+        }
         SessionCredentials.updateFrom(settings)
         AppLogger.activeModeSection = LogSection.forOperatingMode(settings.operatingMode)
         configureWakeLockForMode(settings)
@@ -135,12 +185,8 @@ class CaptureService : Service(), LifecycleOwner {
         downloadSounds(settings)
         vehicleMotionDetector.register(sensorManager, settings.motionSamplingRate)
         startLocationTracking(settings)
-        applyAmbientLight(settings)
-        applySoundMonitoring(settings)
-        scheduleTelemetryLoop()
-        scheduleKeepAliveLoop()
-        scheduleUploadLoop()
-        scheduleDiagnosticUploadLoop()
+        applyAmbientLightSafely(settings)
+        applySoundMonitoringSafely(settings)
 
         if (ServerConnectionManager.isConnected()) {
             ServerSettingsSync.start(this)
@@ -153,6 +199,7 @@ class CaptureService : Service(), LifecycleOwner {
 
     private fun refreshForModeActivation() {
         cachedSettings = runBlocking { settingsStore.settingsFlow.first() }
+        ensureLoops()
         val settings = cachedSettings ?: return
         SessionCredentials.updateFrom(settings)
         AppLogger.activeModeSection = LogSection.forOperatingMode(settings.operatingMode)
@@ -160,8 +207,8 @@ class CaptureService : Service(), LifecycleOwner {
         ensureServerConnected(settings)
         vehicleMotionDetector.register(sensorManager, settings.motionSamplingRate)
         startLocationTracking(settings)
-        applyAmbientLight(settings)
-        applySoundMonitoring(settings)
+        applyAmbientLightSafely(settings)
+        applySoundMonitoringSafely(settings)
         applySensitivity(settings)
         logModeActivated(settings.operatingMode)
         startForeground(NOTIF_ID, buildNotification())
@@ -210,6 +257,17 @@ class CaptureService : Service(), LifecycleOwner {
         }
     }
 
+    private fun applyAmbientLightSafely(settings: AppSettings) {
+        try {
+            applyAmbientLight(settings)
+        } catch (failure: Throwable) {
+            AppLogger.warn(
+                "Capture",
+                "Ambient light update failed: ${failure.javaClass.simpleName}: ${failure.message}",
+            )
+        }
+    }
+
     private fun applySoundMonitoring(settings: AppSettings) {
         if (shouldSampleNoiseTelemetry(settings)) {
             audioCapture.start()
@@ -218,7 +276,19 @@ class CaptureService : Service(), LifecycleOwner {
         }
     }
 
+    private fun applySoundMonitoringSafely(settings: AppSettings) {
+        try {
+            applySoundMonitoring(settings)
+        } catch (failure: Throwable) {
+            AppLogger.warn(
+                "Capture",
+                "Sound monitoring update failed: ${failure.javaClass.simpleName}: ${failure.message}",
+            )
+        }
+    }
+
     private fun shouldSampleNoiseTelemetry(settings: AppSettings): Boolean {
+        if (!audioCapture.hasRecordPermission()) return false
         if (settings.soundMonitoringEnabled) return true
         return settings.operatingMode == OperatingMode.WATCHER && settings.noiseIntervalSec > 0
     }
@@ -243,6 +313,15 @@ class CaptureService : Service(), LifecycleOwner {
 
     private fun stopCapture() {
         running = false
+        synchronized(loopLock) {
+            loopScope?.cancel()
+            loopScope = null
+            telemetryJob = null
+            uploadJob = null
+            diagnosticUploadJob = null
+            keepAliveJob = null
+            watchdogJob = null
+        }
         AppLogger.activeModeSection = null
         DoganCamera.clear()
         vehicleMotionDetector.unregister(sensorManager)
@@ -267,53 +346,105 @@ class CaptureService : Service(), LifecycleOwner {
         }
     }
 
-    private fun scheduleTelemetryLoop() {
-        io.execute {
-            while (running) {
-                try {
-                    val settings = runBlocking { settingsStore.settingsFlow.first() }
-                    cachedSettings = settings
-                    SessionCredentials.updateFrom(settings)
-                    AppLogger.activeModeSection = LogSection.forOperatingMode(settings.operatingMode)
-                    applySensitivity(settings)
-                    applyAmbientLight(settings)
-                    applySoundMonitoring(settings)
-                    configureWakeLockForMode(settings)
-
-                    if (ServerConnectionManager.isConnected() && isValidBaseUrl(settings.serverBaseUrl)) {
-                        collectAndEnqueueTelemetry(settings)
-                        telemetryDatabase.purgeOlderThan(settings.telemetryRetentionHours)
-                        AppLogger.purgeOlderThan(this@CaptureService, settings.logRetentionDays)
-                    } else if (settings.operatingMode != OperatingMode.OFF) {
-                        val now = System.currentTimeMillis()
-                        if (now - lastDisconnectedLogAt >= 60_000L) {
-                            lastDisconnectedLogAt = now
-                            val reason = if (!isValidBaseUrl(settings.serverBaseUrl)) {
-                                "invalid API URL ${settings.serverBaseUrl}"
-                            } else {
-                                "not connected — open Connectivity and Connect"
-                            }
-                            AppLogger.warn("Telemetry", "Skipping capture/upload: $reason")
-                        }
-                    }
-
-                    Thread.sleep(settings.fastestSensorIntervalMs)
-                } catch (_: InterruptedException) {
-                    Thread.currentThread().interrupt()
-                    break
-                } catch (_: Exception) {
-                    Thread.sleep(5_000L)
-                }
-            }
+    private fun ensureLoopScope(): CoroutineScope {
+        synchronized(loopLock) {
+            loopScope?.let { return it }
+            val created = CoroutineScope(
+                SupervisorJob() + Dispatchers.IO + loopExceptionHandler,
+            )
+            loopScope = created
+            return created
         }
     }
 
-    private fun collectAndEnqueueTelemetry(settings: AppSettings) {
+    private fun ensureLoops() {
+        if (!running) return
+        val scope = ensureLoopScope()
+        synchronized(loopLock) {
+            if (telemetryJob?.isActive != true) telemetryJob = scope.launch { runTelemetryLoop() }
+            if (uploadJob?.isActive != true) uploadJob = scope.launch { runUploadLoop() }
+            if (diagnosticUploadJob?.isActive != true) {
+                diagnosticUploadJob = scope.launch { runDiagnosticUploadLoop() }
+            }
+            if (keepAliveJob?.isActive != true) keepAliveJob = scope.launch { runKeepAliveLoop() }
+            if (watchdogJob?.isActive != true) watchdogJob = scope.launch { runWatchdog() }
+        }
+    }
+
+    private suspend fun runTelemetryLoop() {
+        while (running) {
+            lastTelemetryCycleAt = System.currentTimeMillis()
+            var sleepMs = DEFAULT_TELEMETRY_INTERVAL_MS
+            try {
+                val settings = runBlocking { settingsStore.settingsFlow.first() }
+                cachedSettings = settings
+                SessionCredentials.updateFrom(settings)
+                AppLogger.activeModeSection = LogSection.forOperatingMode(settings.operatingMode)
+                applySensitivity(settings)
+                configureWakeLockForMode(settings)
+                sleepMs = settings.fastestSensorIntervalMs
+
+                if (ServerConnectionManager.isConnected() && isValidBaseUrl(settings.serverBaseUrl)) {
+                    collectTelemetryCycle(settings)
+                    telemetryDatabase.purgeOlderThan(settings.telemetryRetentionHours)
+                    AppLogger.purgeOlderThan(this@CaptureService, settings.logRetentionDays)
+                } else if (settings.operatingMode != OperatingMode.OFF) {
+                    val now = System.currentTimeMillis()
+                    if (now - lastDisconnectedLogAt >= 60_000L) {
+                        lastDisconnectedLogAt = now
+                        val reason = if (!isValidBaseUrl(settings.serverBaseUrl)) {
+                            "invalid API URL ${settings.serverBaseUrl}"
+                        } else {
+                            "not connected — open Connectivity and Connect"
+                        }
+                        AppLogger.warn("Telemetry", "Skipping capture/upload: $reason")
+                    }
+                }
+
+                applyAmbientLightSafely(settings)
+                applySoundMonitoringSafely(settings)
+                val heartbeatNow = System.currentTimeMillis()
+                if (heartbeatNow - lastHeartbeatLogAt >= HEARTBEAT_LOG_INTERVAL_MS) {
+                    lastHeartbeatLogAt = heartbeatNow
+                    AppLogger.info(
+                        "Telemetry",
+                        "Cycle heartbeat mode=${settings.operatingMode.name} interval=${sleepMs}ms",
+                    )
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (outOfMemory: OutOfMemoryError) {
+                AppLogger.warn("Telemetry", "Cycle out of memory: ${outOfMemory.message}")
+                sleepMs = ERROR_RETRY_DELAY_MS
+            } catch (failure: Throwable) {
+                AppLogger.error(
+                    "Telemetry",
+                    "Cycle failed: ${failure.javaClass.simpleName}: ${failure.message}",
+                )
+                sleepMs = ERROR_RETRY_DELAY_MS
+            }
+            delay(sleepMs.coerceAtLeast(MIN_LOOP_DELAY_MS))
+        }
+    }
+
+    private fun collectTelemetryCycle(settings: AppSettings) {
+        try {
+            collectAndEnqueueTelemetry(settings, dropFrames = false)
+        } catch (outOfMemory: OutOfMemoryError) {
+            AppLogger.warn(
+                "Telemetry",
+                "Out of memory while embedding frames; retrying snapshot without frames",
+            )
+            collectAndEnqueueTelemetry(settings, dropFrames = true)
+        }
+    }
+
+    private fun collectAndEnqueueTelemetry(settings: AppSettings, dropFrames: Boolean) {
         withTimedWakeLock {
-            val includeFrames = shouldIncludeFrames(settings)
-            val pendingActionIds = pendingCaptureActionIds(settings)
+            val includeFrames = !dropFrames && shouldIncludeFrames(settings)
+            val pendingActionIds = if (dropFrames) emptyList() else pendingCaptureActionIds(settings)
             val forceCapture = pendingActionIds.isNotEmpty()
-            val needFrames = includeFrames || forceCapture
+            val needFrames = !dropFrames && (includeFrames || forceCapture)
             var takeStill = needFrames
             if (takeStill && !forceCapture && settings.operatingMode == OperatingMode.WATCHER) {
                 val now = System.currentTimeMillis()
@@ -324,93 +455,102 @@ class CaptureService : Service(), LifecycleOwner {
 
             var rearFile: File? = null
             var frontFile: File? = null
-            if (takeStill) {
-                val latch = java.util.concurrent.CountDownLatch(
+            try {
+                if (takeStill) {
+                    val latch = java.util.concurrent.CountDownLatch(
+                        when (settings.activeCamera) {
+                            CameraFacing.BOTH -> 2
+                            else -> 1
+                        },
+                    )
                     when (settings.activeCamera) {
-                        CameraFacing.BOTH -> 2
-                        else -> 1
-                    },
-                )
-                when (settings.activeCamera) {
-                    CameraFacing.FRONT -> {
-                        DoganCamera.captureFromFacing(
-                            this, this, CameraFacing.FRONT, settings.sendingImageQuality.jpegQuality,
-                            { file ->
-                                frontFile = file
-                                latch.countDown()
-                            },
-                            captureCallbackExecutor,
-                        )
+                        CameraFacing.FRONT -> {
+                            DoganCamera.captureFromFacing(
+                                this, this, CameraFacing.FRONT, settings.sendingImageQuality.jpegQuality,
+                                { file ->
+                                    frontFile = file
+                                    latch.countDown()
+                                },
+                                captureCallbackExecutor,
+                            )
+                        }
+                        CameraFacing.REAR -> {
+                            DoganCamera.captureFromFacing(
+                                this, this, CameraFacing.REAR, settings.sendingImageQuality.jpegQuality,
+                                { file ->
+                                    rearFile = file
+                                    latch.countDown()
+                                },
+                                captureCallbackExecutor,
+                            )
+                        }
+                        CameraFacing.BOTH -> {
+                            DoganCamera.captureFromFacing(
+                                this, this, CameraFacing.REAR, settings.sendingImageQuality.jpegQuality,
+                                { file ->
+                                    rearFile = file
+                                    latch.countDown()
+                                },
+                                captureCallbackExecutor,
+                            )
+                            DoganCamera.captureFromFacing(
+                                this, this, CameraFacing.FRONT, settings.sendingImageQuality.jpegQuality,
+                                { file ->
+                                    frontFile = file
+                                    latch.countDown()
+                                },
+                                captureCallbackExecutor,
+                            )
+                        }
                     }
-                    CameraFacing.REAR -> {
-                        DoganCamera.captureFromFacing(
-                            this, this, CameraFacing.REAR, settings.sendingImageQuality.jpegQuality,
-                            { file ->
-                                rearFile = file
-                                latch.countDown()
-                            },
-                            captureCallbackExecutor,
-                        )
+                    latch.await(CAPTURE_LATCH_TIMEOUT_SEC, java.util.concurrent.TimeUnit.SECONDS)
+                    if (settings.operatingMode == OperatingMode.WATCHER &&
+                        (rearFile != null || frontFile != null)
+                    ) {
+                        lastWatcherFrameAt = System.currentTimeMillis()
                     }
-                    CameraFacing.BOTH -> {
-                        DoganCamera.captureFromFacing(
-                            this, this, CameraFacing.REAR, settings.sendingImageQuality.jpegQuality,
-                            { file ->
-                                rearFile = file
-                                latch.countDown()
-                            },
-                            captureCallbackExecutor,
-                        )
-                        DoganCamera.captureFromFacing(
-                            this, this, CameraFacing.FRONT, settings.sendingImageQuality.jpegQuality,
-                            { file ->
-                                frontFile = file
-                                latch.countDown()
-                            },
-                            captureCallbackExecutor,
+                    if (takeStill && rearFile == null && frontFile == null) {
+                        AppLogger.warn(
+                            "Capture",
+                            "Still capture requested but no JPEG (${settings.activeCamera}, policy=${settings.imageUploadPolicyForMode(settings.operatingMode)})",
                         )
                     }
                 }
-                latch.await(15, java.util.concurrent.TimeUnit.SECONDS)
-                if (settings.operatingMode == OperatingMode.WATCHER &&
-                    (rearFile != null || frontFile != null)
+
+                val now = System.currentTimeMillis()
+                val latency = if (lastLatencySampleAt == 0L ||
+                    now - lastLatencySampleAt >= settings.latencyIntervalSec * 1000L
                 ) {
-                    lastWatcherFrameAt = System.currentTimeMillis()
+                    lastLatencySampleAt = now
+                    apiClient.pingHealthWithLatency(settings.serverBaseUrl)?.latencyMs ?: -1L
+                } else {
+                    -1L
                 }
-                if (takeStill && rearFile == null && frontFile == null) {
-                    AppLogger.warn(
+
+                val embedFrames = takeStill && (rearFile != null || frontFile != null)
+                val payload = telemetryCollector.collectSnapshot(
+                    rearFile,
+                    frontFile,
+                    latency,
+                    embedFrames,
+                    settings,
+                )
+                val rearLen = payload.optString("rear_camera_frame_base64").length
+                val frontLen = payload.optString("front_camera_frame_base64").length
+                if (embedFrames) {
+                    AppLogger.info(
                         "Capture",
-                        "Still capture requested but no JPEG (${settings.activeCamera}, policy=${settings.imageUploadPolicyForMode(settings.operatingMode)})",
+                        "Enqueue telemetry with frames rear=${rearLen}b front=${frontLen}b",
                     )
                 }
+                telemetryDatabase.enqueue(payload)
+                if (forceCapture && telemetryHasAttachedFrames(payload)) {
+                    acknowledgePendingActions(settings.serverBaseUrl, pendingActionIds)
+                }
+            } finally {
+                rearFile?.delete()
+                frontFile?.delete()
             }
-
-            val now = System.currentTimeMillis()
-            val latency = if (lastLatencySampleAt == 0L ||
-                now - lastLatencySampleAt >= settings.latencyIntervalSec * 1000L
-            ) {
-                lastLatencySampleAt = now
-                apiClient.pingHealthWithLatency(settings.serverBaseUrl)?.latencyMs ?: -1L
-            } else {
-                -1L
-            }
-
-            val embedFrames = takeStill && (rearFile != null || frontFile != null)
-            val payload = telemetryCollector.collectSnapshot(rearFile, frontFile, latency, embedFrames, settings)
-            val rearLen = payload.optString("rear_camera_frame_base64").length
-            val frontLen = payload.optString("front_camera_frame_base64").length
-            if (embedFrames) {
-                AppLogger.info(
-                    "Capture",
-                    "Enqueue telemetry with frames rear=${rearLen}b front=${frontLen}b",
-                )
-            }
-            telemetryDatabase.enqueue(payload)
-            if (forceCapture && telemetryHasAttachedFrames(payload)) {
-                acknowledgePendingActions(settings.serverBaseUrl, pendingActionIds)
-            }
-            rearFile?.delete()
-            frontFile?.delete()
         }
     }
 
@@ -445,42 +585,44 @@ class CaptureService : Service(), LifecycleOwner {
         }
     }
 
-    private fun scheduleUploadLoop() {
-        uploadExecutor.execute {
-            while (running) {
-                try {
-                    val settings = cachedSettings ?: runBlocking { settingsStore.settingsFlow.first() }
-                    if (ServerConnectionManager.isConnected() && isValidBaseUrl(settings.serverBaseUrl)) {
-                        withTimedWakeLock {
-                            val stats = telemetryUploader.uploadPending(settings.serverBaseUrl)
-                            if (stats.uploaded > 0 || stats.failed > 0) {
-                                AppLogger.info(
-                                    "Telemetry",
-                                    "Upload batch ok=${stats.uploaded} failed=${stats.failed} remaining=${stats.remaining}",
-                                )
-                            }
+    private suspend fun runUploadLoop() {
+        while (running) {
+            var sleepMs = DEFAULT_TELEMETRY_INTERVAL_MS
+            try {
+                val settings = cachedSettings ?: runBlocking { settingsStore.settingsFlow.first() }
+                sleepMs = settings.uploadIntervalMs.coerceAtLeast(
+                    SettingsStore.MIN_UPLOAD_INTERVAL_SEC * 1000L,
+                )
+                if (ServerConnectionManager.isConnected() && isValidBaseUrl(settings.serverBaseUrl)) {
+                    withTimedWakeLock {
+                        val stats = telemetryUploader.uploadPending(settings.serverBaseUrl)
+                        if (stats.uploaded > 0 || stats.failed > 0) {
+                            AppLogger.info(
+                                "Telemetry",
+                                "Upload batch ok=${stats.uploaded} failed=${stats.failed} remaining=${stats.remaining}",
+                            )
                         }
                     }
-                    val sleepMs = (cachedSettings ?: settings).uploadIntervalMs.coerceAtLeast(
-                        SettingsStore.MIN_UPLOAD_INTERVAL_SEC * 1000L,
-                    )
-                    Thread.sleep(sleepMs)
-                } catch (_: InterruptedException) {
-                    Thread.currentThread().interrupt()
-                    break
-                } catch (_: Exception) {
-                    Thread.sleep(5_000L)
                 }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Throwable) {
+                AppLogger.warn(
+                    "Telemetry",
+                    "Upload loop failed: ${failure.javaClass.simpleName}: ${failure.message}",
+                )
+                sleepMs = ERROR_RETRY_DELAY_MS
             }
+            delay(sleepMs.coerceAtLeast(MIN_LOOP_DELAY_MS))
         }
     }
 
-    private fun scheduleDiagnosticUploadLoop() {
-        uploadExecutor.execute {
-            while (running) {
-                try {
-                    val settings = cachedSettings ?: continue
-                    if (!ServerConnectionManager.isConnected()) continue
+    private suspend fun runDiagnosticUploadLoop() {
+        while (running) {
+            var sleepMs = DIAGNOSTIC_UPLOAD_INTERVAL_MS
+            try {
+                val settings = cachedSettings
+                if (settings != null && ServerConnectionManager.isConnected()) {
                     for (segment in cabinNoiseArchive.getPendingUploads()) {
                         if (!segment.file.exists()) continue
                         val metadata = JSONObject()
@@ -491,42 +633,66 @@ class CaptureService : Service(), LifecycleOwner {
                             .put("linked_alert_id", segment.linkedAlertId)
                             .put("mode", segment.mode)
                             .put("device_id", deviceId)
-                        val ok = apiClient.submitDiagnosticAudio(
+                        val uploaded = apiClient.submitDiagnosticAudio(
                             settings.serverBaseUrl,
                             segment.file,
                             metadata,
                         )
-                        if (ok) cabinNoiseArchive.markUploaded(segment.id)
+                        if (uploaded) cabinNoiseArchive.markUploaded(segment.id)
                     }
-                    Thread.sleep(30_000L)
-                } catch (_: InterruptedException) {
-                    Thread.currentThread().interrupt()
-                    break
-                } catch (_: Exception) {
-                    Thread.sleep(30_000L)
                 }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Throwable) {
+                AppLogger.warn(
+                    "Diagnostics",
+                    "Audio upload loop failed: ${failure.javaClass.simpleName}: ${failure.message}",
+                )
+                sleepMs = ERROR_RETRY_DELAY_MS
             }
+            delay(sleepMs.coerceAtLeast(MIN_LOOP_DELAY_MS))
         }
     }
 
-    private fun scheduleKeepAliveLoop() {
-        keepAliveExecutor.execute {
-            while (running) {
-                try {
-                    val settings = runBlocking { settingsStore.settingsFlow.first() }
-                    maybeWakeScreen(settings)
-                    val checkMs = if (settings.screenOnIntervalMin > 0) {
-                        minOf(30_000L, settings.screenOnIntervalMin * 60_000L / 2)
-                    } else {
-                        30_000L
-                    }
-                    Thread.sleep(checkMs.coerceAtLeast(5_000L))
-                } catch (_: InterruptedException) {
-                    Thread.currentThread().interrupt()
-                    break
-                } catch (_: Exception) {
-                    Thread.sleep(30_000L)
+    private suspend fun runKeepAliveLoop() {
+        while (running) {
+            var sleepMs = KEEP_ALIVE_INTERVAL_MS
+            try {
+                val settings = runBlocking { settingsStore.settingsFlow.first() }
+                maybeWakeScreen(settings)
+                sleepMs = if (settings.screenOnIntervalMin > 0) {
+                    minOf(30_000L, settings.screenOnIntervalMin * 60_000L / 2)
+                } else {
+                    30_000L
                 }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Throwable) {
+                AppLogger.warn(
+                    "KeepAlive",
+                    "Keep-alive loop failed: ${failure.javaClass.simpleName}: ${failure.message}",
+                )
+                sleepMs = 30_000L
+            }
+            delay(sleepMs.coerceAtLeast(KEEP_ALIVE_INTERVAL_MS))
+        }
+    }
+
+    private suspend fun runWatchdog() {
+        while (running) {
+            delay(WATCHDOG_INTERVAL_MS)
+            if (!running) return
+            val settings = cachedSettings ?: continue
+            val interval = settings.fastestSensorIntervalMs.coerceAtLeast(MIN_LOOP_DELAY_MS)
+            val stalledFor = System.currentTimeMillis() - lastTelemetryCycleAt
+            if (stalledFor <= interval * 3 + WATCHDOG_GRACE_MS) continue
+            AppLogger.warn(
+                "Telemetry",
+                "Watchdog: no telemetry cycle for ${stalledFor}ms; restarting loop",
+            )
+            synchronized(loopLock) {
+                telemetryJob?.cancel()
+                telemetryJob = ensureLoopScope().launch { runTelemetryLoop() }
             }
         }
     }

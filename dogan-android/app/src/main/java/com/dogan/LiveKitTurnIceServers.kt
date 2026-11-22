@@ -1,26 +1,39 @@
 package com.dogan
 
-import livekit.LivekitRtc
 import livekit.org.webrtc.PeerConnection
+import org.json.JSONArray
 
 /**
- * Converts LiveKit signal join [LivekitRtc.ICEServer] entries to WebRTC [PeerConnection.IceServer] instances.
+ * Builds explicit WebRTC ICE servers from the API `ice_servers` list.
  *
- * SDK 2.27.x uses TLS_CERT_POLICY_SECURE by default; liblkjingle's trust store lacks ISRG roots, so
- * turns://dogan-turn.xaigrok.ir:443 (Let's Encrypt) fails. We relax verification only for that host.
+ * The coturn edge at [DOGAN_TURN_HOST] terminates TLS with a Let's Encrypt certificate that the
+ * SDK's bundled libwebrtc trust store rejects, so certificate checks are relaxed for that host only.
  */
 object LiveKitTurnIceServers {
     const val DOGAN_TURN_HOST = "dogan-turn.xaigrok.ir"
 
-    fun fromJoinResponse(join: LivekitRtc.JoinResponse): List<PeerConnection.IceServer> {
-        return join.iceServersList.map { fromProto(it) }
+    fun fromJsonArray(array: JSONArray?): List<PeerConnection.IceServer> {
+        if (array == null) return emptyList()
+        val servers = ArrayList<PeerConnection.IceServer>(array.length())
+        for (index in 0 until array.length()) {
+            val entry = array.optJSONObject(index) ?: continue
+            val urlArray = entry.optJSONArray("urls") ?: continue
+            val urls = ArrayList<String>(urlArray.length())
+            for (urlIndex in 0 until urlArray.length()) {
+                val url = urlArray.optString(urlIndex).trim()
+                if (url.isNotEmpty()) urls.add(url)
+            }
+            if (urls.isEmpty()) continue
+            servers.add(build(urls, entry.optString("username"), entry.optString("credential")))
+        }
+        return servers
     }
 
-    fun fromProto(server: LivekitRtc.ICEServer): PeerConnection.IceServer {
-        val builder = PeerConnection.IceServer.builder(server.urlsList)
-            .setUsername(server.username ?: "")
-            .setPassword(server.credential ?: "")
-        if (server.urlsList.any { isDoganTurnUrl(it) }) {
+    fun build(urls: List<String>, username: String, credential: String): PeerConnection.IceServer {
+        val builder = PeerConnection.IceServer.builder(urls)
+        if (username.isNotEmpty()) builder.setUsername(username)
+        if (credential.isNotEmpty()) builder.setPassword(credential)
+        if (urls.any { isDoganTurnUrl(it) }) {
             builder.setTlsCertPolicy(
                 PeerConnection.TlsCertPolicy.TLS_CERT_POLICY_INSECURE_NO_CHECK,
             )

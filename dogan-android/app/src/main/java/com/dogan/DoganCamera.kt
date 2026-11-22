@@ -13,6 +13,7 @@ import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import java.util.concurrent.Executor
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 /** CameraX binding for monitoring, preview, analysis, and dual-camera capture. */
@@ -81,8 +82,8 @@ object DoganCamera {
         val providerFuture = ProcessCameraProvider.getInstance(context)
         providerFuture.addListener({
             try {
-                val provider = providerFuture.get()
-                provider.unbindAll()
+                val provider = providerFuture.get(PROVIDER_TIMEOUT_SEC, TimeUnit.SECONDS)
+                unbindOwnUseCases(provider)
 
                 val previewUseCase = Preview.Builder().build()
                 val captureUseCase = ImageCapture.Builder()
@@ -151,8 +152,8 @@ object DoganCamera {
         val providerFuture = ProcessCameraProvider.getInstance(context)
         providerFuture.addListener({
             try {
-                val provider = providerFuture.get()
-                provider.unbindAll()
+                val provider = providerFuture.get(PROVIDER_TIMEOUT_SEC, TimeUnit.SECONDS)
+                unbindOwnUseCases(provider)
 
                 val previewUseCase = Preview.Builder().build().also {
                     it.setSurfaceProvider(previewView.surfaceProvider)
@@ -198,13 +199,12 @@ object DoganCamera {
         val providerFuture = ProcessCameraProvider.getInstance(context)
         providerFuture.addListener({
             try {
-                val provider = providerFuture.get()
+                val provider = providerFuture.get(PROVIDER_TIMEOUT_SEC, TimeUnit.SECONDS)
                 val capture = ImageCapture.Builder()
                     .setJpegQuality(jpegQuality)
                     .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                     .build()
-                provider.unbindAll()
-                markUnbound()
+                unbindOwnUseCases(provider)
                 provider.bindToLifecycle(lifecycleOwner, facing.toCameraSelector(), capture)
                 activeFacing = facing
                 val file = java.io.File.createTempFile("dogan_analysis_", ".jpg", context.cacheDir)
@@ -213,15 +213,14 @@ object DoganCamera {
                     override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                         val bitmap = BitmapFactory.decodeFile(file.absolutePath)
                         file.delete()
-                        // CameraX unbind/bind must run on main; takePicture callbacks use [executor].
-                        finishStillCaptureOnMain(context, lifecycleOwner, provider) {
+                        finishStillCaptureOnMain(context, lifecycleOwner, provider, capture) {
                             onComplete(bitmap)
                         }
                     }
 
                     override fun onError(exception: ImageCaptureException) {
                         file.delete()
-                        finishStillCaptureOnMain(context, lifecycleOwner, provider) {
+                        finishStillCaptureOnMain(context, lifecycleOwner, provider, capture) {
                             onComplete(null)
                         }
                     }
@@ -243,27 +242,26 @@ object DoganCamera {
         val providerFuture = ProcessCameraProvider.getInstance(context)
         providerFuture.addListener({
             try {
-                val provider = providerFuture.get()
+                val provider = providerFuture.get(PROVIDER_TIMEOUT_SEC, TimeUnit.SECONDS)
                 val capture = ImageCapture.Builder()
                     .setJpegQuality(jpegQuality)
                     .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                     .build()
-                provider.unbindAll()
-                markUnbound()
+                unbindOwnUseCases(provider)
                 provider.bindToLifecycle(lifecycleOwner, facing.toCameraSelector(), capture)
                 activeFacing = facing
                 val file = java.io.File.createTempFile("dogan_${facing.name.lowercase()}_", ".jpg", context.cacheDir)
                 val options = ImageCapture.OutputFileOptions.Builder(file).build()
                 capture.takePicture(options, executor, object : ImageCapture.OnImageSavedCallback {
                     override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                        finishStillCaptureOnMain(context, lifecycleOwner, provider) {
+                        finishStillCaptureOnMain(context, lifecycleOwner, provider, capture) {
                             onComplete(file)
                         }
                     }
                     override fun onError(exception: ImageCaptureException) {
                         AppLogger.warn("Capture", "takePicture failed (${facing.name}): ${exception.message}")
                         file.delete()
-                        finishStillCaptureOnMain(context, lifecycleOwner, provider) {
+                        finishStillCaptureOnMain(context, lifecycleOwner, provider, capture) {
                             onComplete(null)
                         }
                     }
@@ -279,10 +277,11 @@ object DoganCamera {
         context: Context,
         lifecycleOwner: LifecycleOwner,
         provider: ProcessCameraProvider,
+        capture: ImageCapture,
         after: () -> Unit,
     ) {
         ContextCompat.getMainExecutor(context).execute {
-            finishStillCapture(context, lifecycleOwner, provider)
+            finishStillCapture(context, lifecycleOwner, provider, capture)
             after()
         }
     }
@@ -291,12 +290,24 @@ object DoganCamera {
         context: Context,
         lifecycleOwner: LifecycleOwner,
         provider: ProcessCameraProvider,
+        capture: ImageCapture,
     ) {
-        provider.unbindAll()
+        try {
+            provider.unbind(capture)
+        } catch (failure: Exception) {
+            AppLogger.warn("Capture", "Still unbind failed: ${failure.message}")
+        }
         markUnbound()
         if (preferContinuousBind) {
             bindForMonitoring(context, lifecycleOwner, activeFacing)
         }
+    }
+
+    private fun unbindOwnUseCases(provider: ProcessCameraProvider) {
+        preview?.let { useCase -> runCatching { provider.unbind(useCase) } }
+        imageAnalysis?.let { useCase -> runCatching { provider.unbind(useCase) } }
+        captureRef.get()?.let { useCase -> runCatching { provider.unbind(useCase) } }
+        markUnbound()
     }
 
     private fun markUnbound() {
@@ -318,12 +329,11 @@ object DoganCamera {
 
     fun clear() {
         preferContinuousBind = false
-        cameraProvider?.unbindAll()
+        cameraProvider?.let { provider -> unbindOwnUseCases(provider) }
         cameraProvider = null
-        preview = null
-        imageAnalysis = null
-        captureRef.set(null)
-        boundOwner = null
+        markUnbound()
         analysisListener = null
     }
+
+    private const val PROVIDER_TIMEOUT_SEC = 5L
 }
