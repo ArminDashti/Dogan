@@ -58,5 +58,6 @@ dependencies {
 
     implementation("com.google.android.gms:play-services-location:21.3.0")
 
-    implementation("io.github.webrtc-sdk:android:144.7559.15")
+    implementation("com.github.pedroSG94.RootEncoder:library:2.8.2")
+    testImplementation("junit:junit:4.13.2")
 }

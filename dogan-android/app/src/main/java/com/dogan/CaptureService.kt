@@ -53,7 +53,7 @@ class CaptureService : Service(), LifecycleOwner {
     private val watcherEngine by lazy { WatcherEngine(alertManager) }
     private val modeController by lazy { ModeController(watcherEngine) }
     private val telemetryUploader by lazy { TelemetryUploader(apiClient, telemetryDatabase) }
-    private val whipStreamer by lazy { WhipStreamer(this, apiClient) }
+    private val streamPublisher by lazy { WebSocketStreamer(this, apiClient) }
     private val resourceMonitor by lazy { DeviceResourceMonitor(this) }
 
     private lateinit var audioCapture: AudioCapture
@@ -174,24 +174,14 @@ class CaptureService : Service(), LifecycleOwner {
 
     private fun maybeStartStreaming(settings: AppSettings) {
         if (settings.operatingMode != OperatingMode.WATCHER) {
-            whipStreamer.stop()
+            streamPublisher.stop()
             return
         }
         if (ServerConnectionManager.isConnected() && isValidBaseUrl(settings.serverBaseUrl)) {
-            if (whipStreamer.isPublishingSame(
-                    settings.serverBaseUrl,
-                    settings.streamMode,
-                    settings.streamBaseUrl,
-                )
-            ) {
+            if (streamPublisher.isPublishingSame(settings.serverBaseUrl, settings.streamMode)) {
                 return
             }
-            whipStreamer.start(
-                settings.serverBaseUrl,
-                settings.streamMode,
-                settings.streamBaseUrl,
-                settings.streamPort,
-            )
+            streamPublisher.start(settings.serverBaseUrl, settings.streamMode)
         }
     }
 
@@ -237,7 +227,7 @@ class CaptureService : Service(), LifecycleOwner {
         locationTracker.stop()
         ambientLightSensor.stop()
         audioCapture.stop()
-        whipStreamer.stop()
+        streamPublisher.stop()
         alertManager.release()
         wakeLock?.release()
         wakeLock = null

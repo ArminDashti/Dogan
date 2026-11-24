@@ -88,6 +88,7 @@ func New(applicationConfig config.Config) *gin.Engine {
 	)
 	streamTokenHandler := handlers.NewStreamTokenHandler(streamTokenIssuer, dataStore, iceOptions)
 	mediaMTXAuthHandler := handlers.NewMediaMTXAuthHandler(streamTokenIssuer)
+	streamPublisherHandler := handlers.NewStreamPublisherHandler(streamTokenIssuer, applicationConfig.MediaMTXRTMPAddress)
 	webrtcSessionHandler := handlers.NewWebRTCSessionHandler(streamTokenIssuer, dataStore, dataStore, iceOptions)
 	devicesHandler := handlers.NewDevicesHandler(dataStore, streamTokenIssuer, dataStore, iceOptions)
 	devicesWebHandler := handlers.NewDevicesWebHandler(dataStore, dataStore, dataStore, dataStore)
@@ -100,6 +101,7 @@ func New(applicationConfig config.Config) *gin.Engine {
 		api.GET("/health", healthHandler.GetHealth)
 		// MediaMTX authHTTPAddress hook: validates short-lived stream tokens (no bearer middleware).
 		api.POST("/mediamtx/auth", mediaMTXAuthHandler.Authorize)
+		api.GET("/stream/publish", streamPublisherHandler.Publish)
 
 		protected := api.Group("/")
 		protected.Use(middleware.RequireBearerToken(tokenIssuer, applicationConfig.EmbeddedAPIToken))

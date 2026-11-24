@@ -12,13 +12,11 @@ services:
     expose:
       - "8889"
       - "8888"
-      - "8189"
+      - "1935"
       - "9997"
     ports:
       - "8889:8889"
       - "8888:8888"
-      - "8189:8189/udp"
-      - "8189:8189/tcp"
 
   dogan-turn:
     image: coturn/coturn:4.19
@@ -91,6 +89,7 @@ services:
       DOGAN_MEDIAMTX_WEBRTC_PUBLIC_URL: ${DOGAN_MEDIAMTX_WEBRTC_PUBLIC_URL:-http://localhost:8889}
       DOGAN_MEDIAMTX_HLS_PUBLIC_URL: ${DOGAN_MEDIAMTX_HLS_PUBLIC_URL:-http://localhost:8888}
       DOGAN_MEDIAMTX_API_URL: ${DOGAN_MEDIAMTX_API_URL:-http://dogan-mediamtx:9997}
+      DOGAN_MEDIAMTX_RTMP_ADDRESS: ${DOGAN_MEDIAMTX_RTMP_ADDRESS:-dogan-mediamtx:1935}
       DOGAN_STREAM_TOKEN_SECRET: ${DOGAN_STREAM_TOKEN_SECRET:-}
       DOGAN_STREAM_TOKEN_TTL: ${DOGAN_STREAM_TOKEN_TTL:-3600}
       DOGAN_TURN_DOMAIN: ${DOGAN_TURN_DOMAIN:-}

@@ -11,7 +11,8 @@ api: yes
 apiAddress: :9997
 
 rtsp: no
-rtmp: no
+rtmp: yes
+rtmpAddress: :1935
 srt: no
 moq: no
 

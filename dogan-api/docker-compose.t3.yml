@@ -4,17 +4,8 @@
 #   docker compose -f docker-compose.yml -f docker-compose.t3.yml up -d --force-recreate mediamtx turn api
 services:
   mediamtx:
-    expose:
-      - "8889"
-      - "8888"
-      - "9997"
-    ports: !reset
-      - target: 8189
-        published: 8189
-        protocol: udp
-      - target: 8189
-        published: 8189
-        protocol: tcp
+    expose: !reset ["8889", "8888", "1935", "9997"]
+    ports: !reset []
     environment:
       MTX_WEBRTCADDITIONALHOSTS: ${DOGAN_MEDIAMTX_ADDITIONAL_HOSTS:-2.144.27.124}
       MTX_AUTHHTTPADDRESS: ${DOGAN_MEDIAMTX_AUTH_URL:-http://dogan-api:8080/dogan/api/v1/mediamtx/auth}
@@ -41,6 +32,7 @@ services:
       DOGAN_MEDIAMTX_WEBRTC_PUBLIC_URL: ${DOGAN_MEDIAMTX_WEBRTC_PUBLIC_URL:-https://dogan-media.xaigrok.ir}
       DOGAN_MEDIAMTX_HLS_PUBLIC_URL: ${DOGAN_MEDIAMTX_HLS_PUBLIC_URL:-https://dogan-hls.xaigrok.ir}
       DOGAN_MEDIAMTX_API_URL: ${DOGAN_MEDIAMTX_API_URL:-http://mediamtx:9997}
+      DOGAN_MEDIAMTX_RTMP_ADDRESS: ${DOGAN_MEDIAMTX_RTMP_ADDRESS:-mediamtx:1935}
       DOGAN_STREAM_TOKEN_SECRET: ${DOGAN_STREAM_TOKEN_SECRET:-}
       DOGAN_STREAM_TOKEN_TTL: ${DOGAN_STREAM_TOKEN_TTL:-3600}
       DOGAN_TURN_DOMAIN: ${DOGAN_TURN_DOMAIN:-dogan-turn.xaigrok.ir}
