@@ -80,15 +80,16 @@ func (handler *WebRTCSessionHandler) CreateSession(context *gin.Context) {
 	}
 
 	context.JSON(http.StatusOK, models.WebRTCSessionResponse{
-		SessionID:  tokenResponse.Path,
-		Token:      tokenResponse.Token,
-		URL:        tokenResponse.WHIPURL,
-		WHIPURL:    tokenResponse.WHIPURL,
-		Room:       tokenResponse.Path,
-		Path:       tokenResponse.Path,
-		Identity:   tokenResponse.Identity,
-		ExpiresAt:  tokenResponse.ExpiresAt,
-		IceServers: mediamtx.IceServers(handler.iceOptions, tokenResponse.Identity),
+		SessionID:           tokenResponse.Path,
+		Token:               tokenResponse.Token,
+		URL:                 tokenResponse.WHIPURL,
+		WHIPURL:             tokenResponse.WHIPURL,
+		WebSocketPublishURL: streamPublishWebSocketURL(context),
+		Room:                tokenResponse.Path,
+		Path:                tokenResponse.Path,
+		Identity:            tokenResponse.Identity,
+		ExpiresAt:           tokenResponse.ExpiresAt,
+		IceServers:          mediamtx.IceServers(handler.iceOptions, tokenResponse.Identity),
 	})
 }
 

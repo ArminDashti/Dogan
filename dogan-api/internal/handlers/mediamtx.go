@@ -61,6 +61,10 @@ func (handler *StreamTokenHandler) IssueToken(context *gin.Context) {
 	if role == mediamtx.RolePublisher {
 		url = tokenResponse.WHIPURL
 	}
+	webSocketPublishURL := ""
+	if role == mediamtx.RolePublisher {
+		webSocketPublishURL = streamPublishWebSocketURL(context)
+	}
 
 	_, _ = handler.webrtcStore.SaveConnection(models.WebRTCConnectionRecord{
 		DeviceID:    request.DeviceID,
@@ -72,17 +76,18 @@ func (handler *StreamTokenHandler) IssueToken(context *gin.Context) {
 	})
 
 	context.JSON(http.StatusOK, models.StreamTokenResponse{
-		Token:      tokenResponse.Token,
-		URL:        url,
-		Room:       tokenResponse.Path,
-		Path:       tokenResponse.Path,
-		Identity:   tokenResponse.Identity,
-		Role:       role,
-		WHIPURL:    tokenResponse.WHIPURL,
-		WHEPURL:    tokenResponse.WHEPURL,
-		HLSURL:     tokenResponse.HLSURL,
-		ExpiresAt:  tokenResponse.ExpiresAt,
-		IceServers: mediamtx.IceServers(handler.iceOptions, tokenResponse.Identity),
+		Token:               tokenResponse.Token,
+		URL:                 url,
+		Room:                tokenResponse.Path,
+		Path:                tokenResponse.Path,
+		Identity:            tokenResponse.Identity,
+		Role:                role,
+		WHIPURL:             tokenResponse.WHIPURL,
+		WHEPURL:             tokenResponse.WHEPURL,
+		HLSURL:              tokenResponse.HLSURL,
+		WebSocketPublishURL: webSocketPublishURL,
+		ExpiresAt:           tokenResponse.ExpiresAt,
+		IceServers:          mediamtx.IceServers(handler.iceOptions, tokenResponse.Identity),
 	})
 }
 

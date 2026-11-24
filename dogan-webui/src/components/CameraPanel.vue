@@ -36,8 +36,7 @@ const loadingStream = ref(false)
 const capturing = ref(false)
 const captureMessage = ref<string | null>(null)
 const errorMessage = ref<string | null>(null)
-const streamNotice = ref<string | null>(null)
-const streamMode = ref<StreamMode>('webrtc')
+const streamMode = ref<StreamMode>('hls')
 const credentials = ref<StreamResponse | null>(null)
 const videoElement = ref<HTMLVideoElement | null>(null)
 
@@ -103,7 +102,7 @@ function reportStreamError(error: Error): void {
   if (connectionState.value === 'idle') {
     return
   }
-  const url = credentials.value?.whepUrl ?? credentials.value?.url ?? ''
+  const url = credentials.value?.hlsUrl ?? credentials.value?.whepUrl ?? credentials.value?.url ?? ''
   const message = formatStreamError(error, url)
   connectionState.value = 'error'
   errorMessage.value = message
@@ -152,7 +151,6 @@ async function disconnectStream(): Promise<void> {
   connectionGeneration += 1
   await teardownPlayer()
   credentials.value = null
-  streamNotice.value = null
   if (connectionState.value !== 'idle') {
     connectionState.value = 'idle'
     emit('connectionStateChange', connectionState.value)
@@ -168,7 +166,6 @@ async function playStream(): Promise<void> {
   loadingStream.value = true
   errorMessage.value = null
   captureMessage.value = null
-  streamNotice.value = null
   connectionState.value = 'connecting'
   emit('connectionStateChange', connectionState.value)
 
@@ -181,22 +178,7 @@ async function playStream(): Promise<void> {
     }
     credentials.value = streamCredentials
 
-    let session: PlayerSession
-    if (streamMode.value === 'hls' && streamCredentials.hlsUrl) {
-      session = await connectSession(streamCredentials, 'hls')
-    } else {
-      try {
-        session = await connectSession(streamCredentials, 'webrtc')
-      } catch (error) {
-        if (!streamCredentials.hlsUrl) {
-          throw error
-        }
-        streamNotice.value = `${formatStreamError(error, streamCredentials.whepUrl)} Switched to HLS.`
-        console.warn('[dogan stream] WebRTC playback failed, using HLS', error)
-        streamMode.value = 'hls'
-        session = await connectSession(streamCredentials, 'hls')
-      }
-    }
+    const session = await connectSession(streamCredentials, streamMode.value)
 
     if (generation !== connectionGeneration) {
       await session.stop()
@@ -210,7 +192,12 @@ async function playStream(): Promise<void> {
     connectionState.value = 'error'
     emit('connectionStateChange', connectionState.value)
     const message = credentials.value
-      ? formatStreamError(error, credentials.value.whepUrl || credentials.value.url)
+      ? formatStreamError(
+          error,
+          streamMode.value === 'hls'
+            ? credentials.value.hlsUrl || credentials.value.whepUrl || credentials.value.url
+            : credentials.value.whepUrl || credentials.value.url,
+        )
       : getErrorMessage(error, 'Unable to fetch stream credentials from the API.')
     errorMessage.value = message
     emit('error', message)
@@ -232,7 +219,6 @@ function toggleStreamMode(): void {
     return
   }
   streamMode.value = streamMode.value === 'webrtc' ? 'hls' : 'webrtc'
-  streamNotice.value = null
 }
 
 async function captureFrame(): Promise<void> {
@@ -365,9 +351,6 @@ onUnmounted(() => {
       </span>
     </div>
 
-    <p v-if="streamNotice" class="border-t border-[var(--border)] px-5 py-3 text-sm text-[var(--muted)]">
-      {{ streamNotice }}
-    </p>
     <p v-if="captureMessage" class="border-t border-[var(--border)] px-5 py-3 text-sm text-[var(--live)]">
       {{ captureMessage }}
     </p>

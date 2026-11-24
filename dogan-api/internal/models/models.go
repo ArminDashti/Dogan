@@ -282,17 +282,18 @@ type StreamTokenRequest struct {
 }
 
 type StreamTokenResponse struct {
-	Token      string            `json:"token"`
-	URL        string            `json:"url"`
-	Room       string            `json:"room"`
-	Path       string            `json:"path"`
-	Identity   string            `json:"identity"`
-	Role       string            `json:"role"`
-	WHIPURL    string            `json:"whip_url,omitempty"`
-	WHEPURL    string            `json:"whep_url,omitempty"`
-	HLSURL     string            `json:"hls_url,omitempty"`
-	ExpiresAt  time.Time         `json:"expires_at"`
-	IceServers []IceServerConfig `json:"ice_servers"`
+	Token               string            `json:"token"`
+	URL                 string            `json:"url"`
+	Room                string            `json:"room"`
+	Path                string            `json:"path"`
+	Identity            string            `json:"identity"`
+	Role                string            `json:"role"`
+	WHIPURL             string            `json:"whip_url,omitempty"`
+	WHEPURL             string            `json:"whep_url,omitempty"`
+	HLSURL              string            `json:"hls_url,omitempty"`
+	WebSocketPublishURL string            `json:"websocket_publish_url,omitempty"`
+	ExpiresAt           time.Time         `json:"expires_at"`
+	IceServers          []IceServerConfig `json:"ice_servers"`
 }
 
 type WebRTCSessionRequest struct {
@@ -307,15 +308,16 @@ type IceServerConfig struct {
 }
 
 type WebRTCSessionResponse struct {
-	SessionID  string            `json:"session_id"`
-	Token      string            `json:"token"`
-	URL        string            `json:"url"`
-	WHIPURL    string            `json:"whip_url"`
-	Room       string            `json:"room"`
-	Path       string            `json:"path"`
-	Identity   string            `json:"identity"`
-	ExpiresAt  time.Time         `json:"expires_at"`
-	IceServers []IceServerConfig `json:"ice_servers"`
+	SessionID           string            `json:"session_id"`
+	Token               string            `json:"token"`
+	URL                 string            `json:"url"`
+	WHIPURL             string            `json:"whip_url"`
+	WebSocketPublishURL string            `json:"websocket_publish_url,omitempty"`
+	Room                string            `json:"room"`
+	Path                string            `json:"path"`
+	Identity            string            `json:"identity"`
+	ExpiresAt           time.Time         `json:"expires_at"`
+	IceServers          []IceServerConfig `json:"ice_servers"`
 }
 
 type DeviceListItem struct {
