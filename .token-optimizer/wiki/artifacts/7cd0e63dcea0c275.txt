@@ -1,0 +1,21 @@
+{
+  "success": true,
+  "pattern": "\\b(synchronized|Mutex|AtomicBoolean|compareAndSet|CountDownLatch|Semaphore|@Synchronized)\\b",
+  "metadata": {
+    "totalMatches": 0,
+    "filesSearched": 53,
+    "filesWithMatches": 0,
+    "returnedMatches": 0,
+    "truncated": false,
+    "tokensSaved": 0,
+    "tokenCount": 4,
+    "originalTokenCount": 4,
+    "compressionRatio": 1,
+    "duration": 299,
+    "cacheHit": false,
+    "savingsClassification": "unmeasured",
+    "savingsReason": "No comparable unoptimized grep response was materialized; repository bytes scanned are not model-context tokens."
+  },
+  "matches": [],
+  "hint": "No literal match for \"\\b(synchronized|Mutex|AtomicBoolean|compareAndSet|CountDownLatch|Semaphore|@Synchronized)\\b\", but it matches as a regular expression. Patterns are literal unless you pass regex: true."
+}

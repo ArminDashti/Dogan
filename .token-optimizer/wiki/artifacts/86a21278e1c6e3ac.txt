@@ -1,0 +1,45 @@
+{
+  "success": true,
+  "pattern": "catch (_: Exception)",
+  "metadata": {
+    "totalMatches": 4,
+    "filesSearched": 1,
+    "filesWithMatches": 1,
+    "returnedMatches": 4,
+    "truncated": false,
+    "tokensSaved": 0,
+    "tokenCount": 132,
+    "originalTokenCount": 132,
+    "compressionRatio": 1,
+    "duration": 3,
+    "cacheHit": false,
+    "savingsClassification": "unmeasured",
+    "savingsReason": "No comparable unoptimized grep response was materialized; repository bytes scanned are not model-context tokens."
+  },
+  "matches": [
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 304,
+      "line": "                } catch (_: Exception) {\r",
+      "match": "catch (_: Exception)"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 471,
+      "line": "                } catch (_: Exception) {\r",
+      "match": "catch (_: Exception)"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 505,
+      "line": "                } catch (_: Exception) {\r",
+      "match": "catch (_: Exception)"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 527,
+      "line": "                } catch (_: Exception) {\r",
+      "match": "catch (_: Exception)"
+    }
+  ]
+}

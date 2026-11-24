@@ -160,3 +160,4 @@ After any change, always:
 - Local Docker is five containers: `dogan-api`, `dogan-cv`, `dogan-webui`, `dogan-mediamtx`, and `dogan-turn`. `dogan-cv` processes images.
 - Production Dogan WebUI is `https://dogan.xaigrok.ir/` (Irancell T3).
 - Android Watchman publishes over WHIP to MediaMTX only through the TURN relay on TCP 443 (`turns://dogan-turn.xaigrok.ir:443?transport=tcp`), served by the `dogan-turn` coturn container; WHIP/WHEP host is `dogan-media.xaigrok.ir`. Direct UDP is not the production path (unverified (post-migration)).
+- On this PC, Gradle 9.3.1 builds require JDK 17 plus `ANDROID_HOME` and `ANDROID_SDK_ROOT`; `local.properties` alone did not resolve the SDK in this shell. Verified with `JAVA_HOME=C:\Program Files\Microsoft\jdk-17.0.21.21-hotspot`, `ANDROID_HOME=C:\Users\armin\AppData\Local\Android\Sdk`, and `ANDROID_SDK_ROOT=%ANDROID_HOME%`.

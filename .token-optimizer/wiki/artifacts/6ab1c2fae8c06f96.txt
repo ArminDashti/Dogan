@@ -1,0 +1,51 @@
+{
+  "success": true,
+  "pattern": "fun start\\(|if \\(running\\) return|recorder.startRecording|AudioRecord\\(|val read = recorder.read",
+  "metadata": {
+    "totalMatches": 5,
+    "filesSearched": 1,
+    "filesWithMatches": 1,
+    "returnedMatches": 5,
+    "truncated": false,
+    "tokensSaved": 0,
+    "tokenCount": 156,
+    "originalTokenCount": 156,
+    "compressionRatio": 1,
+    "duration": 183,
+    "cacheHit": false,
+    "savingsClassification": "unmeasured",
+    "savingsReason": "No comparable unoptimized grep response was materialized; repository bytes scanned are not model-context tokens."
+  },
+  "matches": [
+    {
+      "file": "AudioCapture.kt",
+      "lineNumber": 27,
+      "line": "    fun start() {\r",
+      "match": "fun start("
+    },
+    {
+      "file": "AudioCapture.kt",
+      "lineNumber": 28,
+      "line": "        if (running) return\r",
+      "match": "if (running) return"
+    },
+    {
+      "file": "AudioCapture.kt",
+      "lineNumber": 40,
+      "line": "        val recorder = AudioRecord(\r",
+      "match": "AudioRecord("
+    },
+    {
+      "file": "AudioCapture.kt",
+      "lineNumber": 58,
+      "line": "        recorder.startRecording()\r",
+      "match": "recorder.startRecording"
+    },
+    {
+      "file": "AudioCapture.kt",
+      "lineNumber": 66,
+      "line": "                val read = recorder.read(buffer, 0, buffer.size)\r",
+      "match": "val read = recorder.read"
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "success": true,
+  "pattern": "Timeout|OkHttpClient|dispatcher|Dispatcher|ConnectionPool|retryOnConnectionFailure",
+  "metadata": {
+    "totalMatches": 7,
+    "filesSearched": 1,
+    "filesWithMatches": 1,
+    "returnedMatches": 7,
+    "truncated": false,
+    "tokensSaved": 0,
+    "tokenCount": 214,
+    "originalTokenCount": 214,
+    "compressionRatio": 1,
+    "duration": 9,
+    "cacheHit": false,
+    "savingsClassification": "unmeasured",
+    "savingsReason": "No comparable unoptimized grep response was materialized; repository bytes scanned are not model-context tokens."
+  },
+  "matches": [
+    {
+      "file": "DoganApiClient.kt",
+      "lineNumber": 6,
+      "line": "import okhttp3.OkHttpClient\r",
+      "match": "OkHttpClient"
+    },
+    {
+      "file": "DoganApiClient.kt",
+      "lineNumber": 23,
+      "line": "    private val httpClient: OkHttpClient = createHttpClient(),\r",
+      "match": "OkHttpClient"
+    },
+    {
+      "file": "DoganApiClient.kt",
+      "lineNumber": 531,
+      "line": "        private fun createHttpClient(): OkHttpClient {\r",
+      "match": "OkHttpClient"
+    },
+    {
+      "file": "DoganApiClient.kt",
+      "lineNumber": 532,
+      "line": "            return OkHttpClient.Builder()\r",
+      "match": "OkHttpClient"
+    },
+    {
+      "file": "DoganApiClient.kt",
+      "lineNumber": 533,
+      "line": "                .connectTimeout(30, TimeUnit.SECONDS)\r",
+      "match": "Timeout"
+    },
+    {
+      "file": "DoganApiClient.kt",
+      "lineNumber": 534,
+      "line": "                .readTimeout(60, TimeUnit.SECONDS)\r",
+      "match": "Timeout"
+    },
+    {
+      "file": "DoganApiClient.kt",
+      "lineNumber": 535,
+      "line": "                .writeTimeout(60, TimeUnit.SECONDS)\r",
+      "match": "Timeout"
+    }
+  ]
+}

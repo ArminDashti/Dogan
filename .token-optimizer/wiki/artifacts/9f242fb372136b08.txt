@@ -1,0 +1,75 @@
+{
+  "success": true,
+  "pattern": "fun (info|warn|error|init|purgeOlderThan)|Executor|synchronized|Lock|FileOutputStream|flush",
+  "metadata": {
+    "totalMatches": 9,
+    "filesSearched": 1,
+    "filesWithMatches": 1,
+    "returnedMatches": 9,
+    "truncated": false,
+    "tokensSaved": 0,
+    "tokenCount": 375,
+    "originalTokenCount": 375,
+    "compressionRatio": 1,
+    "duration": 113,
+    "cacheHit": false,
+    "savingsClassification": "unmeasured",
+    "savingsReason": "No comparable unoptimized grep response was materialized; repository bytes scanned are not model-context tokens."
+  },
+  "matches": [
+    {
+      "file": "AppLogger.kt",
+      "lineNumber": 36,
+      "line": "    fun init(context: Context) {\r",
+      "match": "fun init"
+    },
+    {
+      "file": "AppLogger.kt",
+      "lineNumber": 43,
+      "line": "    fun info(tag: String, message: String) = append(null, \"I\", tag, message)\r",
+      "match": "fun info"
+    },
+    {
+      "file": "AppLogger.kt",
+      "lineNumber": 45,
+      "line": "    fun info(section: LogSection, tag: String, message: String) = append(section, \"I\", tag, message)\r",
+      "match": "fun info"
+    },
+    {
+      "file": "AppLogger.kt",
+      "lineNumber": 47,
+      "line": "    fun warn(tag: String, message: String) = append(null, \"W\", tag, message)\r",
+      "match": "fun warn"
+    },
+    {
+      "file": "AppLogger.kt",
+      "lineNumber": 49,
+      "line": "    fun warn(section: LogSection, tag: String, message: String) = append(section, \"W\", tag, message)\r",
+      "match": "fun warn"
+    },
+    {
+      "file": "AppLogger.kt",
+      "lineNumber": 51,
+      "line": "    fun error(tag: String, message: String) = append(null, \"E\", tag, message)\r",
+      "match": "fun error"
+    },
+    {
+      "file": "AppLogger.kt",
+      "lineNumber": 53,
+      "line": "    fun error(section: LogSection, tag: String, message: String) = append(section, \"E\", tag, message)\r",
+      "match": "fun error"
+    },
+    {
+      "file": "AppLogger.kt",
+      "lineNumber": 61,
+      "line": "    fun flushDisk(context: Context) {\r",
+      "match": "flush"
+    },
+    {
+      "file": "AppLogger.kt",
+      "lineNumber": 69,
+      "line": "    fun purgeOlderThan(context: Context, retentionDays: Int) {\r",
+      "match": "fun purgeOlderThan"
+    }
+  ]
+}

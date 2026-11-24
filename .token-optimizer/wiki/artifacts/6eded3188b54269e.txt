@@ -1,0 +1,111 @@
+{
+  "success": true,
+  "pattern": "connectMutex.withLock|stopInternalAwait|liveKitRoom.connect|LiveKit.create|catch \\(e: Exception\\)|scope.launch|scope.cancel|disconnect\\(\\)|RECONNECT_DELAY_MS",
+  "metadata": {
+    "totalMatches": 15,
+    "filesSearched": 1,
+    "filesWithMatches": 1,
+    "returnedMatches": 15,
+    "truncated": false,
+    "tokensSaved": 0,
+    "tokenCount": 481,
+    "originalTokenCount": 481,
+    "compressionRatio": 1,
+    "duration": 65,
+    "cacheHit": false,
+    "savingsClassification": "unmeasured",
+    "savingsReason": "No comparable unoptimized grep response was materialized; repository bytes scanned are not model-context tokens."
+  },
+  "matches": [
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 76,
+      "line": "        connectJob = scope.launch { connectInternal(baseUrl, streamMode, streamUrl, streamPort) }\r",
+      "match": "scope.launch"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 88,
+      "line": "        connectMutex.withLock {\r",
+      "match": "connectMutex.withLock"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 89,
+      "line": "            stopInternalAwait()\r",
+      "match": "stopInternalAwait"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 109,
+      "line": "                val liveKitRoom = LiveKit.create(context.applicationContext)\r",
+      "match": "LiveKit.create"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 117,
+      "line": "                liveKitRoom.connect(\r",
+      "match": "liveKitRoom.connect"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 125,
+      "line": "            } catch (e: Exception) {\r",
+      "match": "catch (e: Exception)"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 141,
+      "line": "        eventsJob = scope.launch {\r",
+      "match": "scope.launch"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 219,
+      "line": "        restartJob = scope.launch {\r",
+      "match": "scope.launch"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 220,
+      "line": "            delay(RECONNECT_DELAY_MS)\r",
+      "match": "RECONNECT_DELAY_MS"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 253,
+      "line": "        scope.launch { stopInternalAwait() }\r",
+      "match": "scope.launch"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 253,
+      "line": "        scope.launch { stopInternalAwait() }\r",
+      "match": "stopInternalAwait"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 258,
+      "line": "        scope.cancel()\r",
+      "match": "scope.cancel"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 261,
+      "line": "    private suspend fun stopInternalAwait() {\r",
+      "match": "stopInternalAwait"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 267,
+      "line": "        activeRoom?.disconnect()\r",
+      "match": "disconnect()"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 273,
+      "line": "        const val RECONNECT_DELAY_MS = 30_000L\r",
+      "match": "RECONNECT_DELAY_MS"
+    }
+  ]
+}

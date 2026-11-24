@@ -1,0 +1,153 @@
+{
+  "success": true,
+  "pattern": "streamMode|noiseIntervalSec|soundMonitoringEnabled|fastestSensorIntervalMs",
+  "metadata": {
+    "totalMatches": 22,
+    "filesSearched": 1,
+    "filesWithMatches": 1,
+    "returnedMatches": 22,
+    "truncated": false,
+    "tokensSaved": 0,
+    "tokenCount": 797,
+    "originalTokenCount": 797,
+    "compressionRatio": 1,
+    "duration": 8,
+    "cacheHit": false,
+    "savingsClassification": "unmeasured",
+    "savingsReason": "No comparable unoptimized grep response was materialized; repository bytes scanned are not model-context tokens."
+  },
+  "matches": [
+    {
+      "file": "SettingsStore.kt",
+      "lineNumber": 39,
+      "line": "    val streamMode: StreamMode,\r",
+      "match": "streamMode"
+    },
+    {
+      "file": "SettingsStore.kt",
+      "lineNumber": 39,
+      "line": "    val streamMode: StreamMode,\r",
+      "match": "StreamMode"
+    },
+    {
+      "file": "SettingsStore.kt",
+      "lineNumber": 47,
+      "line": "    val soundMonitoringEnabled: Boolean,\r",
+      "match": "soundMonitoringEnabled"
+    },
+    {
+      "file": "SettingsStore.kt",
+      "lineNumber": 61,
+      "line": "    val noiseIntervalSec: Int,\r",
+      "match": "noiseIntervalSec"
+    },
+    {
+      "file": "SettingsStore.kt",
+      "lineNumber": 71,
+      "line": "    val fastestSensorIntervalMs: Long\r",
+      "match": "fastestSensorIntervalMs"
+    },
+    {
+      "file": "SettingsStore.kt",
+      "lineNumber": 76,
+      "line": "            noiseIntervalSec,\r",
+      "match": "noiseIntervalSec"
+    },
+    {
+      "file": "SettingsStore.kt",
+      "lineNumber": 122,
+      "line": "    private val streamModeKey = stringPreferencesKey(\"stream_mode\")\r",
+      "match": "streamMode"
+    },
+    {
+      "file": "SettingsStore.kt",
+      "lineNumber": 130,
+      "line": "    private val soundMonitoringEnabledKey = booleanPreferencesKey(\"sound_monitoring_enabled\")\r",
+      "match": "soundMonitoringEnabled"
+    },
+    {
+      "file": "SettingsStore.kt",
+      "lineNumber": 142,
+      "line": "    private val noiseIntervalSecKey = intPreferencesKey(\"noise_interval_sec\")\r",
+      "match": "noiseIntervalSec"
+    },
+    {
+      "file": "SettingsStore.kt",
+      "lineNumber": 183,
+      "line": "            streamMode = StreamMode.fromStoredValue(pref[streamModeKey]),\r",
+      "match": "streamMode"
+    },
+    {
+      "file": "SettingsStore.kt",
+      "lineNumber": 183,
+      "line": "            streamMode = StreamMode.fromStoredValue(pref[streamModeKey]),\r",
+      "match": "StreamMode"
+    },
+    {
+      "file": "SettingsStore.kt",
+      "lineNumber": 183,
+      "line": "            streamMode = StreamMode.fromStoredValue(pref[streamModeKey]),\r",
+      "match": "streamMode"
+    },
+    {
+      "file": "SettingsStore.kt",
+      "lineNumber": 199,
+      "line": "            soundMonitoringEnabled = pref[soundMonitoringEnabledKey] ?: true,\r",
+      "match": "soundMonitoringEnabled"
+    },
+    {
+      "file": "SettingsStore.kt",
+      "lineNumber": 199,
+      "line": "            soundMonitoringEnabled = pref[soundMonitoringEnabledKey] ?: true,\r",
+      "match": "soundMonitoringEnabled"
+    },
+    {
+      "file": "SettingsStore.kt",
+      "lineNumber": 219,
+      "line": "            noiseIntervalSec = normalizeSensorIntervalSec(pref[noiseIntervalSecKey] ?: DEFAULT_NOISE_INTERVAL_SEC),\r",
+      "match": "noiseIntervalSec"
+    },
+    {
+      "file": "SettingsStore.kt",
+      "lineNumber": 219,
+      "line": "            noiseIntervalSec = normalizeSensorIntervalSec(pref[noiseIntervalSecKey] ?: DEFAULT_NOISE_INTERVAL_SEC),\r",
+      "match": "noiseIntervalSec"
+    },
+    {
+      "file": "SettingsStore.kt",
+      "lineNumber": 247,
+      "line": "            pref[streamModeKey] = settings.streamMode.toStoredValue()\r",
+      "match": "streamMode"
+    },
+    {
+      "file": "SettingsStore.kt",
+      "lineNumber": 247,
+      "line": "            pref[streamModeKey] = settings.streamMode.toStoredValue()\r",
+      "match": "streamMode"
+    },
+    {
+      "file": "SettingsStore.kt",
+      "lineNumber": 255,
+      "line": "            pref[soundMonitoringEnabledKey] = settings.soundMonitoringEnabled\r",
+      "match": "soundMonitoringEnabled"
+    },
+    {
+      "file": "SettingsStore.kt",
+      "lineNumber": 255,
+      "line": "            pref[soundMonitoringEnabledKey] = settings.soundMonitoringEnabled\r",
+      "match": "soundMonitoringEnabled"
+    },
+    {
+      "file": "SettingsStore.kt",
+      "lineNumber": 267,
+      "line": "            pref[noiseIntervalSecKey] = normalizeSensorIntervalSec(settings.noiseIntervalSec)\r",
+      "match": "noiseIntervalSec"
+    },
+    {
+      "file": "SettingsStore.kt",
+      "lineNumber": 267,
+      "line": "            pref[noiseIntervalSecKey] = normalizeSensorIntervalSec(settings.noiseIntervalSec)\r",
+      "match": "noiseIntervalSec"
+    }
+  ]
+}

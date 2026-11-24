@@ -1,0 +1,20 @@
+{
+  "content": "                        }\r\n                        sdkReconnecting = false\r\n                        _streaming.value = false\r\n                        LiveKitStatusCache.setStreaming(false)\r\n                        if (reason != DisconnectReason.CLIENT_INITIATED) {\r\n                            LiveKitStatusCache.setError(\r\n                                event.error?.message ?: \"LiveKit disconnected ($reason)\",\r\n                            )\r\n                            scheduleRestartIfNeeded()\r\n                        }\r\n                    }\r\n\r\n                    else -> Unit\r\n                }\r\n            }\r\n        }\r\n    }\r\n\r\n    private fun scheduleRestartIfNeeded() {\r\n        if (userStopRequested || sdkReconnecting || lastBaseUrl.isBlank()) {\r\n            return\r\n        }\r\n        restartJob?.cancel()\r\n        restartJob = scope.launch {\r\n            delay(RECONNECT_DELAY_MS)\r\n            if (userStopRequested || sdkReconnecting || lastBaseUrl.isBlank()) {\r\n                return@launch\r\n            }\r\n            AppLogger.info(\"LiveKit\", \"Restarting publisher after disconnect\")\r\n            connectInternal(lastBaseUrl, lastStreamMode, lastStreamUrl, lastStreamPort)\r\n        }\r\n    }\r\n\r\n    private suspend fun applyStreamMode(participant: LocalParticipant, streamMode: StreamMode) {\r\n        when (streamMode) {\r\n            StreamMode.VIDEO_ONLY -> {\r\n                participant.setCameraEnabled(true)\r\n                participant.setMicrophoneEnabled(false)\r\n            }\r\n            StreamMode.AUDIO_ONLY -> {\r\n                participant.setCameraEnabled(false)\r\n                participant.setMicrophoneEnabled(true)\r\n            }\r\n            StreamMode.VIDEO_AUDIO -> {\r\n                participant.setCameraEnabled(true)\r\n                participant.setMicrophoneEnabled(true)\r\n            }\r\n        }\r\n    }\r\n\r\n    fun stop() {\r\n        userStopRequested = true\r\n        sdkReconnecting = false\r\n        restartJob?.cancel()\r\n        restartJob = null\r\n        connectJob?.cancel()\r\n        connectJob = null\r\n        scope.launch { stopInternalAwait() }\r\n    }\r\n\r\n    fun release() {\r\n        stop()\r\n        scope.cancel()\r\n    }\r\n\r\n    private suspend fun stopInternalAwait() {\r\n        eventsJob?.cancel()\r\n        eventsJob = null\r\n        val activeRoom = room\r\n        room = null\r\n        activeConnectKey = \"\"\r\n        activeRoom?.disconnect()\r\n        _streaming.value = false\r\n        LiveKitStatusCache.setStreaming(false)\r\n    }\r\n\r\n    private companion object {\r\n        const val RECONNECT_DELAY_MS = 30_000L\r\n    }\r\n}\n\n// [chunk 3 of 3. Call smart_read again with chunkIndex=<n> for another.]",
+  "metadata": {
+    "path": "C:/Users/armin/GitHub/Dogan/dogan-android/app/src/main/java/com/dogan/LiveKitStreamer.kt",
+    "size": 10551,
+    "encoding": "utf-8",
+    "fileType": "text",
+    "hash": "42c5971e18829f3efa3661c89fdc0690377fed69462f8250520ee6f31b4db9dc",
+    "fromCache": true,
+    "isDiff": false,
+    "chunked": true,
+    "truncated": false,
+    "tokensSaved": 1429,
+    "tokenCount": 474,
+    "originalTokenCount": 1903,
+    "compressionRatio": 0.2515401383755094,
+    "chunkCount": 3,
+    "chunkIndex": 2
+  }
+}

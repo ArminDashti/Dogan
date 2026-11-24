@@ -1,0 +1,51 @@
+{
+  "success": true,
+  "pattern": "synchronized|Mutex|AtomicBoolean|compareAndSet|CountDownLatch|Semaphore|inFlight|isConnecting|singleFlight",
+  "metadata": {
+    "totalMatches": 5,
+    "filesSearched": 53,
+    "filesWithMatches": 2,
+    "returnedMatches": 5,
+    "truncated": false,
+    "tokensSaved": 0,
+    "tokenCount": 146,
+    "originalTokenCount": 146,
+    "compressionRatio": 1,
+    "duration": 216,
+    "cacheHit": false,
+    "savingsClassification": "unmeasured",
+    "savingsReason": "No comparable unoptimized grep response was materialized; repository bytes scanned are not model-context tokens."
+  },
+  "matches": [
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 19,
+      "line": "import kotlinx.coroutines.sync.Mutex\r",
+      "match": "Mutex"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 29,
+      "line": "    private val connectMutex = Mutex()\r",
+      "match": "Mutex"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 29,
+      "line": "    private val connectMutex = Mutex()\r",
+      "match": "Mutex"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 88,
+      "line": "        connectMutex.withLock {\r",
+      "match": "Mutex"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 328,
+      "line": "                val latch = java.util.concurrent.CountDownLatch(\r",
+      "match": "CountDownLatch"
+    }
+  ]
+}

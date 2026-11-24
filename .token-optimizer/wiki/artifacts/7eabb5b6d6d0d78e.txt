@@ -1,0 +1,27 @@
+{
+  "success": true,
+  "pattern": "private var running",
+  "metadata": {
+    "totalMatches": 1,
+    "filesSearched": 1,
+    "filesWithMatches": 1,
+    "returnedMatches": 1,
+    "truncated": false,
+    "tokensSaved": 0,
+    "tokenCount": 32,
+    "originalTokenCount": 32,
+    "compressionRatio": 1,
+    "duration": 57,
+    "cacheHit": false,
+    "savingsClassification": "unmeasured",
+    "savingsReason": "No comparable unoptimized grep response was materialized; repository bytes scanned are not model-context tokens."
+  },
+  "matches": [
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 62,
+      "line": "    private var running = false\r",
+      "match": "private var running"
+    }
+  ]
+}

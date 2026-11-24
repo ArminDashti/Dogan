@@ -1,0 +1,111 @@
+{
+  "success": true,
+  "pattern": "runBlocking|Thread\\.sleep|\\.join\\(|\\.await\\(",
+  "metadata": {
+    "totalMatches": 15,
+    "filesSearched": 53,
+    "filesWithMatches": 1,
+    "returnedMatches": 15,
+    "truncated": false,
+    "tokensSaved": 0,
+    "tokenCount": 488,
+    "originalTokenCount": 488,
+    "compressionRatio": 1,
+    "duration": 184,
+    "cacheHit": false,
+    "savingsClassification": "unmeasured",
+    "savingsReason": "No comparable unoptimized grep response was materialized; repository bytes scanned are not model-context tokens."
+  },
+  "matches": [
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 18,
+      "line": "import kotlinx.coroutines.runBlocking\r",
+      "match": "runBlocking"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 128,
+      "line": "        cachedSettings = runBlocking { settingsStore.settingsFlow.first() }\r",
+      "match": "runBlocking"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 155,
+      "line": "        cachedSettings = runBlocking { settingsStore.settingsFlow.first() }\r",
+      "match": "runBlocking"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 274,
+      "line": "                    val settings = runBlocking { settingsStore.settingsFlow.first() }\r",
+      "match": "runBlocking"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 300,
+      "line": "                    Thread.sleep(settings.fastestSensorIntervalMs)\r",
+      "match": "Thread.sleep"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 305,
+      "line": "                    Thread.sleep(5_000L)\r",
+      "match": "Thread.sleep"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 374,
+      "line": "                latch.await(15, java.util.concurrent.TimeUnit.SECONDS)\r",
+      "match": ".await("
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 452,
+      "line": "                    val settings = cachedSettings ?: runBlocking { settingsStore.settingsFlow.first() }\r",
+      "match": "runBlocking"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 467,
+      "line": "                    Thread.sleep(sleepMs)\r",
+      "match": "Thread.sleep"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 472,
+      "line": "                    Thread.sleep(5_000L)\r",
+      "match": "Thread.sleep"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 501,
+      "line": "                    Thread.sleep(30_000L)\r",
+      "match": "Thread.sleep"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 506,
+      "line": "                    Thread.sleep(30_000L)\r",
+      "match": "Thread.sleep"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 516,
+      "line": "                    val settings = runBlocking { settingsStore.settingsFlow.first() }\r",
+      "match": "runBlocking"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 523,
+      "line": "                    Thread.sleep(checkMs.coerceAtLeast(5_000L))\r",
+      "match": "Thread.sleep"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 528,
+      "line": "                    Thread.sleep(30_000L)\r",
+      "match": "Thread.sleep"
+    }
+  ]
+}
