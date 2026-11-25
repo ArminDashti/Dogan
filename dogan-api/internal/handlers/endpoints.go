@@ -51,7 +51,9 @@ func (handler *EndpointsHandler) ListEndpoints(context *gin.Context) {
 		{Method: http.MethodGet, Path: apiBasePath + "/devices/:id/telemetry", Description: "Get live device telemetry snapshot for web", Auth: true},
 		{Method: http.MethodGet, Path: apiBasePath + "/devices/:id/metrics", Description: "Get device metrics history for web charts", Auth: true},
 		{Method: http.MethodPost, Path: apiBasePath + "/devices/:id/capture", Description: "Queue capture and return latest frame", Auth: true},
+		{Method: http.MethodGet, Path: apiBasePath + "/devices/:id/last-image", Description: "Latest stored frame metadata for a device", Auth: true},
 		{Method: http.MethodGet, Path: apiBasePath + "/images", Description: "List gallery images", Auth: true},
+		{Method: http.MethodGet, Path: apiBasePath + "/images/:id/thumbnail", Description: "Gallery image thumbnail", Auth: true},
 		{Method: http.MethodGet, Path: apiBasePath + "/images/:id", Description: "Download gallery image by id", Auth: true},
 	}
 

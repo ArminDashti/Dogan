@@ -61,6 +61,7 @@ func (handler *TelemetryHandler) SubmitTelemetry(context *gin.Context) {
 		longitude = &lon
 	}
 
+	jolt := payload.Jolt
 	record := models.DeviceMetricsRecord{
 		DeviceID:         payload.DeviceID,
 		BatteryLevel:     &batteryLevel,
@@ -75,6 +76,7 @@ func (handler *TelemetryHandler) SubmitTelemetry(context *gin.Context) {
 		AmbientLightLux:  &ambient,
 		ServerLatencyMs:  &latency,
 		DeviceIPAddress:  payload.DeviceIPAddress,
+		Jolt:             &jolt,
 		CPUUsagePercent:  payload.CPUUsagePercent,
 		RAMUsagePercent:  payload.RAMUsagePercent,
 		RecordedAt:       recordedAt,
@@ -123,6 +125,9 @@ func (handler *TelemetryHandler) persistOptionalFrame(deviceID string, capturedA
 		CapturedAt: capturedAt,
 		ReceivedAt: time.Now().UTC(),
 	})
+	if _, thumbErr := store.EnsureThumbnail(framePath); thumbErr != nil {
+		log.Printf("telemetry: thumbnail for device %s: %v", deviceID, thumbErr)
+	}
 
 	if handler.vision != nil && handler.vision.Enabled() {
 		var imageID *int64

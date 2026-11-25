@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/dogan/dogan-server/internal/metricsaudio"
 	"github.com/dogan/dogan-server/internal/models"
 	"github.com/dogan/dogan-server/internal/store"
 	"github.com/gin-gonic/gin"
@@ -146,10 +147,11 @@ func (handler *DevicesWebHandler) ListImages(context *gin.Context) {
 	images := make([]models.GalleryImage, 0, len(frames))
 	for _, frame := range frames {
 		imageURL := fmt.Sprintf("%s/images/%d", baseURL, frame.ID)
+		thumbURL := fmt.Sprintf("%s/images/%d/thumbnail", baseURL, frame.ID)
 		images = append(images, models.GalleryImage{
 			ID:           strconv.FormatInt(frame.ID, 10),
 			URL:          imageURL,
-			ThumbnailURL: imageURL,
+			ThumbnailURL: thumbURL,
 			Caption:      frame.DeviceID,
 			CapturedAt:   frame.CapturedAt,
 			DeviceID:     frame.DeviceID,
@@ -180,12 +182,66 @@ func (handler *DevicesWebHandler) GetImage(context *gin.Context) {
 	context.File(frame.Path)
 }
 
+func (handler *DevicesWebHandler) GetImageThumbnail(context *gin.Context) {
+	rawID := context.Param("id")
+	imageID, err := strconv.ParseInt(rawID, 10, 64)
+	if err != nil {
+		context.JSON(http.StatusBadRequest, models.ErrorResponse{Error: "invalid image id"})
+		return
+	}
+
+	frame, err := handler.frameStore.GetFrameByID(imageID)
+	if err != nil {
+		if errors.Is(err, store.ErrFrameNotFound) {
+			context.JSON(http.StatusNotFound, models.ErrorResponse{Error: "image not found"})
+			return
+		}
+		context.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "failed to retrieve image"})
+		return
+	}
+
+	thumbPath, err := store.EnsureThumbnail(frame.Path)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "failed to build thumbnail"})
+		return
+	}
+	context.File(thumbPath)
+}
+
+func (handler *DevicesWebHandler) GetDeviceLastImage(context *gin.Context) {
+	deviceID := context.Param("id")
+	if deviceID == "" {
+		context.JSON(http.StatusBadRequest, models.ErrorResponse{Error: "device id is required"})
+		return
+	}
+
+	frame, err := handler.frameStore.GetLastFrame(deviceID)
+	if err != nil {
+		if errors.Is(err, store.ErrFrameNotFound) {
+			context.JSON(http.StatusNotFound, models.ErrorResponse{Error: "no image found for device"})
+			return
+		}
+		context.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "failed to retrieve image"})
+		return
+	}
+
+	baseURL := publicAPIBase(context)
+	context.JSON(http.StatusOK, models.GalleryImage{
+		ID:           strconv.FormatInt(frame.ID, 10),
+		URL:          fmt.Sprintf("%s/images/%d", baseURL, frame.ID),
+		ThumbnailURL: fmt.Sprintf("%s/images/%d/thumbnail", baseURL, frame.ID),
+		Caption:      frame.DeviceID,
+		CapturedAt:   frame.CapturedAt,
+		DeviceID:     frame.DeviceID,
+	})
+}
+
 func toTelemetrySnapshot(metrics models.DeviceMetricsRecord) models.DeviceTelemetrySnapshot {
 	return models.DeviceTelemetrySnapshot{
 		DeviceID:                  metrics.DeviceID,
 		BatteryPercent:            floatOrZero(metrics.BatteryLevel),
 		BatteryTemperatureCelsius: floatOrZero(metrics.TemperatureC),
-		NoiseDb:                   floatOrZero(metrics.CabinNoiseRMS),
+		NoiseDb:                   metricsaudio.CabinNoiseRmsToDb(floatOrZero(metrics.CabinNoiseRMS)),
 		Jolt:                      floatOrZero(metrics.Jolt),
 		SignalStrength:            float64(intOrZero(metrics.SignalStrength)),
 		NetworkType:               metrics.NetworkType,
@@ -200,7 +256,7 @@ func toMetricReading(item models.DeviceMetricsRecord) models.MetricReading {
 		Timestamp:                 item.RecordedAt,
 		BatteryPercent:            floatOrZero(item.BatteryLevel),
 		BatteryTemperatureCelsius: floatOrZero(item.TemperatureC),
-		NoiseDb:                   floatOrZero(item.CabinNoiseRMS),
+		NoiseDb:                   metricsaudio.CabinNoiseRmsToDb(floatOrZero(item.CabinNoiseRMS)),
 		Jolt:                      floatOrZero(item.Jolt),
 		SignalStrength:            float64(intOrZero(item.SignalStrength)),
 		NetworkType:               item.NetworkType,
