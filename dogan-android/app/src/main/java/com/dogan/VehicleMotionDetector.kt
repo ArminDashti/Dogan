@@ -22,6 +22,10 @@ class VehicleMotionDetector(
     var lastMagnitudeMps2: Float = 0f
         private set
 
+    @Volatile
+    var telemetryJoltMps2: Float = 0f
+        private set
+
     private var usesLinearAcceleration = true
     private val gravityEstimate = FloatArray(3)
     private var baselineMagnitude = 0f
@@ -77,6 +81,11 @@ class VehicleMotionDetector(
         previousMagnitude = magnitude
         previousTimestampNanos = event.timestamp
         lastMagnitudeMps2 = magnitude
+        telemetryJoltMps2 = if (telemetryJoltMps2 <= 0f) {
+            magnitude
+        } else {
+            telemetryJoltMps2 * TELEMETRY_JOLT_SMOOTHING + magnitude * (1f - TELEMETRY_JOLT_SMOOTHING)
+        }
 
         val nowMs = System.currentTimeMillis()
         if (nowMs - lastTriggerAtMs < COOLDOWN_MS) return
@@ -113,6 +122,7 @@ class VehicleMotionDetector(
         previousMagnitude = 0f
         previousTimestampNanos = 0L
         lastMagnitudeMps2 = 0f
+        telemetryJoltMps2 = 0f
         gravityEstimate.fill(0f)
     }
 
@@ -137,5 +147,6 @@ class VehicleMotionDetector(
         /** Jerk sensitivity threshold (rate-of-change of acceleration) to detect brief impulses. */
         private const val JERK_SENSITIVITY_MPS3 = 1.2f
         private const val BASELINE_SMOOTHING = 0.992f
+        private const val TELEMETRY_JOLT_SMOOTHING = 0.9f
     }
 }

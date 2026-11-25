@@ -6,6 +6,7 @@ import ErrorAlert from '@/components/ErrorAlert.vue'
 import { fetchDevices } from '@/services/api/devices'
 import { fetchDeviceMetrics } from '@/services/api/metrics'
 import { getErrorMessage } from '@/services/api/errors'
+import { formatTehranDateTime } from '@/utils/tehranTime'
 import type { Device, DeviceMetrics, MetricReading, MetricsHistoryRange } from '@/types/api'
 
 const METRIC_DEFS = {
@@ -136,19 +137,7 @@ function barHeight(value: number): string {
 }
 
 function formatTimestamp(value: string): string {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-  if (selectedRange.value === 'today' || selectedRange.value === 'yesterday') {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  }
-  return date.toLocaleString([], {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  return formatTehranDateTime(value)
 }
 
 async function loadDevices(): Promise<void> {

@@ -19,7 +19,7 @@ const sensorIntervals = [
   { key: 'batteryIntervalSec', label: 'Battery', help: 'How often the phone updates battery level.' },
   { key: 'temperatureIntervalSec', label: 'Temperature', help: 'How often the phone updates temperature.' },
   { key: 'noiseIntervalSec', label: 'Noise', help: 'How often the phone updates cabin noise.' },
-  { key: 'joltIntervalSec', label: 'Jolt', help: 'How often the phone updates jolt. Sampling is not on the phone yet.' },
+  { key: 'joltIntervalSec', label: 'Jolt', help: 'How often the phone reports smoothed motion (m/s²) to the server.' },
   { key: 'networkTypeIntervalSec', label: 'Network type', help: 'How often the phone updates network type.' },
   { key: 'sim1SignalIntervalSec', label: 'SIM 1 signal', help: 'How often the phone updates SIM 1 signal.' },
   { key: 'sim2SignalIntervalSec', label: 'SIM 2 signal', help: 'How often the phone updates SIM 2 signal. Sampling is not on the phone yet.' },

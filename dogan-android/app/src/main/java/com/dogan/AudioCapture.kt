@@ -19,6 +19,10 @@ class AudioCapture(
         private set
 
     @Volatile
+    var telemetryRms: Double = 0.0
+        private set
+
+    @Volatile
     var soundSensitivity: SensitivityLevel = SensitivityLevel.MEDIUM
 
     @Volatile
@@ -64,6 +68,11 @@ class AudioCapture(
                 if (read > 0) {
                     val rms = computeRms(buffer, read)
                     currentRms = rms
+                    telemetryRms = if (telemetryRms <= 0.0) {
+                        rms
+                    } else {
+                        telemetryRms * TELEMETRY_RMS_SMOOTHING + rms * (1.0 - TELEMETRY_RMS_SMOOTHING)
+                    }
                     cabinNoiseArchive?.writePcmSamples(buffer, read, rms)
                     val now = System.currentTimeMillis()
                     if (rms > loudThreshold() && now - lastSpikeAt > 5_000L) {
@@ -90,6 +99,7 @@ class AudioCapture(
         }
         audioRecord = null
         currentRms = 0.0
+        telemetryRms = 0.0
         AppLogger.info("Audio", "Sound monitoring stopped")
     }
 
@@ -111,5 +121,6 @@ class AudioCapture(
 
     companion object {
         private const val DEFAULT_LOUD_THRESHOLD = 2500.0
+        private const val TELEMETRY_RMS_SMOOTHING = 0.85
     }
 }

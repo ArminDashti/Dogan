@@ -15,6 +15,7 @@ class TelemetryCollector(
     private val locationTracker: LocationTracker,
     private val ambientLightSensor: AmbientLightSensor,
     private val audioCapture: AudioCapture,
+    private val vehicleMotionDetector: VehicleMotionDetector,
     private val deviceId: String,
     private val resourceMonitor: DeviceResourceMonitor,
 ) {
@@ -31,6 +32,8 @@ class TelemetryCollector(
     private var batteryAt = 0L
     private var temperatureAt = 0L
     private var noiseAt = 0L
+    private var joltAt = 0L
+    private var cachedJolt = 0.0
     private var networkTypeAt = 0L
     private var sim1At = 0L
     private var latencyAt = 0L
@@ -68,8 +71,12 @@ class TelemetryCollector(
             temperatureAt = nowMs
         }
         if (due(noiseAt, nowMs, settings.noiseIntervalSec)) {
-            cachedNoise = audioCapture.currentRms
+            cachedNoise = audioCapture.telemetryRms
             noiseAt = nowMs
+        }
+        if (due(joltAt, nowMs, settings.joltIntervalSec)) {
+            cachedJolt = vehicleMotionDetector.telemetryJoltMps2.toDouble()
+            joltAt = nowMs
         }
         if (due(networkTypeAt, nowMs, settings.networkTypeIntervalSec)) {
             cachedNetworkType = NetworkInfoCollector.getNetworkType(context)
@@ -93,10 +100,17 @@ class TelemetryCollector(
             .put("network_signal_strength_dbm", cachedSignalDbm)
             .put("network_type", cachedNetworkType)
             .put("cabin_noise_rms", cachedNoise)
+            .put("jolt", cachedJolt)
             .put("battery_temperature_celsius", cachedBatteryTemp)
             .put("battery_percentage", cachedBatteryPct)
-            .put("rear_camera_frame_base64", if (includeFrames) encodeFile(rearFrameFile) else "")
-            .put("front_camera_frame_base64", if (includeFrames) encodeFile(frontFrameFile) else "")
+            .put(
+                "rear_camera_frame_base64",
+                if (includeFrames) encodeFile(rearFrameFile, settings.sendingImageQuality) else "",
+            )
+            .put(
+                "front_camera_frame_base64",
+                if (includeFrames) encodeFile(frontFrameFile, settings.sendingImageQuality) else "",
+            )
             .put("ambient_light_lux", ambientLightSensor.lux.toDouble())
             .put("server_latency_ms", cachedLatencyMs)
             .put("device_ip_address", NetworkInfoCollector.getLocalIpAddress())
@@ -109,8 +123,10 @@ class TelemetryCollector(
         return nowMs - lastAt >= intervalSec.coerceAtLeast(1) * 1000L
     }
 
-    private fun encodeFile(file: File?): String {
+    private fun encodeFile(file: File?, quality: ImageQuality): String {
         if (file == null || !file.exists()) return ""
-        return Base64.encodeToString(file.readBytes(), Base64.NO_WRAP)
+        val bytes = FrameUploadEncoder.prepareUploadBytes(file, quality)
+        if (bytes.isEmpty()) return ""
+        return Base64.encodeToString(bytes, Base64.NO_WRAP)
     }
 }

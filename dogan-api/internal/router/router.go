@@ -136,7 +136,9 @@ func New(applicationConfig config.Config) *gin.Engine {
 			protected.GET("/devices/:id/telemetry", devicesWebHandler.GetDeviceTelemetry)
 			protected.GET("/devices/:id/metrics", devicesWebHandler.GetDeviceMetrics)
 			protected.POST("/devices/:id/capture", devicesWebHandler.CaptureDeviceFrame)
+			protected.GET("/devices/:id/last-image", devicesWebHandler.GetDeviceLastImage)
 			protected.GET("/images", devicesWebHandler.ListImages)
+			protected.GET("/images/:id/thumbnail", devicesWebHandler.GetImageThumbnail)
 			protected.GET("/images/:id", devicesWebHandler.GetImage)
 		}
 	}
