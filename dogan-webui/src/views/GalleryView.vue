@@ -75,23 +75,23 @@ onBeforeUnmount(() => {
         No images yet. Once your backend starts storing captures, they will appear here.
       </div>
 
-      <div v-else class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <article v-for="image in images" :key="image.id" class="yoda-card overflow-hidden">
-          <button type="button" class="gallery-thumb-button" @click="openLightbox(image)">
-            <img
-              :src="image.thumbnailUrl ?? image.url"
-              :alt="image.caption ?? 'Captured image'"
-              class="gallery-thumb"
-              loading="lazy"
-            />
-          </button>
-          <div class="space-y-1 px-4 py-3">
-            <p class="font-semibold tracking-tight text-[var(--text)]">
-              {{ image.caption ?? 'Untitled capture' }}
-            </p>
-            <p class="font-mono text-xs text-[var(--muted)]">{{ formatTehranDateTime(image.capturedAt) }}</p>
-          </div>
-        </article>
+      <div v-else class="gallery-grid">
+        <button
+          v-for="image in images"
+          :key="image.id"
+          type="button"
+          class="gallery-thumb-button"
+          :title="`${image.caption ?? 'Untitled capture'} — ${formatTehranDateTime(image.capturedAt)}`"
+          :aria-label="`Open ${image.caption ?? 'captured image'} captured ${formatTehranDateTime(image.capturedAt)}`"
+          @click="openLightbox(image)"
+        >
+          <img
+            :src="image.thumbnailUrl ?? image.url"
+            :alt="image.caption ?? 'Captured image'"
+            class="gallery-thumb"
+            loading="lazy"
+          />
+        </button>
       </div>
     </div>
 
@@ -114,18 +114,31 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.gallery-grid {
+  --gallery-thumb-size: 88px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--gallery-thumb-size));
+  gap: 0.375rem;
+  justify-content: start;
+  align-content: start;
+}
+
 .gallery-thumb-button {
   display: block;
-  width: 100%;
+  width: var(--gallery-thumb-size);
+  height: var(--gallery-thumb-size);
   padding: 0;
-  border: 0;
-  background: transparent;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
   cursor: zoom-in;
 }
 
 .gallery-thumb {
-  aspect-ratio: 4 / 3;
+  display: block;
   width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 
