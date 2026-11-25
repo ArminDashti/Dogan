@@ -4,7 +4,8 @@ import AppLayout from '@/components/AppLayout.vue'
 import CameraPanel from '@/components/CameraPanel.vue'
 import ErrorAlert from '@/components/ErrorAlert.vue'
 import { deleteDevice, fetchDevices } from '@/services/api/devices'
-import { fetchImages, revokeGalleryObjectUrls } from '@/services/api/gallery'
+import { fetchLatestDeviceImage, revokeGalleryObjectUrls } from '@/services/api/gallery'
+import { formatTehranDateTime } from '@/utils/tehranTime'
 import { fetchSettings } from '@/services/api/settings'
 import { fetchWebRtcConnections } from '@/services/api/logs'
 import { getErrorMessage } from '@/services/api/errors'
@@ -32,10 +33,6 @@ const selectedDevice = computed(() =>
 const deviceLogs = computed(() =>
   connections.value.filter((entry) => entry.deviceId === selectedDeviceId.value),
 )
-
-function pad(value: number): string {
-  return String(value).padStart(2, '0')
-}
 
 function formatBattery(percent: number | undefined, temperature: number | undefined): string {
   const hasPercent = percent !== undefined && !Number.isNaN(percent)
@@ -67,18 +64,11 @@ function formatMode(value: string | undefined): string {
 }
 
 function formatLastUpdate(value: string | undefined): string {
-  if (!value) {
-    return '—'
-  }
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+  return formatTehranDateTime(value)
 }
 
 function formatLogTime(value: string | undefined): string {
-  return formatLastUpdate(value)
+  return formatTehranDateTime(value)
 }
 
 function dash(value: string | undefined): string {
@@ -96,6 +86,9 @@ function startPolling(): void {
   stopPolling()
   pollTimer = setInterval(() => {
     void loadDevices({ silent: true })
+    if (selectedDeviceId.value) {
+      void loadLastImage(selectedDeviceId.value)
+    }
   }, POLL_MS)
 }
 
@@ -124,18 +117,15 @@ async function loadLastImage(deviceId: string): Promise<void> {
     return
   }
   try {
-    const images = await fetchImages()
+    const match = await fetchLatestDeviceImage(deviceId)
     if (request !== imageRequest) {
-      revokeGalleryObjectUrls(images)
+      if (match) {
+        revokeGalleryObjectUrls([match])
+      }
       return
     }
-    const match = images
-      .filter((image) => image.deviceId === deviceId || image.caption === deviceId)
-      .sort((a, b) => Date.parse(b.capturedAt) - Date.parse(a.capturedAt))[0]
-    const unused = match ? images.filter((image) => image.id !== match.id) : images
-    revokeGalleryObjectUrls(unused)
     clearLastImage()
-    lastImage.value = match ?? null
+    lastImage.value = match
   } catch {
     if (request === imageRequest) {
       clearLastImage()
@@ -296,12 +286,16 @@ onUnmounted(() => {
             <section class="device-square yoda-card" aria-label="Last image">
               <h2 class="device-square__title">Last image</h2>
               <div class="device-square__body device-square__body--center">
-                <img
-                  v-if="lastImage"
-                  class="device-last-image"
-                  :src="lastImage.url"
-                  alt="Last camera image"
-                />
+                <template v-if="lastImage">
+                  <img
+                    class="device-last-image"
+                    :src="lastImage.url"
+                    :alt="`Last camera image for ${selectedDevice?.name ?? selectedDeviceId}`"
+                  />
+                  <p class="device-last-image__time font-mono text-xs text-[var(--muted)]">
+                    {{ formatTehranDateTime(lastImage.capturedAt) }}
+                  </p>
+                </template>
                 <p v-else class="device-square__empty">No image yet</p>
               </div>
             </section>
@@ -447,14 +441,23 @@ onUnmounted(() => {
 
 .device-square__body--center {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 0.35rem;
 }
 
 .device-last-image {
   width: 100%;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   object-fit: contain;
+}
+
+.device-last-image__time {
+  margin: 0;
+  padding: 0 0.5rem 0.35rem;
+  text-align: center;
 }
 
 .device-square__empty {
