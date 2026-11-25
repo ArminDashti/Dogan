@@ -86,7 +86,13 @@ class CaptureService : Service(), LifecycleOwner {
             cabinNoiseArchive = cabinNoiseArchive,
         )
         telemetryCollector = TelemetryCollector(
-            this, locationTracker, ambientLightSensor, audioCapture, deviceId, resourceMonitor,
+            this,
+            locationTracker,
+            ambientLightSensor,
+            audioCapture,
+            vehicleMotionDetector,
+            deviceId,
+            resourceMonitor,
         )
         AppLogger.init(this)
     }
