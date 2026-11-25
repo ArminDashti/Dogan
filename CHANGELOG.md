@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.0.1
+
+### Added
+- **Android:** Downscale telemetry JPEGs to a 640px long edge with quality-aware recompression before base64 upload; report jolt (smoothed linear acceleration) on the configured interval.
+- **API:** `GET /images/:id/thumbnail`, `GET /devices/:id/last-image`, thumbnail generation on frame ingest, cabin-noise RMS→dB mapping for metrics charts, and persistence of telemetry `jolt`.
+- **WebUI:** Gallery thumbnails with full-size lightbox, device last-frame panel with Asia/Tehran `YYYY-MM-DD HH:MM:SS` timestamps and polling refresh. Android `3.0.1` (versionCode 16), API `3.0.1`, WebUI `0.4.1`.
+
+### Fixed
+- **Noise/Jolt metrics:** Smoothed cabin microphone RMS and accelerometer readings on the phone; charts use dB instead of raw PCM RMS; jolt series populate from Android telemetry instead of staying at zero.
+
 ## 0.4.1
 
 ### Fixed
