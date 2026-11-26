@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -239,16 +240,18 @@ func (store *Store) SaveMetrics(metrics models.DeviceMetricsRecord) error {
 
 	_, err = store.db.Exec(
 		`INSERT INTO android_telemetry (
-			device_id, battery_level, signal_strength, network_type,
+			device_id, battery_level, signal_strength, sim1_signal_dbm, sim2_signal_dbm, network_type,
 			temperature_c, latitude, longitude,
 			cabin_noise_rms, gps_signal_quality, speed_kmh, ambient_light_lux,
 			server_latency_ms, device_ip_address, jolt,
 			cpu_usage_percent, ram_usage_percent,
 			recorded_at, received_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		deviceRowID,
 		nullableFloat(metrics.BatteryLevel),
 		nullableInt(metrics.SignalStrength),
+		nullableInt(metrics.Sim1SignalDbm),
+		nullableInt(metrics.Sim2SignalDbm),
 		nullIfEmpty(metrics.NetworkType),
 		nullableFloat(metrics.TemperatureC),
 		nullableFloat(metrics.Latitude),
@@ -287,6 +290,8 @@ func (store *Store) GetLatestMetrics(deviceID string) (models.DeviceMetricsRecor
 	var latitude sql.NullFloat64
 	var longitude sql.NullFloat64
 	var signalStrength sql.NullInt64
+	var sim1Signal sql.NullInt64
+	var sim2Signal sql.NullInt64
 	var networkType sql.NullString
 	var cabinNoiseRMS sql.NullFloat64
 	var gpsSignalQuality sql.NullString
@@ -302,7 +307,7 @@ func (store *Store) GetLatestMetrics(deviceID string) (models.DeviceMetricsRecor
 	cutoff := store.retentionCutoff()
 
 	err = store.db.QueryRow(
-		`SELECT battery_level, signal_strength, network_type,
+		`SELECT battery_level, signal_strength, sim1_signal_dbm, sim2_signal_dbm, network_type,
 		        temperature_c, latitude, longitude,
 		        cabin_noise_rms, gps_signal_quality, speed_kmh, ambient_light_lux,
 		        server_latency_ms, device_ip_address, jolt,
@@ -317,6 +322,8 @@ func (store *Store) GetLatestMetrics(deviceID string) (models.DeviceMetricsRecor
 	).Scan(
 		&batteryLevel,
 		&signalStrength,
+		&sim1Signal,
+		&sim2Signal,
 		&networkType,
 		&temperatureC,
 		&latitude,
@@ -349,6 +356,8 @@ func (store *Store) GetLatestMetrics(deviceID string) (models.DeviceMetricsRecor
 	metrics.DeviceID = deviceID
 	metrics.BatteryLevel = floatPointer(batteryLevel)
 	metrics.SignalStrength = intPointer(signalStrength)
+	metrics.Sim1SignalDbm = intPointer(sim1Signal)
+	metrics.Sim2SignalDbm = intPointer(sim2Signal)
 	metrics.NetworkType = stringPointer(networkType)
 	metrics.TemperatureC = floatPointer(temperatureC)
 	metrics.Latitude = floatPointer(latitude)
@@ -382,7 +391,7 @@ func (store *Store) ListMetricsHistory(deviceID string, from, to time.Time, limi
 		return nil, err
 	}
 
-	cutoff := store.retentionCutoff()
+	cutoff := TehranStartOfYesterday(time.Now())
 	if from.Before(cutoff) {
 		from = cutoff
 	}
@@ -391,7 +400,7 @@ func (store *Store) ListMetricsHistory(deviceID string, from, to time.Time, limi
 	}
 
 	rows, err := store.db.Query(
-		`SELECT battery_level, signal_strength, network_type,
+		`SELECT battery_level, signal_strength, sim1_signal_dbm, sim2_signal_dbm, network_type,
 		        temperature_c, latitude, longitude,
 		        cabin_noise_rms, gps_signal_quality, speed_kmh, ambient_light_lux,
 		        server_latency_ms, device_ip_address, jolt,
@@ -419,6 +428,8 @@ func (store *Store) ListMetricsHistory(deviceID string, from, to time.Time, limi
 		var latitude sql.NullFloat64
 		var longitude sql.NullFloat64
 		var signalStrength sql.NullInt64
+		var sim1Signal sql.NullInt64
+		var sim2Signal sql.NullInt64
 		var networkType sql.NullString
 		var cabinNoiseRMS sql.NullFloat64
 		var gpsSignalQuality sql.NullString
@@ -435,6 +446,8 @@ func (store *Store) ListMetricsHistory(deviceID string, from, to time.Time, limi
 		if err := rows.Scan(
 			&batteryLevel,
 			&signalStrength,
+			&sim1Signal,
+			&sim2Signal,
 			&networkType,
 			&temperatureC,
 			&latitude,
@@ -463,6 +476,8 @@ func (store *Store) ListMetricsHistory(deviceID string, from, to time.Time, limi
 		metrics.DeviceID = deviceID
 		metrics.BatteryLevel = floatPointer(batteryLevel)
 		metrics.SignalStrength = intPointer(signalStrength)
+		metrics.Sim1SignalDbm = intPointer(sim1Signal)
+		metrics.Sim2SignalDbm = intPointer(sim2Signal)
 		metrics.NetworkType = stringPointer(networkType)
 		metrics.TemperatureC = floatPointer(temperatureC)
 		metrics.Latitude = floatPointer(latitude)
@@ -489,6 +504,141 @@ func (store *Store) ListMetricsHistory(deviceID string, from, to time.Time, limi
 	return history, nil
 }
 
+func (store *Store) ListMetricsBuckets(deviceID string, from, to time.Time, bucketSeconds int) ([]models.DeviceMetricsRecord, error) {
+	if bucketSeconds < 60 {
+		bucketSeconds = 60
+	}
+	if bucketSeconds > 86400 {
+		bucketSeconds = 86400
+	}
+
+	deviceRowID, err := store.resolveDeviceRowID(deviceID)
+	if err != nil {
+		if errors.Is(err, ErrDeviceNotFound) {
+			return nil, ErrMetricsNotFound
+		}
+		return nil, err
+	}
+
+	if to.IsZero() || to.Before(from) {
+		to = time.Now().UTC().Add(time.Second)
+	}
+
+	rows, err := store.db.Query(
+		`SELECT CAST(strftime('%s', recorded_at) AS INTEGER) / ? AS bucket,
+		        AVG(battery_level), AVG(temperature_c), AVG(cabin_noise_rms), AVG(jolt),
+		        AVG(sim1_signal_dbm), AVG(sim2_signal_dbm), AVG(signal_strength),
+		        MAX(network_type), AVG(server_latency_ms)
+		 FROM android_telemetry
+		 WHERE device_id = ? AND recorded_at >= ? AND recorded_at < ?
+		   AND strftime('%s', recorded_at) IS NOT NULL
+		 GROUP BY bucket
+		 ORDER BY bucket ASC`,
+		bucketSeconds,
+		deviceRowID,
+		formatSQLiteTime(from),
+		formatSQLiteTime(to),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("query metrics buckets: %w", err)
+	}
+	defer rows.Close()
+
+	buckets := make([]models.DeviceMetricsRecord, 0)
+	for rows.Next() {
+		var bucket int64
+		var batteryLevel sql.NullFloat64
+		var temperatureC sql.NullFloat64
+		var cabinNoiseRMS sql.NullFloat64
+		var jolt sql.NullFloat64
+		var sim1Signal sql.NullFloat64
+		var sim2Signal sql.NullFloat64
+		var signalStrength sql.NullFloat64
+		var networkType sql.NullString
+		var serverLatencyMs sql.NullFloat64
+
+		if err := rows.Scan(
+			&bucket,
+			&batteryLevel,
+			&temperatureC,
+			&cabinNoiseRMS,
+			&jolt,
+			&sim1Signal,
+			&sim2Signal,
+			&signalStrength,
+			&networkType,
+			&serverLatencyMs,
+		); err != nil {
+			return nil, fmt.Errorf("scan metrics bucket: %w", err)
+		}
+
+		record := models.DeviceMetricsRecord{
+			DeviceID:        deviceID,
+			BatteryLevel:    floatPointer(batteryLevel),
+			TemperatureC:    floatPointer(temperatureC),
+			CabinNoiseRMS:   floatPointer(cabinNoiseRMS),
+			Jolt:            floatPointer(jolt),
+			Sim1SignalDbm:   intPointerFromFloat(sim1Signal),
+			Sim2SignalDbm:   intPointerFromFloat(sim2Signal),
+			SignalStrength:  intPointerFromFloat(signalStrength),
+			NetworkType:     stringPointer(networkType),
+			ServerLatencyMs: intPointerFromFloat(serverLatencyMs),
+			RecordedAt:      time.Unix(bucket*int64(bucketSeconds), 0).UTC(),
+		}
+		buckets = append(buckets, record)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate metrics buckets: %w", err)
+	}
+	return buckets, nil
+}
+
+func (store *Store) ListFramesSince(from time.Time, limit int) ([]models.FrameRecord, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	if limit > 500 {
+		limit = 500
+	}
+
+	rows, err := store.db.Query(
+		`SELECT si.id, d.mac_address, si.path, si.captured_at, si.received_at
+		 FROM stored_images si
+		 JOIN devices d ON d.id = si.device_id
+		 WHERE si.captured_at >= ?
+		 ORDER BY si.captured_at DESC, si.id DESC
+		 LIMIT ?`,
+		formatSQLiteTime(from),
+		limit,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("list frames since: %w", err)
+	}
+	defer rows.Close()
+
+	frames := make([]models.FrameRecord, 0)
+	for rows.Next() {
+		var frame models.FrameRecord
+		var capturedAtRaw string
+		var receivedAtRaw string
+		if err := rows.Scan(&frame.ID, &frame.DeviceID, &frame.Path, &capturedAtRaw, &receivedAtRaw); err != nil {
+			return nil, fmt.Errorf("scan frame since: %w", err)
+		}
+		if err := scanSQLiteTime(capturedAtRaw, &frame.CapturedAt); err != nil {
+			return nil, fmt.Errorf("scan frame since captured_at: %w", err)
+		}
+		if err := scanSQLiteTime(receivedAtRaw, &frame.ReceivedAt); err != nil {
+			return nil, fmt.Errorf("scan frame since received_at: %w", err)
+		}
+		frames = append(frames, frame)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate frames since: %w", err)
+	}
+	return frames, nil
+}
+
 func (store *Store) ListFrames(limit int) ([]models.FrameRecord, error) {
 	if limit <= 0 {
 		limit = 50
@@ -497,7 +647,7 @@ func (store *Store) ListFrames(limit int) ([]models.FrameRecord, error) {
 		limit = 200
 	}
 
-	cutoff := store.retentionCutoff()
+	cutoff := TehranStartOfDay(time.Now())
 	rows, err := store.db.Query(
 		`SELECT si.id, d.mac_address, si.path, si.captured_at, si.received_at
 		 FROM stored_images si
@@ -907,7 +1057,6 @@ func (store *Store) PurgeExpiredMetrics(cutoff time.Time) error {
 	return nil
 }
 
-
 func (store *Store) SaveVisionAnalysis(record models.VisionAnalysisRecord) (models.VisionAnalysisRecord, error) {
 	deviceRowID, err := store.resolveDeviceRowID(record.DeviceID)
 	if err != nil {
@@ -1243,6 +1392,14 @@ func intPointer(value sql.NullInt64) *int {
 		return nil
 	}
 	result := int(value.Int64)
+	return &result
+}
+
+func intPointerFromFloat(value sql.NullFloat64) *int {
+	if !value.Valid {
+		return nil
+	}
+	result := int(math.Round(value.Float64))
 	return &result
 }
 

@@ -25,6 +25,7 @@ export interface Device {
 export type MetricsHistoryRange =
   | 'today'
   | 'yesterday'
+  | 'today_yesterday'
   | 'this_week'
   | 'this_month'
   | 'last_week'
@@ -37,6 +38,8 @@ export interface MetricReading {
   noiseDb: number
   jolt: number
   signalStrength: number
+  sim1SignalDbm: number
+  sim2SignalDbm: number
   networkType: string
   serverPhoneLatencyMs: number
 }
@@ -50,6 +53,8 @@ export interface DeviceMetrics {
     noiseDb: number
     jolt: number
     signalStrength: number
+    sim1SignalDbm: number
+    sim2SignalDbm: number
     networkType: string
     serverPhoneLatencyMs: number
     recordedAt: string
@@ -94,6 +99,12 @@ export interface StreamResponse {
   expiresAt: string
   urlWarnings?: string[]
   iceServers?: IceServerConfig[]
+}
+
+export interface ChartPoint {
+  hour: number
+  value: number
+  networkType?: string
 }
 
 export interface GalleryImage {

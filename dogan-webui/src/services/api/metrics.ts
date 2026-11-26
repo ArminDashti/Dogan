@@ -8,6 +8,8 @@ interface MetricReadingWire {
   noise_db: number
   jolt: number
   signal_strength: number
+  sim1_signal_dbm?: number
+  sim2_signal_dbm?: number
   network_type: string
   server_phone_latency_ms: number
 }
@@ -21,6 +23,8 @@ interface DeviceMetricsWire {
     noise_db: number
     jolt: number
     signal_strength: number
+    sim1_signal_dbm?: number
+    sim2_signal_dbm?: number
     network_type: string
     server_phone_latency_ms: number
     recorded_at: string
@@ -36,6 +40,8 @@ function mapReading(reading: MetricReadingWire): MetricReading {
     noiseDb: reading.noise_db,
     jolt: reading.jolt,
     signalStrength: reading.signal_strength,
+    sim1SignalDbm: reading.sim1_signal_dbm ?? reading.signal_strength ?? 0,
+    sim2SignalDbm: reading.sim2_signal_dbm ?? 0,
     networkType: reading.network_type ?? '',
     serverPhoneLatencyMs: reading.server_phone_latency_ms,
   }
@@ -44,9 +50,14 @@ function mapReading(reading: MetricReadingWire): MetricReading {
 export async function fetchDeviceMetrics(
   deviceId: string,
   range: MetricsHistoryRange = 'today',
+  bucketSeconds?: number,
 ): Promise<DeviceMetrics> {
+  const query = new URLSearchParams({ range })
+  if (bucketSeconds) {
+    query.set('bucket', String(bucketSeconds))
+  }
   const raw = await apiClient.get<DeviceMetricsWire>(
-    `/devices/${encodeURIComponent(deviceId)}/metrics?range=${encodeURIComponent(range)}`,
+    `/devices/${encodeURIComponent(deviceId)}/metrics?${query.toString()}`,
   )
 
   return {
@@ -58,6 +69,8 @@ export async function fetchDeviceMetrics(
       noiseDb: raw.current.noise_db,
       jolt: raw.current.jolt,
       signalStrength: raw.current.signal_strength,
+      sim1SignalDbm: raw.current.sim1_signal_dbm ?? raw.current.signal_strength ?? 0,
+      sim2SignalDbm: raw.current.sim2_signal_dbm ?? 0,
       networkType: raw.current.network_type ?? '',
       serverPhoneLatencyMs: raw.current.server_phone_latency_ms,
       recordedAt: raw.current.recorded_at,

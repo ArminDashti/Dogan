@@ -18,6 +18,7 @@ type FrameStore interface {
 	SaveFrame(frame models.FrameRecord) error
 	GetLastFrame(deviceID string) (models.FrameRecord, error)
 	ListFrames(limit int) ([]models.FrameRecord, error)
+	ListFramesSince(from time.Time, limit int) ([]models.FrameRecord, error)
 	GetFrameByID(imageID int64) (models.FrameRecord, error)
 }
 
@@ -25,6 +26,7 @@ type MetricsStore interface {
 	SaveMetrics(metrics models.DeviceMetricsRecord) error
 	GetLatestMetrics(deviceID string) (models.DeviceMetricsRecord, error)
 	ListMetricsHistory(deviceID string, from, to time.Time, limit int) ([]models.DeviceMetricsRecord, error)
+	ListMetricsBuckets(deviceID string, from, to time.Time, bucketSeconds int) ([]models.DeviceMetricsRecord, error)
 }
 
 type LoginLogStore interface {

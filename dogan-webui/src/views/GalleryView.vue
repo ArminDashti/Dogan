@@ -60,7 +60,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <AppLayout title="Image Gallery" subtitle="Captured snapshots from your devices.">
+  <AppLayout title="Image Gallery" subtitle="Captures from today. Older photos are removed automatically.">
     <div class="space-y-6">
       <ErrorAlert v-if="errorMessage" title="Gallery unavailable" :message="errorMessage" />
 
@@ -72,7 +72,7 @@ onBeforeUnmount(() => {
         v-else-if="images.length === 0"
         class="yoda-card border-dashed px-5 py-12 text-center text-[var(--muted)]"
       >
-        No images yet. Once your backend starts storing captures, they will appear here.
+        No captures today yet. Photos from your device appear here as they arrive.
       </div>
 
       <div v-else class="gallery-grid">

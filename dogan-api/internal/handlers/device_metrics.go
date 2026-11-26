@@ -29,6 +29,8 @@ func (handler *DeviceMetricsHandler) SubmitMetrics(context *gin.Context) {
 		DeviceID:       payload.DeviceID,
 		BatteryLevel:   payload.BatteryLevel,
 		SignalStrength: payload.SignalStrength,
+		Sim1SignalDbm:  payload.Sim1SignalDbm,
+		Sim2SignalDbm:  payload.Sim2SignalDbm,
 		NetworkType:    payload.NetworkType,
 		TemperatureC:   payload.TemperatureC,
 		Latitude:       payload.Latitude,

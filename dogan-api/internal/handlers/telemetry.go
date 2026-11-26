@@ -52,6 +52,12 @@ func (handler *TelemetryHandler) SubmitTelemetry(context *gin.Context) {
 	latency := payload.ServerLatencyMs
 	signal := payload.NetworkSignalStrengthDbm
 
+	sim1 := payload.Sim1SignalDbm
+	if sim1 == nil {
+		sim1 = &signal
+	}
+	sim2 := payload.Sim2SignalDbm
+
 	var latitude *float64
 	var longitude *float64
 	if payload.GPSLocation != nil {
@@ -66,6 +72,8 @@ func (handler *TelemetryHandler) SubmitTelemetry(context *gin.Context) {
 		DeviceID:         payload.DeviceID,
 		BatteryLevel:     &batteryLevel,
 		SignalStrength:   &signal,
+		Sim1SignalDbm:    sim1,
+		Sim2SignalDbm:    sim2,
 		NetworkType:      payload.NetworkType,
 		TemperatureC:     &tempC,
 		Latitude:         latitude,

@@ -60,6 +60,8 @@ type DeviceMetricsPayload struct {
 	DeviceID       string    `json:"device_id" binding:"required"`
 	BatteryLevel   *float64  `json:"battery_level_percent,omitempty"`
 	SignalStrength *int      `json:"signal_strength_dbm,omitempty"`
+	Sim1SignalDbm  *int      `json:"sim1_signal_dbm,omitempty"`
+	Sim2SignalDbm  *int      `json:"sim2_signal_dbm,omitempty"`
 	NetworkType    string    `json:"network_type,omitempty"`
 	TemperatureC   *float64  `json:"temperature_celsius,omitempty"`
 	Latitude       *float64  `json:"latitude,omitempty"`
@@ -71,6 +73,8 @@ type DeviceMetricsRecord struct {
 	DeviceID         string    `json:"device_id"`
 	BatteryLevel     *float64  `json:"battery_level_percent,omitempty"`
 	SignalStrength   *int      `json:"signal_strength_dbm,omitempty"`
+	Sim1SignalDbm    *int      `json:"sim1_signal_dbm,omitempty"`
+	Sim2SignalDbm    *int      `json:"sim2_signal_dbm,omitempty"`
 	NetworkType      string    `json:"network_type,omitempty"`
 	TemperatureC     *float64  `json:"temperature_celsius,omitempty"`
 	Latitude         *float64  `json:"latitude,omitempty"`
@@ -101,6 +105,8 @@ type TelemetryPayload struct {
 	GPSSignalQuality         string       `json:"gps_signal_quality"`
 	SpeedKmh                 float64      `json:"speed_kmh"`
 	NetworkSignalStrengthDbm int          `json:"network_signal_strength_dbm"`
+	Sim1SignalDbm            *int         `json:"sim1_signal_dbm,omitempty"`
+	Sim2SignalDbm            *int         `json:"sim2_signal_dbm,omitempty"`
 	NetworkType              string       `json:"network_type"`
 	CabinNoiseRMS            float64      `json:"cabin_noise_rms"`
 	BatteryTemperatureC      float64      `json:"battery_temperature_celsius"`
@@ -123,6 +129,8 @@ type DeviceTelemetrySnapshot struct {
 	NoiseDb                   float64   `json:"noise_db"`
 	Jolt                      float64   `json:"jolt"`
 	SignalStrength            float64   `json:"signal_strength"`
+	Sim1SignalDbm             float64   `json:"sim1_signal_dbm"`
+	Sim2SignalDbm             float64   `json:"sim2_signal_dbm"`
 	NetworkType               string    `json:"network_type"`
 	ServerPhoneLatencyMs      float64   `json:"server_phone_latency_ms"`
 	ServerWebLatencyMs        float64   `json:"server_web_latency_ms"`
@@ -136,6 +144,8 @@ type MetricReading struct {
 	NoiseDb                   float64   `json:"noise_db"`
 	Jolt                      float64   `json:"jolt"`
 	SignalStrength            float64   `json:"signal_strength"`
+	Sim1SignalDbm             float64   `json:"sim1_signal_dbm"`
+	Sim2SignalDbm             float64   `json:"sim2_signal_dbm"`
 	NetworkType               string    `json:"network_type"`
 	ServerPhoneLatencyMs      float64   `json:"server_phone_latency_ms"`
 }
@@ -149,6 +159,8 @@ type DeviceMetricsHistory struct {
 		NoiseDb                   float64   `json:"noise_db"`
 		Jolt                      float64   `json:"jolt"`
 		SignalStrength            float64   `json:"signal_strength"`
+		Sim1SignalDbm             float64   `json:"sim1_signal_dbm"`
+		Sim2SignalDbm             float64   `json:"sim2_signal_dbm"`
 		NetworkType               string    `json:"network_type"`
 		ServerPhoneLatencyMs      float64   `json:"server_phone_latency_ms"`
 		RecordedAt                time.Time `json:"recorded_at"`
