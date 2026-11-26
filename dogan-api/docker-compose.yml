@@ -24,7 +24,6 @@ services:
     command:
       - --listening-port=5349
       - --no-tls
-      - --no-dtls
       - --fingerprint
       - --realm=dogan-turn.xaigrok.ir
       - --no-cli

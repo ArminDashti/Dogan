@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.0.2
+
+### Fixed
+- **API/Docker:** Drop the removed `--no-dtls` flag from the `dogan-turn` coturn command in `docker-compose.yml` and `docker-compose.t3.yml`. coturn 4.19 removed the flag and leaves DTLS off by default, so the TURN container exited at startup and the local stack came up without a relay. API `3.0.2`.
+
 ## 3.0.1
 
 ### Added
