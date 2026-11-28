@@ -10,42 +10,22 @@ const router = useRouter()
 const authStore = useAuthStore()
 const { collapsed, toggleCollapsed } = useSidebarCollapsed()
 
-const metricChildren = [
-  { label: 'Battery', to: '/metrics/battery' },
-  { label: 'Battery Temperature', to: '/metrics/battery-temperature' },
-  { label: 'Noise', to: '/metrics/noise' },
-  { label: 'Jolt', to: '/metrics/jolt' },
-  { label: 'Signal', to: '/metrics/signal' },
-  { label: 'Network Type', to: '/metrics/network-type' },
-  { label: 'Server-Phone Latency', to: '/metrics/server-phone-latency' },
-]
-
 const navigation = [
   { label: 'Device', to: '/device', icon: 'device' as const },
   { label: 'Stream', to: '/stream', icon: 'stream' as const },
   { label: 'Gallery', to: '/gallery', icon: 'gallery' as const },
   { label: 'Logs', to: '/logs', icon: 'logs' as const },
+  { label: 'Metrics', to: '/metrics', icon: 'metrics' as const },
   { label: 'Settings', to: '/settings', icon: 'settings' as const },
-  {
-    label: 'Metrics',
-    to: '/metrics/battery',
-    icon: 'metrics' as const,
-    children: metricChildren,
-  },
 ]
 
 const activePath = computed(() => route.path)
-const metricsExpanded = computed(() => activePath.value.startsWith('/metrics'))
 
 function isActive(to: string): boolean {
-  if (to === '/metrics/battery') {
+  if (to === '/metrics') {
     return activePath.value.startsWith('/metrics')
   }
   return activePath.value === to || activePath.value.startsWith(`${to}/`)
-}
-
-function isChildActive(to: string): boolean {
-  return activePath.value === to
 }
 
 async function handleLogout(): Promise<void> {
@@ -152,21 +132,6 @@ async function handleLogout(): Promise<void> {
           </svg>
           <span class="nav-link-label">{{ item.label }}</span>
         </RouterLink>
-
-        <div
-          v-if="item.children && metricsExpanded && !collapsed"
-          class="mt-0.5 ml-4 space-y-0.5 border-l border-[var(--border)] pl-2"
-        >
-          <RouterLink
-            v-for="child in item.children"
-            :key="child.to"
-            :to="child.to"
-            class="nav-link !py-1.5 text-sm"
-            :class="{ 'router-link-active': isChildActive(child.to) }"
-          >
-            <span class="nav-link-label">{{ child.label }}</span>
-          </RouterLink>
-        </div>
       </div>
     </nav>
 

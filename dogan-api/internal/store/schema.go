@@ -74,6 +74,8 @@ CREATE TABLE IF NOT EXISTS android_telemetry (
 	device_id INTEGER NOT NULL REFERENCES devices(id),
 	battery_level REAL,
 	signal_strength INTEGER,
+	sim1_signal_dbm INTEGER,
+	sim2_signal_dbm INTEGER,
 	network_type TEXT,
 	temperature_c REAL,
 	latitude REAL,
@@ -135,6 +137,8 @@ func migrateSchema(database *sql.DB) error {
 	}{
 		{"cabin_noise_rms", "REAL"},
 		{"gps_signal_quality", "TEXT"},
+		{"sim1_signal_dbm", "INTEGER"},
+		{"sim2_signal_dbm", "INTEGER"},
 		{"speed_kmh", "REAL"},
 		{"ambient_light_lux", "REAL"},
 		{"server_latency_ms", "INTEGER"},

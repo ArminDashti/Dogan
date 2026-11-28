@@ -61,14 +61,27 @@ func (handler *DevicesWebHandler) GetDeviceMetrics(context *gin.Context) {
 		return
 	}
 
-	from, to := metricsRangeBounds(context.Query("range"))
-	history, err := handler.metricsStore.ListMetricsHistory(deviceID, from, to, 500)
+	rangeKey := context.Query("range")
+	from, to := metricsRangeBounds(rangeKey)
+	bucketSeconds := metricsBucketSeconds(context.Query("bucket"), rangeKey)
+
+	var history []models.DeviceMetricsRecord
+	var err error
+	if bucketSeconds > 0 {
+		history, err = handler.metricsStore.ListMetricsBuckets(deviceID, from, to, bucketSeconds)
+	} else {
+		history, err = handler.metricsStore.ListMetricsHistory(deviceID, from, to, 500)
+	}
 	if err != nil {
 		if errors.Is(err, store.ErrMetricsNotFound) {
 			context.JSON(http.StatusNotFound, models.ErrorResponse{Error: "no metrics found for device"})
 			return
 		}
 		context.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "failed to retrieve metrics"})
+		return
+	}
+	if len(history) == 0 {
+		context.JSON(http.StatusNotFound, models.ErrorResponse{Error: "no metrics found for device"})
 		return
 	}
 
@@ -83,12 +96,19 @@ func (handler *DevicesWebHandler) GetDeviceMetrics(context *gin.Context) {
 		History:    make([]models.MetricReading, 0, len(history)),
 	}
 	latest := history[0]
+	for _, item := range history {
+		if item.RecordedAt.After(latest.RecordedAt) {
+			latest = item
+		}
+	}
 	current := toMetricReading(latest)
 	response.Current.BatteryPercent = current.BatteryPercent
 	response.Current.BatteryTemperatureCelsius = current.BatteryTemperatureCelsius
 	response.Current.NoiseDb = current.NoiseDb
 	response.Current.Jolt = current.Jolt
 	response.Current.SignalStrength = current.SignalStrength
+	response.Current.Sim1SignalDbm = current.Sim1SignalDbm
+	response.Current.Sim2SignalDbm = current.Sim2SignalDbm
 	response.Current.NetworkType = current.NetworkType
 	response.Current.ServerPhoneLatencyMs = current.ServerPhoneLatencyMs
 	response.Current.RecordedAt = latest.RecordedAt
@@ -137,7 +157,7 @@ func (handler *DevicesWebHandler) CaptureDeviceFrame(context *gin.Context) {
 }
 
 func (handler *DevicesWebHandler) ListImages(context *gin.Context) {
-	frames, err := handler.frameStore.ListFrames(100)
+	frames, err := handler.frameStore.ListFramesSince(store.TehranStartOfDay(time.Now()), 500)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "failed to list images"})
 		return
@@ -259,40 +279,66 @@ func toMetricReading(item models.DeviceMetricsRecord) models.MetricReading {
 		NoiseDb:                   metricsaudio.CabinNoiseRmsToDb(floatOrZero(item.CabinNoiseRMS)),
 		Jolt:                      floatOrZero(item.Jolt),
 		SignalStrength:            float64(intOrZero(item.SignalStrength)),
+		Sim1SignalDbm:             float64(sim1SignalDbm(item)),
+		Sim2SignalDbm:             float64(intOrZero(item.Sim2SignalDbm)),
 		NetworkType:               item.NetworkType,
 		ServerPhoneLatencyMs:      float64(intOrZero(item.ServerLatencyMs)),
 	}
 }
 
+func sim1SignalDbm(item models.DeviceMetricsRecord) int {
+	if item.Sim1SignalDbm != nil && *item.Sim1SignalDbm != 0 {
+		return *item.Sim1SignalDbm
+	}
+	return intOrZero(item.SignalStrength)
+}
+
 func metricsRangeBounds(rangeKey string) (time.Time, time.Time) {
 	now := time.Now().UTC()
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	today := store.TehranStartOfDay(now)
+	localToday := today.Add(store.TehranOffset)
+	weekday := int(localToday.Weekday())
+	if weekday == 0 {
+		weekday = 7
+	}
 	switch rangeKey {
 	case "yesterday":
 		return today.AddDate(0, 0, -1), today
+	case "today_yesterday":
+		return today.AddDate(0, 0, -1), today.AddDate(0, 0, 1)
 	case "this_week":
-		weekday := int(today.Weekday())
-		if weekday == 0 {
-			weekday = 7
-		}
-		start := today.AddDate(0, 0, -(weekday - 1))
-		return start, today.AddDate(0, 0, 1)
+		start := localToday.AddDate(0, 0, -(weekday - 1))
+		return localMidnightToTehran(start), today.AddDate(0, 0, 1)
 	case "last_week":
-		weekday := int(today.Weekday())
-		if weekday == 0 {
-			weekday = 7
-		}
-		thisWeekStart := today.AddDate(0, 0, -(weekday - 1))
-		return thisWeekStart.AddDate(0, 0, -7), thisWeekStart
+		thisWeekStart := localToday.AddDate(0, 0, -(weekday - 1))
+		return localMidnightToTehran(thisWeekStart.AddDate(0, 0, -7)), localMidnightToTehran(thisWeekStart)
 	case "this_month":
-		start := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
-		return start, today.AddDate(0, 0, 1)
+		start := time.Date(localToday.Year(), localToday.Month(), 1, 0, 0, 0, 0, time.UTC)
+		return localMidnightToTehran(start), today.AddDate(0, 0, 1)
 	case "last_month":
-		firstThisMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
-		return firstThisMonth.AddDate(0, -1, 0), firstThisMonth
+		firstThisMonth := time.Date(localToday.Year(), localToday.Month(), 1, 0, 0, 0, 0, time.UTC)
+		return localMidnightToTehran(firstThisMonth.AddDate(0, -1, 0)), localMidnightToTehran(firstThisMonth)
 	default:
 		return today, today.AddDate(0, 0, 1)
 	}
+}
+
+// localMidnightToTehran converts a date read as a UTC clock value back into the
+// matching Tehran-local midnight instant.
+func localMidnightToTehran(local time.Time) time.Time {
+	return store.TehranStartOfDay(local.Add(store.TehranOffset))
+}
+
+func metricsBucketSeconds(raw, rangeKey string) int {
+	if raw != "" {
+		if seconds, err := strconv.Atoi(raw); err == nil && seconds >= 60 {
+			return seconds
+		}
+	}
+	if rangeKey == "today_yesterday" || rangeKey == "yesterday" {
+		return 900
+	}
+	return 0
 }
 
 func floatOrZero(value *float64) float64 {

@@ -23,6 +23,7 @@ const props = defineProps<{
   deviceId: string
   deviceName?: string
   fill?: boolean
+  hideControls?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -221,6 +222,13 @@ function toggleStreamMode(): void {
   streamMode.value = streamMode.value === 'webrtc' ? 'hls' : 'webrtc'
 }
 
+function setStreamMode(mode: StreamMode): void {
+  if (!canToggleMode.value) {
+    return
+  }
+  streamMode.value = mode
+}
+
 async function captureFrame(): Promise<void> {
   if (!canCapture.value) {
     return
@@ -258,6 +266,17 @@ watch(
 onUnmounted(() => {
   void disconnectStream()
 })
+
+defineExpose({
+  play: playStream,
+  stop: stopStream,
+  setMode: setStreamMode,
+  state: connectionState,
+  mode: streamMode,
+  canPlay,
+  canStop,
+  statusLabel,
+})
 </script>
 
 <template>
@@ -292,6 +311,7 @@ onUnmounted(() => {
     </div>
 
     <div
+      v-if="!hideControls"
       class="flex flex-wrap items-center gap-3 border-t border-[var(--border)]"
       :class="fill ? 'shrink-0 px-3 py-2' : 'px-5 py-4'"
     >

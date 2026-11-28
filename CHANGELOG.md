@@ -1,5 +1,23 @@
 # Changelog
 
+## 3.1.0
+
+### Added
+- **WebUI:** One Metrics page with seven charts (battery, battery temperature, noise, jolt, SIM 1 signal, SIM 2 signal, server–phone latency), each drawing today and yesterday on the same hour axis. Signal charts colour segments by 2G/3G/4G/5G.
+- **API:** `range=today_yesterday` with `bucket` averaging (15-minute default) for chart history, Tehran-local day boundaries, and `sim1_signal_dbm` / `sim2_signal_dbm` telemetry fields. SIM 2 is stored for when the phone starts reporting it.
+- **WebUI:** Stream page gets its own Streaming panel with Play, Stop and the HLS/WebRTC protocol choice.
+
+### Changed
+- **WebUI:** Device is chosen once in Settings and reused by Device, Stream and Metrics; the per-section device dropdowns are gone. Sidebar is Device, Stream, Gallery, Logs, Metrics, Settings.
+- **WebUI:** Settings regrouped into Device, Display, Alerts and grouped sensor intervals, with a sticky Save bar.
+- **Gallery:** shows and keeps only today's captures; older photos are deleted with the other retention data.
+- API `3.1.0`, WebUI `0.5.0`.
+
+## 3.0.2
+
+### Fixed
+- **API/Docker:** Drop the removed `--no-dtls` flag from the `dogan-turn` coturn command in `docker-compose.yml` and `docker-compose.t3.yml`. coturn 4.19 removed the flag and leaves DTLS off by default, so the TURN container exited at startup and the local stack came up without a relay. API `3.0.2`.
+
 ## 3.0.1
 
 ### Added

@@ -1,315 +1,269 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import AppLayout from '@/components/AppLayout.vue'
 import ErrorAlert from '@/components/ErrorAlert.vue'
-import { fetchDevices } from '@/services/api/devices'
+import MetricChart from '@/components/MetricChart.vue'
+import { useSelectedDevice } from '@/composables/useSelectedDevice'
 import { fetchDeviceMetrics } from '@/services/api/metrics'
 import { getErrorMessage } from '@/services/api/errors'
-import { formatTehranDateTime } from '@/utils/tehranTime'
-import type { Device, DeviceMetrics, MetricReading, MetricsHistoryRange } from '@/types/api'
+import {
+  formatTehranDayLabel,
+  formatTehranDateTime,
+  tehranDateKey,
+  tehranHourOfDay,
+  tehranTodayKey,
+  tehranYesterdayKey,
+} from '@/utils/tehranTime'
+import type { DeviceMetrics, MetricReading } from '@/types/api'
+import type { ChartPoint } from '@/types/api'
 
-const METRIC_DEFS = {
-  battery: {
-    label: 'Battery',
+const REFRESH_MS = 60_000
+const BUCKET_SECONDS = 900
+
+interface MetricDefinition {
+  key: string
+  title: string
+  unit?: string
+  min?: number
+  max?: number
+  colorByNetwork?: boolean
+  emptyMessage?: string
+  value: (reading: MetricReading) => number
+  valid: (value: number) => boolean
+  format?: (value: number) => string
+}
+
+const METRICS: MetricDefinition[] = [
+  {
+    key: 'battery',
+    title: 'Battery',
+    unit: 'Charge level',
+    min: 0,
     max: 100,
-    kind: 'number' as const,
-    value: (m: DeviceMetrics) => m.current.batteryPercent,
-    reading: (r: MetricReading) => r.batteryPercent,
-    format: (n: number) => `${n.toFixed(0)}%`,
+    value: (reading) => reading.batteryPercent,
+    valid: (value) => value > 0,
+    format: (value) => `${value.toFixed(0)}%`,
   },
-  'battery-temperature': {
-    label: 'Battery Temperature',
-    max: 50,
-    kind: 'number' as const,
-    value: (m: DeviceMetrics) => m.current.batteryTemperatureCelsius,
-    reading: (r: MetricReading) => r.batteryTemperatureCelsius,
-    format: (n: number) => `${n.toFixed(1)}°C`,
+  {
+    key: 'battery-temperature',
+    title: 'Battery temperature',
+    unit: '°C',
+    value: (reading) => reading.batteryTemperatureCelsius,
+    valid: (value) => value > 0,
+    format: (value) => `${value.toFixed(1)}°`,
   },
-  noise: {
-    label: 'Noise',
-    max: 100,
-    kind: 'number' as const,
-    value: (m: DeviceMetrics) => m.current.noiseDb,
-    reading: (r: MetricReading) => r.noiseDb,
-    format: (n: number) => `${n.toFixed(1)} dB`,
+  {
+    key: 'noise',
+    title: 'Noise',
+    unit: 'Cabin level, dB',
+    value: (reading) => reading.noiseDb,
+    valid: (value) => Number.isFinite(value) && value !== 0,
+    format: (value) => `${value.toFixed(0)} dB`,
   },
-  jolt: {
-    label: 'Jolt',
-    max: 5,
-    kind: 'number' as const,
-    value: (m: DeviceMetrics) => m.current.jolt,
-    reading: (r: MetricReading) => r.jolt,
-    format: (n: number) => n.toFixed(2),
+  {
+    key: 'jolt',
+    title: 'Jolt',
+    unit: 'm/s²',
+    value: (reading) => reading.jolt,
+    valid: (value) => Number.isFinite(value),
+    format: (value) => value.toFixed(2),
   },
-  signal: {
-    label: 'Signal',
-    max: 0,
-    kind: 'number' as const,
-    value: (m: DeviceMetrics) => m.current.signalStrength,
-    reading: (r: MetricReading) => r.signalStrength,
-    format: (n: number) => `${n.toFixed(0)} dBm`,
+  {
+    key: 'signal-1',
+    title: 'Signal SIM 1',
+    unit: 'dBm',
+    min: -120,
+    max: -40,
+    colorByNetwork: true,
+    value: (reading) => reading.sim1SignalDbm || reading.signalStrength,
+    valid: (value) => value < 0,
+    format: (value) => `${value.toFixed(0)}`,
   },
-  'network-type': {
-    label: 'Network Type',
-    max: 0,
-    kind: 'text' as const,
-    value: (m: DeviceMetrics) => m.current.networkType,
-    reading: (r: MetricReading) => r.networkType,
-    format: (n: string | number) => String(n || '--'),
+  {
+    key: 'signal-2',
+    title: 'Signal SIM 2',
+    unit: 'dBm',
+    min: -120,
+    max: -40,
+    colorByNetwork: true,
+    emptyMessage: 'Not reported yet — the phone sends one SIM today.',
+    value: (reading) => reading.sim2SignalDbm,
+    valid: (value) => value < 0,
+    format: (value) => `${value.toFixed(0)}`,
   },
-  'server-phone-latency': {
-    label: 'Server-Phone Latency',
-    max: 1000,
-    kind: 'number' as const,
-    value: (m: DeviceMetrics) => m.current.serverPhoneLatencyMs,
-    reading: (r: MetricReading) => r.serverPhoneLatencyMs,
-    format: (n: number) => `${n.toFixed(0)} ms`,
+  {
+    key: 'latency',
+    title: 'Server–phone latency',
+    unit: 'ms',
+    value: (reading) => reading.serverPhoneLatencyMs,
+    valid: (value) => value > 0,
+    format: (value) => `${value.toFixed(0)} ms`,
   },
-} as const
-
-type MetricSlug = keyof typeof METRIC_DEFS
-
-const RANGES: { id: MetricsHistoryRange; label: string }[] = [
-  { id: 'today', label: 'Today' },
-  { id: 'yesterday', label: 'Yesterday' },
-  { id: 'this_week', label: 'This week' },
-  { id: 'this_month', label: 'This month' },
-  { id: 'last_week', label: 'Last week' },
-  { id: 'last_month', label: 'Last month' },
 ]
 
-const route = useRoute()
-const router = useRouter()
+const { deviceId, deviceName, loading: loadingDevices, load: loadDevice } = useSelectedDevice()
 
-const devices = ref<Device[]>([])
-const selectedDeviceId = ref('')
 const metrics = ref<DeviceMetrics | null>(null)
-const loadingDevices = ref(true)
-const loadingMetrics = ref(false)
+const loading = ref(false)
 const errorMessage = ref<string | null>(null)
-const selectedRange = ref<MetricsHistoryRange>('today')
+const lastLoadedAt = ref<Date | null>(null)
 
-const metricSlug = computed<MetricSlug>(() => {
-  const raw = typeof route.params.metric === 'string' ? route.params.metric : 'battery'
-  return raw in METRIC_DEFS ? (raw as MetricSlug) : 'battery'
-})
+let refreshTimer: ReturnType<typeof setInterval> | null = null
 
-const metricDef = computed(() => METRIC_DEFS[metricSlug.value])
+const todayKey = computed(() => tehranTodayKey())
+const yesterdayKey = computed(() => tehranYesterdayKey())
+const todayLabel = computed(() => `Today · ${formatTehranDayLabel(todayKey.value)}`)
+const yesterdayLabel = computed(() => `Yesterday · ${formatTehranDayLabel(yesterdayKey.value)}`)
 
-const routeDeviceId = computed(() => {
-  if (typeof route.query.device === 'string' && route.query.device.length > 0) {
-    return route.query.device
+function splitPoints(definition: MetricDefinition): { today: ChartPoint[]; yesterday: ChartPoint[] } {
+  const reading = metrics.value
+  if (!reading) {
+    return { today: [], yesterday: [] }
   }
-  return undefined
-})
 
-const currentDisplay = computed(() => {
-  if (!metrics.value) {
-    return '--'
-  }
-  const value = metricDef.value.value(metrics.value)
-  return metricDef.value.format(value as never)
-})
-
-const chartReadings = computed(() => {
-  if (!metrics.value) {
-    return [] as MetricReading[]
-  }
-  return [...metrics.value.history].reverse().slice(-48)
-})
-
-const numericMax = computed(() => {
-  if (metricSlug.value === 'signal') {
-    const values = chartReadings.value.map((r) => Math.abs(metricDef.value.reading(r) as number))
-    return Math.max(50, ...values, 1)
-  }
-  return metricDef.value.max || 100
-})
-
-function barHeight(value: number): string {
-  if (metricSlug.value === 'signal') {
-    const ratio = Math.max(0, Math.min(Math.abs(value) / numericMax.value, 1))
-    return `${Math.round(ratio * 100)}%`
-  }
-  const ratio = Math.max(0, Math.min(value / numericMax.value, 1))
-  return `${Math.round(ratio * 100)}%`
-}
-
-function formatTimestamp(value: string): string {
-  return formatTehranDateTime(value)
-}
-
-async function loadDevices(): Promise<void> {
-  loadingDevices.value = true
-  try {
-    devices.value = await fetchDevices()
-    const preferredId = routeDeviceId.value || selectedDeviceId.value || devices.value[0]?.id
-    if (preferredId) {
-      selectedDeviceId.value = preferredId
+  const today: ChartPoint[] = []
+  const yesterday: ChartPoint[] = []
+  for (const item of reading.history) {
+    const value = definition.value(item)
+    if (!definition.valid(value)) {
+      continue
     }
-  } catch (error) {
-    errorMessage.value = getErrorMessage(error, 'Unable to load devices.')
-  } finally {
-    loadingDevices.value = false
+    const point: ChartPoint = {
+      hour: tehranHourOfDay(item.timestamp),
+      value,
+      networkType: item.networkType,
+    }
+    const key = tehranDateKey(item.timestamp)
+    if (key === todayKey.value) {
+      today.push(point)
+    } else if (key === yesterdayKey.value) {
+      yesterday.push(point)
+    }
   }
+
+  today.sort((a, b) => a.hour - b.hour)
+  yesterday.sort((a, b) => a.hour - b.hour)
+  return { today, yesterday }
 }
+
+const chartData = computed(() =>
+  METRICS.map((definition) => ({
+    definition,
+    ...splitPoints(definition),
+  })),
+)
+
+const hasAnyData = computed(() => chartData.value.some((chart) => chart.today.length > 0))
 
 async function loadMetrics(): Promise<void> {
-  if (!selectedDeviceId.value) {
+  if (!deviceId.value) {
     metrics.value = null
     return
   }
 
-  loadingMetrics.value = true
+  loading.value = true
   errorMessage.value = null
-
   try {
-    metrics.value = await fetchDeviceMetrics(selectedDeviceId.value, selectedRange.value)
+    metrics.value = await fetchDeviceMetrics(deviceId.value, 'today_yesterday', BUCKET_SECONDS)
+    lastLoadedAt.value = new Date()
   } catch (error) {
     metrics.value = null
     errorMessage.value = getErrorMessage(error, 'Unable to load device metrics.')
   } finally {
-    loadingMetrics.value = false
+    loading.value = false
   }
 }
 
-watch(metricSlug, (slug) => {
-  if (!(slug in METRIC_DEFS)) {
-    void router.replace('/metrics/battery')
-  }
-})
-
-watch(selectedDeviceId, () => {
+watch(deviceId, () => {
   void loadMetrics()
-})
-
-watch(selectedRange, () => {
-  void loadMetrics()
-})
-
-watch(routeDeviceId, (deviceId) => {
-  if (deviceId) {
-    selectedDeviceId.value = deviceId
-  }
 })
 
 onMounted(async () => {
-  if (!(metricSlug.value in METRIC_DEFS)) {
-    await router.replace('/metrics/battery')
-  }
-  await loadDevices()
+  await loadDevice()
   await loadMetrics()
+  refreshTimer = setInterval(() => {
+    void loadMetrics()
+  }, REFRESH_MS)
+})
+
+onUnmounted(() => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer)
+    refreshTimer = null
+  }
 })
 </script>
 
 <template>
-  <AppLayout>
+  <AppLayout title="Metrics" subtitle="Battery, motion, cabin and network readings for today and yesterday.">
     <div class="space-y-6">
-      <div>
-        <h1 class="text-2xl font-semibold tracking-tight text-[var(--text)]">
-          {{ metricDef.label }}
-        </h1>
-        <p class="mt-1 text-sm text-[var(--muted)]">History for the selected device and range.</p>
-      </div>
-
-      <div class="flex flex-wrap items-end gap-4">
-        <label class="min-w-64 flex-1">
-          <span class="mb-1.5 block text-sm font-medium text-[var(--text)]">Device</span>
-          <select
-            v-model="selectedDeviceId"
-            class="yoda-select"
-            :disabled="loadingDevices || devices.length === 0"
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <div class="min-w-0">
+          <p class="page-kicker">Selected device</p>
+          <p class="truncate text-lg font-semibold text-[var(--text)]">
+            {{ loadingDevices ? 'Loading…' : deviceName || 'No device selected' }}
+          </p>
+          <p v-if="lastLoadedAt" class="mt-0.5 font-mono text-xs text-[var(--muted)]">
+            Updated {{ formatTehranDateTime(lastLoadedAt) }}
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            class="yoda-btn yoda-btn--outline cursor-pointer"
+            :disabled="loading || !deviceId"
+            @click="loadMetrics"
           >
-            <option v-if="devices.length === 0" value="">No devices available</option>
-            <option v-for="device in devices" :key="device.id" :value="device.id">
-              {{ device.name }}
-            </option>
-          </select>
-        </label>
-      </div>
-
-      <div class="flex flex-wrap gap-2" role="tablist" aria-label="History range">
-        <button
-          v-for="range in RANGES"
-          :key="range.id"
-          type="button"
-          class="rounded-[6px] border px-3 py-1.5 text-sm transition"
-          :class="
-            selectedRange === range.id
-              ? 'border-[var(--accent)] bg-[var(--accent)] text-white'
-              : 'border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--text)]'
-          "
-          :aria-selected="selectedRange === range.id"
-          @click="selectedRange = range.id"
-        >
-          {{ range.label }}
-        </button>
+            {{ loading ? 'Refreshing…' : 'Refresh' }}
+          </button>
+        </div>
       </div>
 
       <ErrorAlert v-if="errorMessage" title="Metrics unavailable" :message="errorMessage" />
 
-      <article class="yoda-card p-6">
-        <p class="instrument-label">Current {{ metricDef.label.toLowerCase() }}</p>
-        <p class="mt-2 font-mono text-4xl font-semibold tracking-tight text-[var(--text)]">
-          {{ currentDisplay }}
-        </p>
-        <p v-if="metrics" class="mt-2 font-mono text-xs text-[var(--muted)]">
-          Updated {{ formatTimestamp(metrics.current.recordedAt) }}
-        </p>
-      </article>
+      <div
+        v-if="!deviceId && !loadingDevices"
+        class="yoda-card border-dashed px-5 py-12 text-center text-[var(--muted)]"
+      >
+        Select a device in Settings to see its metrics.
+      </div>
 
-      <section class="yoda-card p-6">
-        <div class="mb-4">
-          <h2 class="text-lg font-semibold text-[var(--text)]">History</h2>
-          <p class="text-sm text-[var(--muted)]">
-            {{ RANGES.find((r) => r.id === selectedRange)?.label }} readings.
-          </p>
-        </div>
+      <div v-else-if="loading && !metrics" class="yoda-card px-5 py-12 text-center text-[var(--muted)]">
+        Loading metrics…
+      </div>
 
-        <div v-if="loadingMetrics" class="py-8 text-center text-sm text-[var(--muted)]">
-          Loading metrics…
-        </div>
+      <div
+        v-else-if="metrics && !hasAnyData"
+        class="yoda-card border-dashed px-5 py-12 text-center text-[var(--muted)]"
+      >
+        No readings for today or yesterday yet.
+      </div>
 
-        <div
-          v-else-if="!metrics || metrics.history.length === 0"
-          class="py-8 text-center text-sm text-[var(--muted)]"
-        >
-          No historical readings for this range.
-        </div>
-
-        <div v-else-if="metricDef.kind === 'text'" class="space-y-2">
-          <div
-            v-for="reading in chartReadings"
-            :key="reading.timestamp"
-            class="flex items-center justify-between border-b border-[var(--border)] py-2 text-sm last:border-0"
-          >
-            <span class="font-mono text-[var(--muted)]">{{ formatTimestamp(reading.timestamp) }}</span>
-            <span class="font-medium text-[var(--text)]">{{
-              metricDef.format(metricDef.reading(reading) as never)
-            }}</span>
-          </div>
-        </div>
-
-        <div v-else class="flex h-40 items-end gap-1 overflow-x-auto">
-          <div
-            v-for="reading in chartReadings"
-            :key="reading.timestamp"
-            class="flex min-w-[18px] flex-1 flex-col items-center gap-2"
-          >
-            <div class="flex h-32 w-full items-end rounded-[6px] bg-[var(--surface)]">
-              <div
-                class="w-full rounded-[6px] bg-[var(--accent)]"
-                :style="{ height: barHeight(metricDef.reading(reading) as number) }"
-                :title="metricDef.format(metricDef.reading(reading) as never)"
-              />
-            </div>
-            <span class="truncate text-[9px] text-[var(--muted)]">{{
-              formatTimestamp(reading.timestamp)
-            }}</span>
-          </div>
-        </div>
-      </section>
+      <div v-else class="metric-grid">
+        <MetricChart
+          v-for="chart in chartData"
+          :key="chart.definition.key"
+          :title="chart.definition.title"
+          :unit="chart.definition.unit"
+          :today="chart.today"
+          :yesterday="chart.yesterday"
+          :today-label="todayLabel"
+          :yesterday-label="yesterdayLabel"
+          :min="chart.definition.min"
+          :max="chart.definition.max"
+          :color-by-network="chart.definition.colorByNetwork"
+          :empty-message="chart.definition.emptyMessage"
+          :format-value="chart.definition.format"
+        />
+      </div>
     </div>
   </AppLayout>
 </template>
+
+<style scoped>
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 0.75rem;
+}
+</style>

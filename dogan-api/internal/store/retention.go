@@ -38,18 +38,30 @@ func (cleaner *RetentionCleaner) run() {
 }
 
 func (cleaner *RetentionCleaner) cleanupOnce() {
-	cutoff := time.Now().UTC().Add(-cleaner.retentionPeriod)
+	now := time.Now().UTC()
+	frameCutoff := laterCutoff(now.Add(-cleaner.retentionPeriod), TehranStartOfDay(now))
+	metricsCutoff := laterCutoff(now.Add(-cleaner.retentionPeriod), TehranStartOfYesterday(now))
 
-	framePaths, err := cleaner.store.PurgeExpiredFrames(cutoff)
+	framePaths, err := cleaner.store.PurgeExpiredFrames(frameCutoff)
 	if err != nil {
 		log.Printf("retention cleanup failed for frames: %v", err)
 	} else {
 		cleaner.removeFrameFiles(framePaths)
 	}
 
-	if err := cleaner.store.PurgeExpiredMetrics(cutoff); err != nil {
+	if err := cleaner.store.PurgeExpiredMetrics(metricsCutoff); err != nil {
 		log.Printf("retention cleanup failed for metrics: %v", err)
 	}
+}
+
+// laterCutoff keeps whatever older data must be dropped first: the retention
+// window and the product's "today only" (frames) or "today and yesterday"
+// (metrics) rule.
+func laterCutoff(byRetention, byProductRule time.Time) time.Time {
+	if byProductRule.After(byRetention) {
+		return byProductRule
+	}
+	return byRetention
 }
 
 func (cleaner *RetentionCleaner) removeFrameFiles(framePaths []string) {

@@ -3,21 +3,28 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import AppLayout from '@/components/AppLayout.vue'
 import CameraPanel from '@/components/CameraPanel.vue'
 import ErrorAlert from '@/components/ErrorAlert.vue'
-import { deleteDevice, fetchDevices } from '@/services/api/devices'
+import { deleteDevice } from '@/services/api/devices'
 import { fetchLatestDeviceImage, revokeGalleryObjectUrls } from '@/services/api/gallery'
 import { formatTehranDateTime } from '@/utils/tehranTime'
-import { fetchSettings } from '@/services/api/settings'
 import { fetchWebRtcConnections } from '@/services/api/logs'
 import { getErrorMessage } from '@/services/api/errors'
+import { useSelectedDevice } from '@/composables/useSelectedDevice'
 import type { Device, GalleryImage, WebRtcConnection } from '@/types/api'
 
 const POLL_MS = 5000
 const EMPTY_MESSAGE =
   'No device registered yet. Open Dogan on an Android handset and sign in — it will appear here.'
 
-const devices = ref<Device[]>([])
-const selectedDeviceId = ref('')
-const loading = ref(true)
+const {
+  devices,
+  deviceId: selectedDeviceId,
+  selectedDevice,
+  loading,
+  load: loadSelectedDevice,
+  refreshDevices,
+  setDevice,
+} = useSelectedDevice()
+
 const errorMessage = ref<string | null>(null)
 const unpairingId = ref('')
 const lastImage = ref<GalleryImage | null>(null)
@@ -25,10 +32,6 @@ const connections = ref<WebRtcConnection[]>([])
 
 let pollTimer: ReturnType<typeof setInterval> | null = null
 let imageRequest = 0
-
-const selectedDevice = computed(() =>
-  devices.value.find((d) => d.id === selectedDeviceId.value) ?? null,
-)
 
 const deviceLogs = computed(() =>
   connections.value.filter((entry) => entry.deviceId === selectedDeviceId.value),
@@ -85,22 +88,12 @@ function stopPolling(): void {
 function startPolling(): void {
   stopPolling()
   pollTimer = setInterval(() => {
-    void loadDevices({ silent: true })
+    void refreshDevices()
+    void loadLogs()
     if (selectedDeviceId.value) {
       void loadLastImage(selectedDeviceId.value)
     }
   }, POLL_MS)
-}
-
-function pickDeviceId(list: Device[], preferredId?: string | null): string {
-  if (list.length === 0) {
-    return ''
-  }
-  if (preferredId && list.some((d) => d.id === preferredId)) {
-    return preferredId
-  }
-  const online = list.find((d) => d.status === 'online')
-  return online?.id ?? list[0].id
 }
 
 function clearLastImage(): void {
@@ -141,34 +134,6 @@ async function loadLogs(): Promise<void> {
   }
 }
 
-async function loadDevices(options: { silent?: boolean } = {}): Promise<void> {
-  if (!options.silent) {
-    loading.value = true
-    errorMessage.value = null
-  }
-
-  try {
-    const [list, settings] = await Promise.all([fetchDevices(), fetchSettings()])
-    devices.value = list
-    const keep =
-      selectedDeviceId.value && list.some((d) => d.id === selectedDeviceId.value)
-        ? selectedDeviceId.value
-        : pickDeviceId(list, settings.defaultDeviceId)
-    selectedDeviceId.value = keep
-    if (options.silent) {
-      void loadLogs()
-    }
-  } catch (error) {
-    if (!options.silent) {
-      errorMessage.value = getErrorMessage(error, 'Unable to load device info.')
-    }
-  } finally {
-    if (!options.silent) {
-      loading.value = false
-    }
-  }
-}
-
 async function unpair(device: Device): Promise<void> {
   if (unpairingId.value) {
     return
@@ -181,15 +146,16 @@ async function unpair(device: Device): Promise<void> {
   errorMessage.value = null
   try {
     await deleteDevice(device.id)
-    if (selectedDeviceId.value === device.id) {
-      selectedDeviceId.value = ''
-    }
-    await loadDevices({ silent: true })
+    await refreshDevices()
   } catch (error) {
     errorMessage.value = getErrorMessage(error, 'Unable to unpair device.')
   } finally {
     unpairingId.value = ''
   }
+}
+
+function selectDevice(device: Device): void {
+  void setDevice(device.id)
 }
 
 watch(selectedDeviceId, (id) => {
@@ -198,7 +164,8 @@ watch(selectedDeviceId, (id) => {
 })
 
 onMounted(async () => {
-  await loadDevices()
+  await loadSelectedDevice()
+  void loadLogs()
   startPolling()
 })
 
@@ -210,7 +177,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <AppLayout title="Device" subtitle="Details for the selected handset." :scrollable="false">
+  <AppLayout title="Device" subtitle="Details for the device selected in Settings." :scrollable="false">
     <div class="device-page">
       <ErrorAlert v-if="errorMessage" title="Device unavailable" :message="errorMessage" />
 
@@ -244,7 +211,7 @@ onUnmounted(() => {
                 v-for="device in devices"
                 :key="device.id"
                 :class="{ 'device-table__row--selected': device.id === selectedDeviceId }"
-                @click="selectedDeviceId = device.id"
+                @click="selectDevice(device)"
               >
                 <td class="device-table__mono">{{ device.id }}</td>
                 <td>{{ dash(device.name) }}</td>
