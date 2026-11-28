@@ -1,0 +1,201 @@
+{
+  "success": true,
+  "pattern": "running|refreshForModeActivation|ensureServerConnected|scheduleTelemetryLoop|scheduleUploadLoop|scheduleDiagnosticUploadLoop|collectAndEnqueueTelemetry|Exception|while",
+  "metadata": {
+    "totalMatches": 38,
+    "filesSearched": 1,
+    "filesWithMatches": 1,
+    "returnedMatches": 30,
+    "truncated": true,
+    "tokensSaved": 0,
+    "tokenCount": 851,
+    "originalTokenCount": 851,
+    "compressionRatio": 1,
+    "duration": 5,
+    "cacheHit": false,
+    "savingsClassification": "unmeasured",
+    "savingsReason": "No comparable unoptimized grep response was materialized; repository bytes scanned are not model-context tokens."
+  },
+  "matches": [
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 62,
+      "line": "    private var running = false\r",
+      "match": "running"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 104,
+      "line": "                if (running) {\r",
+      "match": "running"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 105,
+      "line": "                    refreshForModeActivation()\r",
+      "match": "refreshForModeActivation"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 111,
+      "line": "                if (running) {\r",
+      "match": "running"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 112,
+      "line": "                    refreshForModeActivation()\r",
+      "match": "refreshForModeActivation"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 122,
+      "line": "        if (running) return\r",
+      "match": "running"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 123,
+      "line": "        running = true\r",
+      "match": "running"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 133,
+      "line": "        ensureServerConnected(settings)\r",
+      "match": "ensureServerConnected"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 140,
+      "line": "        scheduleTelemetryLoop()\r",
+      "match": "scheduleTelemetryLoop"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 142,
+      "line": "        scheduleUploadLoop()\r",
+      "match": "scheduleUploadLoop"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 143,
+      "line": "        scheduleDiagnosticUploadLoop()\r",
+      "match": "scheduleDiagnosticUploadLoop"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 154,
+      "line": "    private fun refreshForModeActivation() {\r",
+      "match": "refreshForModeActivation"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 160,
+      "line": "        ensureServerConnected(settings)\r",
+      "match": "ensureServerConnected"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 245,
+      "line": "        running = false\r",
+      "match": "running"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 270,
+      "line": "    private fun scheduleTelemetryLoop() {\r",
+      "match": "scheduleTelemetryLoop"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 272,
+      "line": "            while (running) {\r",
+      "match": "while"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 272,
+      "line": "            while (running) {\r",
+      "match": "running"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 284,
+      "line": "                        collectAndEnqueueTelemetry(settings)\r",
+      "match": "collectAndEnqueueTelemetry"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 301,
+      "line": "                } catch (_: InterruptedException) {\r",
+      "match": "Exception"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 304,
+      "line": "                } catch (_: Exception) {\r",
+      "match": "Exception"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 311,
+      "line": "    private fun collectAndEnqueueTelemetry(settings: AppSettings) {\r",
+      "match": "collectAndEnqueueTelemetry"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 448,
+      "line": "    private fun scheduleUploadLoop() {\r",
+      "match": "scheduleUploadLoop"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 450,
+      "line": "            while (running) {\r",
+      "match": "while"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 450,
+      "line": "            while (running) {\r",
+      "match": "running"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 468,
+      "line": "                } catch (_: InterruptedException) {\r",
+      "match": "Exception"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 471,
+      "line": "                } catch (_: Exception) {\r",
+      "match": "Exception"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 478,
+      "line": "    private fun scheduleDiagnosticUploadLoop() {\r",
+      "match": "scheduleDiagnosticUploadLoop"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 480,
+      "line": "            while (running) {\r",
+      "match": "while"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 480,
+      "line": "            while (running) {\r",
+      "match": "running"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 502,
+      "line": "                } catch (_: InterruptedException) {\r",
+      "match": "Exception"
+    }
+  ]
+}

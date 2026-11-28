@@ -1,0 +1,273 @@
+{
+  "success": true,
+  "pattern": "CoroutineScope|SupervisorJob|Dispatchers\\.|newSingleThreadExecutor|launch\\s*[({]",
+  "metadata": {
+    "totalMatches": 42,
+    "filesSearched": 53,
+    "filesWithMatches": 9,
+    "returnedMatches": 42,
+    "truncated": false,
+    "tokensSaved": 0,
+    "tokenCount": 1344,
+    "originalTokenCount": 1344,
+    "compressionRatio": 1,
+    "duration": 312,
+    "cacheHit": false,
+    "savingsClassification": "unmeasured",
+    "savingsReason": "No comparable unoptimized grep response was materialized; repository bytes scanned are not model-context tokens."
+  },
+  "matches": [
+    {
+      "file": "SettingsPublisher.kt",
+      "lineNumber": 25,
+      "line": "        withContext(Dispatchers.IO) {\r",
+      "match": "Dispatchers."
+    },
+    {
+      "file": "SettingsPublisher.kt",
+      "lineNumber": 42,
+      "line": "        withContext(Dispatchers.IO) {\r",
+      "match": "Dispatchers."
+    },
+    {
+      "file": "SettingsActivity.kt",
+      "lineNumber": 68,
+      "line": "        lifecycleScope.launch {\r",
+      "match": "launch {"
+    },
+    {
+      "file": "SettingsActivity.kt",
+      "lineNumber": 110,
+      "line": "        lifecycleScope.launch {\r",
+      "match": "launch {"
+    },
+    {
+      "file": "SettingsActivity.kt",
+      "lineNumber": 115,
+      "line": "        lifecycleScope.launch {\r",
+      "match": "launch {"
+    },
+    {
+      "file": "SettingsActivity.kt",
+      "lineNumber": 120,
+      "line": "        lifecycleScope.launch {\r",
+      "match": "launch {"
+    },
+    {
+      "file": "SettingsActivity.kt",
+      "lineNumber": 125,
+      "line": "        lifecycleScope.launch {\r",
+      "match": "launch {"
+    },
+    {
+      "file": "SettingsActivity.kt",
+      "lineNumber": 130,
+      "line": "        lifecycleScope.launch {\r",
+      "match": "launch {"
+    },
+    {
+      "file": "SettingsActivity.kt",
+      "lineNumber": 367,
+      "line": "            textJob = lifecycleScope.launch {\r",
+      "match": "launch {"
+    },
+    {
+      "file": "SettingsActivity.kt",
+      "lineNumber": 376,
+      "line": "        lifecycleScope.launch {\r",
+      "match": "launch {"
+    },
+    {
+      "file": "SettingsActivity.kt",
+      "lineNumber": 382,
+      "line": "        lifecycleScope.launch {\r",
+      "match": "launch {"
+    },
+    {
+      "file": "SettingsActivity.kt",
+      "lineNumber": 388,
+      "line": "            val connected = withContext(Dispatchers.IO) {\r",
+      "match": "Dispatchers."
+    },
+    {
+      "file": "ServerSettingsSync.kt",
+      "lineNumber": 4,
+      "line": "import kotlinx.coroutines.CoroutineScope\r",
+      "match": "CoroutineScope"
+    },
+    {
+      "file": "ServerSettingsSync.kt",
+      "lineNumber": 7,
+      "line": "import kotlinx.coroutines.SupervisorJob\r",
+      "match": "SupervisorJob"
+    },
+    {
+      "file": "ServerSettingsSync.kt",
+      "lineNumber": 16,
+      "line": "    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)\r",
+      "match": "CoroutineScope"
+    },
+    {
+      "file": "ServerSettingsSync.kt",
+      "lineNumber": 16,
+      "line": "    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)\r",
+      "match": "SupervisorJob"
+    },
+    {
+      "file": "ServerSettingsSync.kt",
+      "lineNumber": 16,
+      "line": "    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)\r",
+      "match": "Dispatchers."
+    },
+    {
+      "file": "ServerSettingsSync.kt",
+      "lineNumber": 22,
+      "line": "        syncJob = scope.launch {\r",
+      "match": "launch {"
+    },
+    {
+      "file": "MainActivity.kt",
+      "lineNumber": 79,
+      "line": "        lifecycleScope.launch {\r",
+      "match": "launch {"
+    },
+    {
+      "file": "MainActivity.kt",
+      "lineNumber": 99,
+      "line": "        lifecycleScope.launch {\r",
+      "match": "launch {"
+    },
+    {
+      "file": "MainActivity.kt",
+      "lineNumber": 129,
+      "line": "        lifecycleScope.launch {\r",
+      "match": "launch {"
+    },
+    {
+      "file": "MainActivity.kt",
+      "lineNumber": 228,
+      "line": "        lifecycleScope.launch {\r",
+      "match": "launch {"
+    },
+    {
+      "file": "MainActivity.kt",
+      "lineNumber": 262,
+      "line": "            permissionLauncher.launch(missing.toTypedArray())\r",
+      "match": "launch("
+    },
+    {
+      "file": "LogsActivity.kt",
+      "lineNumber": 35,
+      "line": "        lifecycleScope.launch {\r",
+      "match": "launch {"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 10,
+      "line": "import kotlinx.coroutines.CoroutineScope\r",
+      "match": "CoroutineScope"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 13,
+      "line": "import kotlinx.coroutines.SupervisorJob\r",
+      "match": "SupervisorJob"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 28,
+      "line": "    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)\r",
+      "match": "CoroutineScope"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 28,
+      "line": "    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)\r",
+      "match": "SupervisorJob"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 28,
+      "line": "    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)\r",
+      "match": "Dispatchers."
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 76,
+      "line": "        connectJob = scope.launch { connectInternal(baseUrl, streamMode, streamUrl, streamPort) }\r",
+      "match": "launch {"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 90,
+      "line": "            val session = withContext(Dispatchers.IO) {\r",
+      "match": "Dispatchers."
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 141,
+      "line": "        eventsJob = scope.launch {\r",
+      "match": "launch {"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 219,
+      "line": "        restartJob = scope.launch {\r",
+      "match": "launch {"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 253,
+      "line": "        scope.launch { stopInternalAwait() }\r",
+      "match": "launch {"
+    },
+    {
+      "file": "DiagnosticsActivity.kt",
+      "lineNumber": 41,
+      "line": "        lifecycleScope.launch {\r",
+      "match": "launch {"
+    },
+    {
+      "file": "ConnectivityTester.kt",
+      "lineNumber": 17,
+      "line": "    suspend fun testInternet(): TestResult = withContext(Dispatchers.IO) {\r",
+      "match": "Dispatchers."
+    },
+    {
+      "file": "ConnectivityTester.kt",
+      "lineNumber": 36,
+      "line": "    suspend fun testServerApi(baseUrl: String): TestResult = withContext(Dispatchers.IO) {\r",
+      "match": "Dispatchers."
+    },
+    {
+      "file": "ConnectivityTester.kt",
+      "lineNumber": 66,
+      "line": "    suspend fun testLiveKit(baseUrl: String): TestResult = withContext(Dispatchers.IO) {\r",
+      "match": "Dispatchers."
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 42,
+      "line": "    private val io = Executors.newSingleThreadExecutor()\r",
+      "match": "newSingleThreadExecutor"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 43,
+      "line": "    private val uploadExecutor = Executors.newSingleThreadExecutor()\r",
+      "match": "newSingleThreadExecutor"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 44,
+      "line": "    private val keepAliveExecutor = Executors.newSingleThreadExecutor()\r",
+      "match": "newSingleThreadExecutor"
+    },
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 45,
+      "line": "    private val captureCallbackExecutor = Executors.newSingleThreadExecutor()\r",
+      "match": "newSingleThreadExecutor"
+    }
+  ]
+}

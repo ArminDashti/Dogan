@@ -1,0 +1,20 @@
+{
+  "content": "            AppLogger.info(\"Server\", \"Auto-connected for ${settings.operatingMode.displayName}\")\r\n            ServerSettingsSync.start(this)\r\n            maybeStartLiveKit(settings)\r\n        } else {\r\n            AppLogger.error(\"Server\", \"Auto-connect failed: ${ServerConnectionManager.lastError}\")\r\n        }\r\n    }\r\n\r\n    private fun onVehicleBumpDetected(peakAccelerationMps2: Float) {\r\n        io.execute {\r\n            val now = System.currentTimeMillis()\r\n            if (now - lastMotionTriggeredCaptureAt < VehicleMotionDetector.COOLDOWN_MS) return@execute\r\n            lastMotionTriggeredCaptureAt = now\r\n            val settings = cachedSettings ?: return@execute\r\n            modeController.onBump(settings, peakAccelerationMps2)\r\n        }\r\n    }\r\n\r\n    private fun createChannels() {\r\n        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {\r\n            val nm = getSystemService(NotificationManager::class.java)\r\n            nm.createNotificationChannel(\r\n                NotificationChannel(CHANNEL, \"Dogan Capture\", NotificationManager.IMPORTANCE_LOW),\r\n            )\r\n            nm.createNotificationChannel(\r\n                NotificationChannel(MOTION_CHANNEL, \"Motion Alerts\", NotificationManager.IMPORTANCE_HIGH),\r\n            )\r\n            nm.createNotificationChannel(\r\n                NotificationChannel(\"dogan_alerts\", \"Dogan Alerts\", NotificationManager.IMPORTANCE_HIGH),\r\n            )\r\n        }\r\n    }\r\n\r\n    private fun buildNotification(): Notification {\r\n        val settings = cachedSettings\r\n        val modeLabel = settings?.operatingMode?.displayName ?: \"\"\r\n        val contentText = modeLabel.ifBlank { getString(R.string.dogan_running) }\r\n        return NotificationCompat.Builder(this, CHANNEL)\r\n            .setContentTitle(getString(R.string.dogan_running))\r\n            .setContentText(contentText)\r\n            .setSmallIcon(android.R.drawable.ic_menu_camera)\r\n            .setOngoing(true)\r\n            .build()\r\n    }\r\n\r\n    private fun configureWakeLockForMode(settings: AppSettings) {\r\n        holdWakeLockIndefinitely =\r\n            settings.operatingMode == OperatingMode.COPILOT && settings.copilotHoldWakeLock\r\n        val pm = getSystemService(POWER_SERVICE) as PowerManager\r\n        if (wakeLock == null) {\r\n            wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, \"Dogan::Capture\").apply {\r\n                setReferenceCounted(false)\r\n            }\r\n        }\r\n        val lock = wakeLock ?: return\r\n        if (holdWakeLockIndefinitely) {\r\n            if (!lock.isHeld) {\r\n                lock.acquire()\r\n            }\r\n        } else if (lock.isHeld) {\r\n            lock.release()\r\n        }\r\n    }\r\n\r\n    private fun withTimedWakeLock(timeoutMs: Long = WORK_WAKE_LOCK_MS, block: () -> Unit) {\r\n        val lock = wakeLock\r\n        if (lock == null || holdWakeLockIndefinitely) {\r\n            block()\r\n            return\r\n        }\r\n        val alreadyHeld = lock.isHeld\r\n        if (!alreadyHeld) {\r\n            lock.acquire(timeoutMs)\r\n        }\r\n        try {\r\n            block()\r\n        } finally {\r\n            if (!alreadyHeld && lock.isHeld) {\r\n                lock.release()\r\n            }\r\n        }\r\n    }\r\n\r\n    override fun onBind(intent: Intent?): IBinder? = null\r\n}\r\n\n\n// [chunk 4 of 4. Call smart_read again with chunkIndex=<n> for another.]",
+  "metadata": {
+    "path": "C:/Users/armin/GitHub/Dogan/dogan-android/app/src/main/java/com/dogan/CaptureService.kt",
+    "size": 27130,
+    "encoding": "utf-8",
+    "fileType": "text",
+    "hash": "2d14e6b06d195989e67126c6216011b9edb04762fb413128429a051108e82474",
+    "fromCache": true,
+    "isDiff": false,
+    "chunked": true,
+    "truncated": false,
+    "tokensSaved": 4161,
+    "tokenCount": 676,
+    "originalTokenCount": 4837,
+    "compressionRatio": 0.12297257446181067,
+    "chunkCount": 4,
+    "chunkIndex": 3
+  }
+}

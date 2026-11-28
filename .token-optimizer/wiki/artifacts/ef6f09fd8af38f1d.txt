@@ -1,0 +1,18 @@
+{
+  "content": "package com.dogan\r\n\r\nimport io.livekit.android.ConnectOptions\r\nimport io.livekit.android.LiveKit\r\nimport io.livekit.android.util.LKLog\r\nimport io.livekit.android.util.LoggingLevel\r\n\r\n/**\r\n * Single signal join: leave [ConnectOptions.rtcConfig] null so SDK merges join ICE (with dogan-turn TLS\r\n * via [io.livekit.android.room.toWebrtc]). Production wss should use relay candidates from TURN.\r\n */\r\nobject LiveKitRelayConnect {\r\n    fun isProductionPath(signalingUrl: String, streamPort: Int): Boolean {\r\n        val normalized = signalingUrl.trim().lowercase()\r\n        return streamPort == 443 ||\r\n            normalized.startsWith(\"wss://\") ||\r\n            normalized.contains(\":443\")\r\n    }\r\n\r\n    fun connectOptions(signalingUrl: String, streamPort: Int): ConnectOptions {\r\n        return ConnectOptions()\r\n    }\r\n\r\n    private const val LIVEKIT_LOG_TAG = \"LiveKit\"\r\n\r\n    private val iceDiagnosticsPattern =\r\n        Regex(\"\"\"(?i)ice|candidate|relay|turn|stun|pc connection|peer connection|transport|ssl\"\"\")\r\n\r\n    fun enableDiagnosticsLogging() {\r\n        LiveKitIceDiagnostics.reset()\r\n        LiveKit.loggingLevel = LoggingLevel.INFO\r\n        LKLog.logger = object : LKLog.Logger {\r\n            override fun log(priority: LoggingLevel, t: Throwable?, message: String) {\r\n                if (!iceDiagnosticsPattern.containsMatchIn(message)) {\r\n                    return\r\n                }\r\n                LiveKitIceDiagnostics.logIceLogLine(message)\r\n                val line = if (t != null) {\r\n                    \"$message (${t.javaClass.simpleName}: ${t.message})\"\r\n                } else {\r\n                    message\r\n                }\r\n                when (priority) {\r\n                    LoggingLevel.WARN, LoggingLevel.ERROR, LoggingLevel.WTF ->\r\n                        AppLogger.warn(LIVEKIT_LOG_TAG, line)\r\n\r\n                    else -> AppLogger.info(LIVEKIT_LOG_TAG, line)\r\n                }\r\n            }\r\n        }\r\n    }\r\n}",
+  "metadata": {
+    "path": "C:/Users/armin/GitHub/Dogan/dogan-android/app/src/main/java/com/dogan/LiveKitRelayConnect.kt",
+    "size": 1953,
+    "encoding": "utf-8",
+    "fileType": "text",
+    "hash": "27304c28bb0aebc4a223462b11a763726d1156a46d844386d9302822e965c028",
+    "fromCache": false,
+    "isDiff": false,
+    "chunked": false,
+    "truncated": false,
+    "tokensSaved": 0,
+    "tokenCount": 404,
+    "originalTokenCount": 404,
+    "compressionRatio": 1
+  }
+}

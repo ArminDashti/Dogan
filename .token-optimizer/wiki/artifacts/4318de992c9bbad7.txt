@@ -1,0 +1,18 @@
+{
+  "content": "package com.dogan\r\n\r\n/**\r\n * Drains the local telemetry queue to the Dogan API only (`POST /api/v1/telemetry`).\r\n * Vision/LLM analysis runs on the server after frames are stored — never from this uploader.\r\n */\r\nclass TelemetryUploader(\r\n    private val apiClient: DoganApiClient,\r\n    private val database: TelemetryDatabase,\r\n) {\r\n    fun uploadPending(baseUrl: String): UploadStats {\r\n        val rows = database.peekPending()\r\n        if (rows.isEmpty()) return UploadStats(0, 0, 0)\r\n\r\n        var uploaded = 0\r\n        var failed = 0\r\n        val flushedIds = mutableListOf<Long>()\r\n\r\n        for (row in rows) {\r\n            val rearLen = row.payload.optString(\"rear_camera_frame_base64\").length\r\n            val frontLen = row.payload.optString(\"front_camera_frame_base64\").length\r\n            val ok = apiClient.submitTelemetry(baseUrl, row.payload)\r\n            if (ok) {\r\n                uploaded++\r\n                flushedIds.add(row.id)\r\n                if (rearLen > 0 || frontLen > 0) {\r\n                    AppLogger.info(\r\n                        \"Telemetry\",\r\n                        \"POST /telemetry ok (rear=${rearLen}b front=${frontLen}b)\",\r\n                    )\r\n                }\r\n            } else {\r\n                failed++\r\n            }\r\n        }\r\n\r\n        if (flushedIds.isNotEmpty()) {\r\n            database.flushUploaded(flushedIds)\r\n        }\r\n\r\n        return UploadStats(uploaded, failed, database.pendingCount())\r\n    }\r\n\r\n    data class UploadStats(val uploaded: Int, val failed: Int, val remaining: Int)\r\n}\r\n",
+  "metadata": {
+    "path": "C:/Users/armin/GitHub/Dogan/dogan-android/app/src/main/java/com/dogan/TelemetryUploader.kt",
+    "size": 1551,
+    "encoding": "utf-8",
+    "fileType": "text",
+    "hash": "dbbe7acddab5d81feb644f2bc670021563483e9c6794190c86fe7579a90c0a1f",
+    "fromCache": false,
+    "isDiff": false,
+    "chunked": false,
+    "truncated": false,
+    "tokensSaved": 0,
+    "tokenCount": 329,
+    "originalTokenCount": 329,
+    "compressionRatio": 1
+  }
+}

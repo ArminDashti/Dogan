@@ -1,0 +1,93 @@
+{
+  "success": true,
+  "pattern": "captureFromFacing|provider.unbindAll\\(\\)|finishStillCaptureOnMain",
+  "metadata": {
+    "totalMatches": 12,
+    "filesSearched": 1,
+    "filesWithMatches": 1,
+    "returnedMatches": 12,
+    "truncated": false,
+    "tokensSaved": 0,
+    "tokenCount": 415,
+    "originalTokenCount": 415,
+    "compressionRatio": 1,
+    "duration": 188,
+    "cacheHit": false,
+    "savingsClassification": "unmeasured",
+    "savingsReason": "No comparable unoptimized grep response was materialized; repository bytes scanned are not model-context tokens."
+  },
+  "matches": [
+    {
+      "file": "DoganCamera.kt",
+      "lineNumber": 85,
+      "line": "                provider.unbindAll()\r",
+      "match": "provider.unbindAll()"
+    },
+    {
+      "file": "DoganCamera.kt",
+      "lineNumber": 155,
+      "line": "                provider.unbindAll()\r",
+      "match": "provider.unbindAll()"
+    },
+    {
+      "file": "DoganCamera.kt",
+      "lineNumber": 206,
+      "line": "                provider.unbindAll()\r",
+      "match": "provider.unbindAll()"
+    },
+    {
+      "file": "DoganCamera.kt",
+      "lineNumber": 217,
+      "line": "                        finishStillCaptureOnMain(context, lifecycleOwner, provider) {\r",
+      "match": "finishStillCaptureOnMain"
+    },
+    {
+      "file": "DoganCamera.kt",
+      "lineNumber": 224,
+      "line": "                        finishStillCaptureOnMain(context, lifecycleOwner, provider) {\r",
+      "match": "finishStillCaptureOnMain"
+    },
+    {
+      "file": "DoganCamera.kt",
+      "lineNumber": 235,
+      "line": "    fun captureFromFacing(\r",
+      "match": "captureFromFacing"
+    },
+    {
+      "file": "DoganCamera.kt",
+      "lineNumber": 251,
+      "line": "                provider.unbindAll()\r",
+      "match": "provider.unbindAll()"
+    },
+    {
+      "file": "DoganCamera.kt",
+      "lineNumber": 259,
+      "line": "                        finishStillCaptureOnMain(context, lifecycleOwner, provider) {\r",
+      "match": "finishStillCaptureOnMain"
+    },
+    {
+      "file": "DoganCamera.kt",
+      "lineNumber": 266,
+      "line": "                        finishStillCaptureOnMain(context, lifecycleOwner, provider) {\r",
+      "match": "finishStillCaptureOnMain"
+    },
+    {
+      "file": "DoganCamera.kt",
+      "lineNumber": 272,
+      "line": "                AppLogger.warn(\"Capture\", \"captureFromFacing setup failed (${facing.name}): ${e.message}\")\r",
+      "match": "captureFromFacing"
+    },
+    {
+      "file": "DoganCamera.kt",
+      "lineNumber": 278,
+      "line": "    private fun finishStillCaptureOnMain(\r",
+      "match": "finishStillCaptureOnMain"
+    },
+    {
+      "file": "DoganCamera.kt",
+      "lineNumber": 295,
+      "line": "        provider.unbindAll()\r",
+      "match": "provider.unbindAll()"
+    }
+  ]
+}

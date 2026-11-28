@@ -1,0 +1,27 @@
+{
+  "success": true,
+  "pattern": "override fun onStartCommand",
+  "metadata": {
+    "totalMatches": 1,
+    "filesSearched": 1,
+    "filesWithMatches": 1,
+    "returnedMatches": 1,
+    "truncated": false,
+    "tokensSaved": 0,
+    "tokenCount": 47,
+    "originalTokenCount": 47,
+    "compressionRatio": 1,
+    "duration": 2,
+    "cacheHit": false,
+    "savingsClassification": "unmeasured",
+    "savingsReason": "No comparable unoptimized grep response was materialized; repository bytes scanned are not model-context tokens."
+  },
+  "matches": [
+    {
+      "file": "CaptureService.kt",
+      "lineNumber": 100,
+      "line": "    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {\r",
+      "match": "override fun onStartCommand"
+    }
+  ]
+}

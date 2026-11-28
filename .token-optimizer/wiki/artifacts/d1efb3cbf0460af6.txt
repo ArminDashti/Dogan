@@ -1,0 +1,81 @@
+{
+  "success": true,
+  "pattern": "sdkReconnecting",
+  "metadata": {
+    "totalMatches": 10,
+    "filesSearched": 1,
+    "filesWithMatches": 1,
+    "returnedMatches": 10,
+    "truncated": false,
+    "tokensSaved": 0,
+    "tokenCount": 329,
+    "originalTokenCount": 329,
+    "compressionRatio": 1,
+    "duration": 4,
+    "cacheHit": false,
+    "savingsClassification": "unmeasured",
+    "savingsReason": "No comparable unoptimized grep response was materialized; repository bytes scanned are not model-context tokens."
+  },
+  "matches": [
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 42,
+      "line": "    private var sdkReconnecting = false\r",
+      "match": "sdkReconnecting"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 145,
+      "line": "                        sdkReconnecting = false\r",
+      "match": "sdkReconnecting"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 157,
+      "line": "                        sdkReconnecting = true\r",
+      "match": "sdkReconnecting"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 166,
+      "line": "                        sdkReconnecting = false\r",
+      "match": "sdkReconnecting"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 177,
+      "line": "                        sdkReconnecting = false\r",
+      "match": "sdkReconnecting"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 194,
+      "line": "                        if (sdkReconnecting || liveKitRoom.state == Room.State.RECONNECTING) {\r",
+      "match": "sdkReconnecting"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 197,
+      "line": "                        sdkReconnecting = false\r",
+      "match": "sdkReconnecting"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 215,
+      "line": "        if (userStopRequested || sdkReconnecting || lastBaseUrl.isBlank()) {\r",
+      "match": "sdkReconnecting"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 221,
+      "line": "            if (userStopRequested || sdkReconnecting || lastBaseUrl.isBlank()) {\r",
+      "match": "sdkReconnecting"
+    },
+    {
+      "file": "LiveKitStreamer.kt",
+      "lineNumber": 248,
+      "line": "        sdkReconnecting = false\r",
+      "match": "sdkReconnecting"
+    }
+  ]
+}
