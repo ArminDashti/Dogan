@@ -266,22 +266,16 @@ class MainActivity : AppCompatActivity() {
     private fun hasRequiredPermissions(): Boolean = missingPermissions().isEmpty()
 
     private fun missingPermissions(): List<String> =
-        permissionsForMode(currentMode).filter {
+        requiredPermissions().filter {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
         }
 
-    private fun permissionsForMode(mode: OperatingMode): List<String> {
-        return buildList {
-            addAll(basePermissions)
-            if (mode == OperatingMode.WATCHER) {
-                add(Manifest.permission.RECORD_AUDIO)
-            }
-        }
-    }
+    private fun requiredPermissions(): List<String> = basePermissions
 
     companion object {
         private val basePermissions = buildList {
             add(Manifest.permission.CAMERA)
+            add(Manifest.permission.RECORD_AUDIO)
             add(Manifest.permission.ACCESS_FINE_LOCATION)
             add(Manifest.permission.ACCESS_COARSE_LOCATION)
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
